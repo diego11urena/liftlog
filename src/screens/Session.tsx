@@ -1,7 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useEffect, useState } from 'react'
 import {
-  addExercise, addSet, deleteLog, dropSet, finishSession, moveExercise, removeExercise, removeLastSet, replaceExercise,
+  addExercise, addSet, deleteLog, MAX_SETS, dropSet, finishSession, moveExercise, removeExercise, removeLastSet, replaceExercise,
   saveSessionToWorkout, setUnilateral, updateSet,
 } from '../actions'
 import { toast } from '../App'
@@ -55,7 +55,7 @@ export default function Session({ logId, onEnded, onClose }: { logId: string; on
         {active && <button className="btn-dark min-h-10 px-4 text-sm" onClick={() => { setFocus(null); setReview(true) }}>End Workout</button>}
       </header>
 
-      <Pager peek index={Math.min(page, wes.length)} onIndex={(i) => { setPage(i); setFocus(null) }} pages={[
+      <Pager index={Math.min(page, wes.length)} onIndex={(i) => { setPage(i); setFocus(null) }} pages={[
         ...wes.map((we, i) => {
           const ex = exercises.get(we.exerciseId)
           return ex ? (
@@ -227,8 +227,8 @@ function ExerciseCard({ we, ex, log, focus, setFocus, onReplace, onMove, first, 
       <div className="my-4"><MuscleMap size="md" primary={ex.primaryMuscles} secondary={ex.secondaryMuscles} /></div>
       <div className="grid grid-cols-3 gap-2">
         <button className="btn min-h-11 bg-danger/15 px-2 text-sm text-danger" onClick={() => { setFocus(null); void removeLastSet(we.id) }} disabled={!rows.length}>Remove Set</button>
-        <button className="btn-ghost min-h-11 px-2 text-sm" onClick={() => dropSet(we.id, fromDisplay(stepFor(settings), unit))}>Drop Set</button>
-        <button className="btn min-h-11 bg-accent/20 px-2 text-sm text-accent" onClick={() => addSet(we.id)}>Add Set</button>
+        <button className="btn-ghost min-h-11 px-2 text-sm" disabled={setNo.size >= MAX_SETS} onClick={() => dropSet(we.id, fromDisplay(stepFor(settings), unit))}>Drop Set</button>
+        <button className="btn min-h-11 bg-accent/20 px-2 text-sm text-accent" disabled={setNo.size >= MAX_SETS} onClick={() => addSet(we.id)}>Add Set</button>
       </div>
 
       {focus && focused && <Numpad field={focus.field} onKey={key} step={focus.field === 'weight' ? stepFor(settings) : focus.field === 'reps' ? 1 : 15} />}

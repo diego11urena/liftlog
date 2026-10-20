@@ -154,7 +154,7 @@ Tapping **Start Workout** slides the Workout tab into this screen. The bottom ta
 
 **Header**: workout name (large) with a count-up timer under it (mm:ss). Right side: a red round **X** button (discard workout; always confirm) and a solid `--text` pill **End Workout** (the reference's is white).
 
-**Exercise pager**: one full card per exercise, swiped horizontally (neighbor cards peek at the edges), with page dots under the card (one per exercise). Each card has:
+**Exercise pager**: one full card per exercise, centered and full width (neighbor cards do NOT peek; owner decision 2026-10-19), swiped horizontally to the next exercise, with page dots under the card (one per exercise). Each exercise starts with ONE empty set; the user adds more, up to a maximum of 4 sets (Add Set and Drop Set disable at 4; owner decision 2026-10-19). Each card has:
 - Exercise name; a small info "i" icon next to it on some exercises (opens form info/instructions from the dataset); a round "..." menu at top right (replace/remove exercise, notes).
 - A **Unilateral** toggle under the name. Off: each set is one row. On: each set splits into two stacked rows labeled **R** and **L**, each with its own kgs and reps.
 - **Set rows**: set number, an accent circular-arrows icon (copies the previous set's values into this set), a weight field ("kgs") then "x" then a reps field ("reps"). Empty fields show **greyed placeholders with last session's values for that same set** (e.g. 20 kgs x 9 reps); typing replaces them. This is the "last workout" feature from the spec above and must be implemented exactly this way. Bodyweight exercises show "BW" in the weight field and use an mm:ss time field instead of reps (e.g. glute bridge).

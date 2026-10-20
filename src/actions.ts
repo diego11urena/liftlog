@@ -19,17 +19,16 @@ export async function startSession(workout?: Workout, name?: string) {
   return logId
 }
 
-/** Adds an exercise with empty set rows (placeholders come from last session / the saved workout). */
+/** Most sets an exercise can have in a session (owner decision 2026-10-19). */
+export const MAX_SETS = 4
+export const setCount = (rows: Pick<WSet, 'order'>[]) => new Set(rows.map((r) => r.order)).size
+
+/** Adds an exercise with one empty set (placeholders come from last session / the saved workout); the user adds more. */
 export async function addExercise(logId: string, exerciseId: string, order?: number, unilateral = false, planSets?: PlanSet[]) {
   const id = uuid()
   order ??= await db.workoutExercises.where('logId').equals(logId).count()
   await db.workoutExercises.add(touch({ id, logId, exerciseId, order, notes: '', unilateral, planSets }))
-  const prior = (await loggedSetsFor(exerciseId)).filter((s) => s.logId !== logId)
-  const lastId = prior.at(-1)?.logId
-  const lastCount = new Set(prior.filter((s) => s.logId === lastId).map((s) => s.order)).size
-  const planRows = planSets?.filter((s) => s.side !== 'L') // one entry per set number
-  const n = planRows?.length || lastCount || 1
-  for (let i = 0; i < n; i++) await addRows({ id, logId, exerciseId, unilateral }, i, !!planRows?.[i]?.isDrop)
+  await addRows({ id, logId, exerciseId, unilateral }, 0)
   return id
 }
 
@@ -46,6 +45,7 @@ const rowsOf = (weId: string) => db.sets.where('workoutExerciseId').equals(weId)
 export async function addSet(weId: string) {
   const we = (await db.workoutExercises.get(weId))!
   const rows = await rowsOf(weId)
+  if (setCount(rows) >= MAX_SETS) return
   await addRows(we, (rows.at(-1)?.order ?? -1) + 1)
 }
 
@@ -53,6 +53,7 @@ export async function addSet(weId: string) {
 export async function dropSet(weId: string, stepKg: number) {
   const we = (await db.workoutExercises.get(weId))!
   const rows = await rowsOf(weId)
+  if (setCount(rows) >= MAX_SETS) return
   const lastW = [...rows].reverse().find((r) => r.weight != null)?.weight
   const w = lastW == null ? null : Math.max(0, Math.round((lastW * 0.8) / stepKg) * stepKg)
   await addRows(we, (rows.at(-1)?.order ?? -1) + 1, true, w)

@@ -30,7 +30,7 @@ export default function MuscleMap({ primary, secondary = [], size = 'lg', onMusc
   const label = (l: Muscle[]) => l.map((m) => MUSCLE_LABEL[m]).join(', ') || 'none'
 
   return (
-    <div className="flex shrink-0 justify-center" style={{ width: w, gap: w * 0.04 }} role="img"
+    <div className="mx-auto flex shrink-0 justify-center" style={{ width: w, gap: w * 0.04 }} role="img"
       aria-label={`Primary: ${label(primary)}. Secondary: ${label(secondary)}.`}>
       {VIEWS.map((v, vi) => (
         <svg key={vi} viewBox={body.viewBox} style={{ width: w * 0.48, height: (w * 0.48 * VH) / VW }} aria-hidden>

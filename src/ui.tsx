@@ -40,7 +40,7 @@ export function Icon({ name, className = 'size-5', fill }: { name: IconName; cla
 export function RoundBtn({ icon, label, onClick, className = '', disabled }: { icon: IconName; label: string; onClick?: () => void; className?: string; disabled?: boolean }) {
   return (
     <button aria-label={label} title={label} onClick={onClick} disabled={disabled}
-      className={`grid size-10 shrink-0 place-items-center rounded-full bg-panel active:scale-95 disabled:opacity-30 ${className}`}>
+      className={`grid size-10 shrink-0 place-items-center rounded-full active:scale-95 disabled:opacity-30 ${/\bbg-/.test(className) ? '' : 'bg-panel'} ${className}`}>
       <Icon name={icon} />
     </button>
   )
@@ -158,25 +158,23 @@ export function WeekStrip({ sunday, selected, onSelect, onWeek, status }: {
   )
 }
 
-/** Horizontal snap pager with dots. Children = pages. */
-export function Pager({ pages, index, onIndex, peek }: { pages: ReactNode[]; index: number; onIndex: (i: number) => void; peek?: boolean }) {
+/** Horizontal snap pager with dots: one full-width, centered page at a time; swipe for the next. */
+export function Pager({ pages, index, onIndex }: { pages: ReactNode[]; index: number; onIndex: (i: number) => void }) {
   const ref = useRef<HTMLDivElement>(null)
   // scroll to externally requested page
   useEffect(() => {
-    const el = ref.current, child = el?.children[index] as HTMLElement | undefined
-    if (el && child && Math.abs(el.scrollLeft - (child.offsetLeft - el.offsetLeft - (peek ? 16 : 0))) > 4)
-      el.scrollTo({ left: child.offsetLeft - el.offsetLeft - (peek ? 16 : 0), behavior: 'smooth' })
-  }, [index, pages.length, peek])
+    const el = ref.current
+    if (el && Math.abs(el.scrollLeft - index * el.clientWidth) > 4) el.scrollTo({ left: index * el.clientWidth, behavior: 'smooth' })
+  }, [index, pages.length])
   const onScroll = () => {
     const el = ref.current!
-    const w = (el.children[0] as HTMLElement | undefined)?.offsetWidth ?? el.clientWidth
-    const i = Math.round(el.scrollLeft / (w + (peek ? 12 : 0)))
+    const i = Math.round(el.scrollLeft / el.clientWidth)
     if (i !== index && i >= 0 && i < pages.length) onIndex(i)
   }
   return (
     <div>
-      <div ref={ref} onScroll={onScroll} className={`no-scrollbar flex snap-x snap-mandatory overflow-x-auto ${peek ? 'gap-3 scroll-px-4 px-4' : ''}`}>
-        {pages.map((p, i) => <div key={i} className={`shrink-0 snap-start ${peek ? 'w-[calc(100%-2.5rem)]' : 'w-full px-4'}`}>{p}</div>)}
+      <div ref={ref} onScroll={onScroll} className="no-scrollbar flex snap-x snap-mandatory overflow-x-auto">
+        {pages.map((p, i) => <div key={i} className="w-full shrink-0 snap-center px-4">{p}</div>)}
       </div>
       {pages.length > 1 && (
         <div className="mt-3 flex justify-center gap-1.5">

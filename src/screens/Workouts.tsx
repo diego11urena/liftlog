@@ -42,7 +42,7 @@ export default function WorkoutsScreen({ onBack }: { onBack: () => void }) {
 }
 
 type Draft = Workout['exercises']
-const emptySets = (): PlanSet[] => Array.from({ length: 3 }, () => ({ weight: null, reps: null, side: null, isDrop: false }))
+const emptySets = (): PlanSet[] => Array.from({ length: 1 }, () => ({ weight: null, reps: null, side: null, isDrop: false }))
 
 /** Create / edit a saved workout. Changes stay local until "Save Workout". */
 export function WorkoutBuilder({ id, newName = '', onClose }: { id?: string; newName?: string; onClose: () => void }) {
