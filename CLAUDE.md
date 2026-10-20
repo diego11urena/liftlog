@@ -106,12 +106,12 @@ Replicate this layout and behavior closely. Use original icons, artwork, wording
   - *Past day with nothing planned or logged*: title "No Workout", subtitle "Nothing logged", dim moon icon.
   - *Future day with nothing planned*: title "Not Planned Yet!", a centered round "+" button with the text "Tap + to plan a workout or add a rest day."
   - *Today with nothing planned*: the same "+" empty state as above, but "Start Workout" is enabled.
-- **Start Workout**: a full-width accent pill pinned above the tab bar. Enabled only for today when a workout is planned (or empty-state freestyle). Disabled (muted fill, dim text) for past/future days and rest days. A day with no plan is titled "Freestyle" and can still start an empty workout.
+- **Start Workout**: a full-width accent pill pinned above the tab bar. Enabled for any planned workout on any day (starts now, logged today) and for today's empty state (freestyle). Disabled (muted fill, dim text) for rest days, finished-workout cards and empty non-today days (owner decision 2026-10-19). A day with no plan is titled "Freestyle" and can still start an empty workout.
 
 **2. Plan-the-day sheet** (opens from the "+" button or the "..." menu)
 - Full-height sheet with a back chevron on the left, the date centered ("Oct 19, 2026"), and a "+" button on the right (creates a new workout).
 - Sections: **Presets** (one row: "Rest" with a moon icon; the reference's "Activities" preset is not built) and **Your Workouts** (the user's saved workouts, e.g. "Leg Day", "Chest day"). Each row has a radio circle on the right; the selected one shows an accent dot. Single-select.
-- Bottom CTA is context-aware: disabled "Change to Selection" while nothing has changed; "Set <Workout Name> for Today" (or the date) when a workout is selected; "Set as Rest Day" when Rest is selected. The CTA shows a brief loading state, then the sheet closes and the card updates. Observation: the Rest preset was missing from this sheet on one visit (Oct 19, after a workout was already planned that day); treat it as "hide Rest if the day already has a started or logged workout" and confirm with me if unsure.
+- Bottom CTA is context-aware: disabled "Change to Selection" while nothing has changed; "Set <Workout Name> for Today" (or the date) when a workout is selected; "Set as Rest Day" when Rest is selected. The sheet closes immediately and the plan saves in the background (owner: the reference's loading delay felt too slow, 2026-10-19). Observation: the Rest preset was missing from this sheet on one visit (Oct 19, after a workout was already planned that day); treat it as "hide Rest if the day already has a started or logged workout" and confirm with me if unsure.
 
 **3. Workouts screen** (from the "Workouts" pill)
 - Back chevron + centered title "Workouts". No Workouts | Routines toggle: routines are not built (owner, 2026-10-19).
@@ -145,7 +145,7 @@ Replicate this layout and behavior closely. Use original icons, artwork, wording
 - No streak, level, score or trophy UI anywhere.
 - Switching days in the week strip updates the title, date, and card instantly, with no network.
 - Planning a day from the sheet updates the card and the day-number color without a reload.
-- Start Workout is disabled everywhere it is disabled in the reference (past, future, rest).
+- Start Workout: enabled for any planned workout on any day (it's logged as today's session) and for today's empty "+" page (freestyle); disabled on rest days, finished-workout cards and non-today empty days. Changed from the reference by owner decision 2026-10-19.
 - Body diagram on the day card is the union of muscles across all exercises in the workout.
 - Creating, renaming, reordering, saving and deleting a workout all persist after refresh.
 

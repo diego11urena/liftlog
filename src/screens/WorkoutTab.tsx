@@ -6,7 +6,7 @@ import { db, type Plan, type Workout, type WorkoutLog } from '../db'
 import { logSummary, musclesOf, useActiveLog, useExercises, useWeekStatus } from '../hooks'
 import { addDays, dateKey, fmtDate, fmtDuration, fmtMDY, fmtVolume, fromKey, sundayOf } from '../lib'
 import MuscleMap from '../MuscleMap'
-import { Icon, NameModal, Pager, RoundBtn, Sheet, Spinner, Tile, WeekStrip, type IconName } from '../ui'
+import { Icon, NameModal, Pager, RoundBtn, Sheet, Tile, WeekStrip, type IconName } from '../ui'
 import Library, { Radio } from './Library'
 import Session, { Summary } from './Session'
 import WorkoutsScreen, { WorkoutBuilder } from './Workouts'
@@ -69,7 +69,8 @@ function Home({ date, setDate, go }: { date: string; setDate: (k: string) => voi
   const doneDay = !!data?.logs.length
   const title = !cur ? '' : cur.kind === 'review' ? cur.log.name : cur.kind === 'planned' ? cur.workout.name : cur.kind === 'rest' ? 'Rest'
     : cur.kind === 'none' ? 'No Workout' : isToday ? 'Freestyle' : 'Not Planned Yet!'
-  const canStart = isToday && !!cur && (cur.kind === 'planned' || cur.kind === 'empty')
+  // a planned workout can be started from any day (it's logged today); freestyle only from today's "+" page (owner, 2026-10-19)
+  const canStart = !!cur && (cur.kind === 'planned' || (cur.kind === 'empty' && isToday))
   const start = () => {
     if (!cur || !canStart) return
     void startSession(cur.kind === 'planned' ? cur.workout : undefined, 'Freestyle')
@@ -202,7 +203,6 @@ function PlanSheet({ date, replace, hasLogs, onClose, onCreate }: { date: string
   const activeToday = useActiveLog()
   const initial = replace ? (replace.type === 'workout' ? replace.workoutId! : replace.type) : ''
   const [sel, setSel] = useState(initial)
-  const [busy, setBusy] = useState(false)
   const isToday = date === dateKey(Date.now())
   const when = isToday ? 'Today' : new Date(fromKey(date)).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
   // Hide Rest once the day already has a started or logged workout.
@@ -210,16 +210,11 @@ function PlanSheet({ date, replace, hasLogs, onClose, onCreate }: { date: string
   const chosen = workouts?.find((w) => w.id === sel)
   const cta = sel === initial || !sel ? 'Change to Selection' : sel === 'rest' ? 'Set as Rest Day' : `Set ${chosen?.name} for ${when}`
 
-  const apply = async () => {
-    setBusy(true)
+  // close right away and save in the background: the write is local and near-instant
+  const apply = () => {
     const s: Selection = sel === 'rest' ? { type: 'rest' } : { type: 'workout', workoutId: sel }
-    try {
-      await Promise.all([setPlan(date, s, replace?.id), new Promise((r) => setTimeout(r, 300))])
-      onClose()
-    } catch (e) {
-      setBusy(false) // never leave the button spinning
-      toast(`Couldn't save the plan: ${(e as Error).message}`)
-    }
+    onClose()
+    setPlan(date, s, replace?.id).catch((e: Error) => toast(`Couldn't save the plan: ${e.message}`))
   }
   const row = (id: string, name: string, icon?: IconName) => <PlanRow key={id} id={id} name={name} icon={icon} sel={sel} setSel={setSel} />
 
@@ -245,8 +240,8 @@ function PlanSheet({ date, replace, hasLogs, onClose, onCreate }: { date: string
         </section>
       </div>
       <div className="p-4">
-        <button className="btn-accent w-full disabled:bg-panel disabled:text-muted disabled:opacity-100" disabled={sel === initial || !sel || busy} onClick={apply}>
-          {busy ? <Spinner className="size-5" /> : cta}
+        <button className="btn-accent w-full disabled:bg-panel disabled:text-muted disabled:opacity-100" disabled={sel === initial || !sel} onClick={apply}>
+          {cta}
         </button>
       </div>
     </Sheet>
