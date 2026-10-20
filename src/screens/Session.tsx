@@ -144,8 +144,8 @@ function ExerciseCard({ we, ex, log, onReplace, onMove, first, last }: {
 
       <div className="mb-1 flex items-center gap-2 text-xs text-muted">
         <span className="w-[4.25rem] shrink-0" />
-        <span className="flex-1 text-center">Weight</span>
-        <span className="w-[4.25rem] shrink-0" />
+        <span className="flex-[1.4] text-center">Weight</span>
+        <span className="w-2" />
         <span className="flex-1 text-center">{timed ? 'Time' : 'Reps'}</span>
         <span className="w-7 shrink-0" />
       </div>
@@ -159,10 +159,13 @@ function ExerciseCard({ we, ex, log, onReplace, onMove, first, last }: {
                 {r.side && <span className="block text-[10px] font-normal">{r.side}</span>}
               </span>
               <button aria-label="Copy previous set" className="grid size-9 shrink-0 place-items-center text-accent" onClick={() => copyRow(r)}><Icon name="repeat" className="size-5" /></button>
-              <NumField kind="weight" label={`Set ${n}${r.side ? ' ' + r.side : ''} weight (${unit})`} value={toDisplay(r.weight, unit)}
-                placeholder={ph?.weight != null ? String(toDisplay(ph.weight, unit)) : bw ? 'BW' : '0'}
-                onSave={(v) => updateSet(r.id, { weight: v == null ? null : fromDisplay(v, unit) })} />
-              <UnitPicker unit={unit} label={`Weight unit for ${ex.name}`} onChange={setUnit} />
+              {/* weight number with its unit right beside it, in one box */}
+              <span className="flex h-11 min-w-0 flex-[1.4] items-center rounded-xl bg-panel focus-within:ring-2 focus-within:ring-accent">
+                <NumField kind="weight" bare label={`Set ${n}${r.side ? ' ' + r.side : ''} weight (${unit})`} value={toDisplay(r.weight, unit)}
+                  placeholder={ph?.weight != null ? String(toDisplay(ph.weight, unit)) : bw ? 'BW' : '0'}
+                  onSave={(v) => updateSet(r.id, { weight: v == null ? null : fromDisplay(v, unit) })} />
+                <UnitPicker unit={unit} label={`Weight unit for ${ex.name}`} onChange={setUnit} />
+              </span>
               <span className="text-muted">×</span>
               {timed
                 ? <NumField kind="time" label={`Set ${n}${r.side ? ' ' + r.side : ''} time`} value={r.durationSec}
@@ -209,20 +212,20 @@ function ExerciseCard({ we, ex, log, onReplace, onMove, first, last }: {
  *  exercise shows the same value because the unit is saved on the exercise. */
 function UnitPicker({ unit, label, onChange }: { unit: Unit; label: string; onChange: (u: Unit) => void }) {
   return (
-    <span className="relative shrink-0">
+    <span className="relative mr-1 shrink-0">
       <select aria-label={label} value={unit} onChange={(e) => onChange(e.target.value as Unit)}
-        className="h-11 w-14 appearance-none rounded-xl border-2 border-accent bg-card pl-2.5 pr-5 font-semibold text-accent outline-none focus:ring-2 focus:ring-accent">
+        className="h-8 appearance-none rounded-lg bg-card pl-2 pr-5 text-sm font-semibold text-accent outline-none focus:ring-2 focus:ring-accent">
         <option value="kg">kg</option>
         <option value="lb">lb</option>
       </select>
-      <Icon name="chevD" className="pointer-events-none absolute right-1.5 top-1/2 size-3.5 -translate-y-1/2 text-accent" />
+      <Icon name="chevD" className="pointer-events-none absolute right-1 top-1/2 size-3.5 -translate-y-1/2 text-accent" />
     </span>
   )
 }
 
 /** Native input (iPhone numeric keypad). Keeps the typed text locally so "62." isn't eaten; saves on every change. */
-function NumField({ kind, value, placeholder, label, onSave }: {
-  kind: 'weight' | 'reps' | 'time'; value: number | null; placeholder: string; label: string; onSave: (v: number | null) => void
+function NumField({ kind, value, placeholder, label, onSave, bare }: {
+  kind: 'weight' | 'reps' | 'time'; value: number | null; placeholder: string; label: string; onSave: (v: number | null) => void; bare?: boolean
 }) {
   const fmt = (v: number | null) => (v == null ? '' : kind === 'time' ? fmtClock(v) : String(v))
   const parse = (t: string): number | null => {
@@ -239,7 +242,8 @@ function NumField({ kind, value, placeholder, label, onSave }: {
       inputMode={kind === 'weight' ? 'decimal' : 'numeric'} pattern={kind === 'weight' ? undefined : '[0-9]*'} enterKeyHint="next"
       onChange={(e) => { setText(e.target.value); onSave(parse(e.target.value)) }}
       onFocus={(e) => e.target.select()} onBlur={() => setText(fmt(value))}
-      className="h-11 w-0 min-w-0 flex-1 rounded-xl bg-panel text-center tabular-nums outline-none placeholder:text-muted/60 focus:ring-2 focus:ring-accent" />
+      className={bare ? 'h-11 w-0 min-w-0 flex-1 bg-transparent pr-1 text-right tabular-nums outline-none placeholder:text-muted/60'
+        : 'h-11 w-0 min-w-0 flex-1 rounded-xl bg-panel text-center tabular-nums outline-none placeholder:text-muted/60 focus:ring-2 focus:ring-accent'} />
   )
 }
 
