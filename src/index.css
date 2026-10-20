@@ -1,0 +1,37 @@
+@import 'tailwindcss';
+
+:root {
+  --bg: #0c0d0f; --card: #1b1b1b; --card2: #1e2020; --line: #2a2c2e; --fg: #f5f5f5; --muted: #8b8f94;
+  --accent: #2bc231; --accent-soft: #7baf7f; --rest: #8ecbff; --danger: #ff453a; --body: #3a3d40;
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-bg: var(--bg); --color-card: var(--card); --color-card2: var(--card2); --color-line: var(--line);
+  --color-fg: var(--fg); --color-muted: var(--muted); --color-accent: var(--accent); --color-accent-soft: var(--accent-soft);
+  --color-rest: var(--rest); --color-danger: var(--danger);
+}
+
+html { background: #000; }
+body { color: var(--fg); -webkit-tap-highlight-color: transparent; overscroll-behavior-y: none; font-family: system-ui, -apple-system, 'SF Pro Text', Roboto, sans-serif; }
+/* 16px+ inputs: no iOS zoom-on-focus */
+@layer base { input, select, textarea { font-size: 16px; background: transparent; } }
+
+@utility btn { @apply inline-flex items-center justify-center gap-2 rounded-full px-5 min-h-12 font-semibold active:scale-[.98] transition disabled:opacity-35 disabled:active:scale-100; }
+@utility btn-accent { @apply btn bg-accent text-black; }
+@utility btn-white { @apply btn bg-fg text-black; }
+@utility btn-ghost { @apply btn bg-card2; }
+@utility card { @apply bg-card rounded-3xl; }
+@utility panel { @apply bg-card2 rounded-2xl; }
+@utility field { @apply w-full rounded-2xl bg-card2 px-4 min-h-12 outline-none focus:ring-2 focus:ring-accent; }
+@utility chip { @apply rounded-full bg-white/10 px-3 py-1 text-sm whitespace-nowrap; }
+/* fixed element constrained to the phone frame */
+@utility phone-fixed { @apply fixed inset-x-0 mx-auto w-full max-w-[430px]; }
+@utility no-scrollbar { scrollbar-width: none; &::-webkit-scrollbar { display: none; } }
+
+@keyframes pop { 0% { transform: scale(.92); opacity: 0 } 100% { transform: scale(1); opacity: 1 } }
+@keyframes slide-up { from { transform: translateY(100%) } to { transform: none } }
+@keyframes caret { 50% { opacity: 0 } }
+.pop { animation: pop .18s ease-out; }
+.slide-up { animation: slide-up .25s cubic-bezier(.2,.8,.2,1); }
+.caret { animation: caret 1s steps(1) infinite; }
