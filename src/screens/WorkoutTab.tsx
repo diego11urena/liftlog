@@ -1,6 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useState, type ReactNode } from 'react'
 import { removePlan, setPlan, startSession, type Selection } from '../actions'
+import { toast } from '../App'
 import { db, type Plan, type Workout, type WorkoutLog } from '../db'
 import { logSummary, musclesOf, useActiveLog, useExercises, useWeekStatus } from '../hooks'
 import { addDays, dateKey, fmtDate, fmtDuration, fmtMDY, fmtVolume, fromKey, sundayOf } from '../lib'
@@ -212,8 +213,13 @@ function PlanSheet({ date, replace, hasLogs, onClose, onCreate }: { date: string
   const apply = async () => {
     setBusy(true)
     const s: Selection = sel === 'rest' ? { type: 'rest' } : { type: 'workout', workoutId: sel }
-    await Promise.all([setPlan(date, s, replace?.id), new Promise((r) => setTimeout(r, 300))])
-    onClose()
+    try {
+      await Promise.all([setPlan(date, s, replace?.id), new Promise((r) => setTimeout(r, 300))])
+      onClose()
+    } catch (e) {
+      setBusy(false) // never leave the button spinning
+      toast(`Couldn't save the plan: ${(e as Error).message}`)
+    }
   }
   const row = (id: string, name: string, icon?: IconName) => <PlanRow key={id} id={id} name={name} icon={icon} sel={sel} setSel={setSel} />
 
