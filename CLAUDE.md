@@ -22,7 +22,7 @@ Plain data is fine and wanted: PRs shown as facts, volume, time, history, charts
 
 ## Stack
 - React + TypeScript + Vite, `vite-plugin-pwa` (Workbox) for manifest and service worker
-- Tailwind CSS, mobile-first (design for a ~390px phone screen, thumb-reachable controls)
+- Tailwind CSS, mobile-first (design for a ~390px phone screen, thumb-reachable controls). The app is only ever used as an installed PWA on a phone, so it ALWAYS renders as a phone: max 430px wide and centered, even on a desktop browser. Fixed bars, sheets and the number pad stay inside that frame.
 - Dexie (IndexedDB) as the primary data store
 - Recharts for charts
 - Optional phase 2: small Node (Fastify) + SQLite server on the home network that serves the built app and offers backup/sync endpoints
@@ -115,7 +115,8 @@ Replicate this layout and behavior closely. Use original icons, artwork, wording
 - Search field ("Search") with three filter chips below: **Muscle Group**, **Primary Muscle**, **Classification** (each opens a picker; chips show active state).
 - Alphabetical list with sticky letter headers (A, B, C...), rows with the exercise name and a trailing chevron. Some rows also show a small clock icon before the chevron (appears on e.g. Abductor Machine and Adductor Machine; probably "recently used", so show it for exercises I have logged recently).
 - Tapping a row opens the **Exercise detail** screen:
-  - Back chevron, exercise name centered, a "+" button on the right (adds it to the workout being built, then returns). Under the title: "Class: <classification>" (e.g. "Body Weight/Weighted").
+  - Back chevron and the exercise name centered, with "Class: <classification>" under the title (e.g. "Body Weight/Weighted"). When the library was opened to add to a workout, a full-width green **Add Exercise** button is pinned at the bottom (adds it, then returns). The reference's small "+" in the top bar was too easy to miss, so it was replaced (owner request 2026-10-19). Custom exercises show a pencil (edit) in the top bar instead.
+  - No "How to" section (instructions or photos) on this screen (owner request 2026-10-19). The active-workout card's "i" icon still opens them.
   - Large card with front and back body diagrams, targeted muscles in green.
   - A small stats card: "No data / Log this exercise first" with a green edit icon when there is no history; once logged, show last workout and PR (feature 6 above).
   - **PR Progress** card: a segmented toggle "PR" | "Vol." and a chart, with a range selector "Month | Year | All Time". Empty state: icon, "No Data", "Log this exercise to activate insights and data."
@@ -126,7 +127,7 @@ Replicate this layout and behavior closely. Use original icons, artwork, wording
 - `plans`: id, date (YYYY-MM-DD, unique), type ('workout'|'rest'|'activity'), workoutId?  (one row per planned day; drives the week strip and day card)
 - `routines`: id, name, days[] (later)
 - `workouts` (saved definitions, the "Your Workouts" list) are separate from `workoutLogs` (completed sessions): templates in the earlier model map to saved workouts. Keep `workoutLogs` for history and the "Prev. volume · duration" subtitle.
-- `workoutExercises` entries in a saved workout need an `order` field for drag reordering.
+- Saved workouts store their exercises as an ordered embedded array (`workouts.exercises[{exerciseId, unilateral, sets[]}]`); array order is the drag order. `workoutExercises` rows belong to logged sessions only.
 
 **Acceptance checklist for this tab**
 - No streak, level, score or trophy UI anywhere.
