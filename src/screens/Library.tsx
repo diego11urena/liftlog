@@ -1,8 +1,8 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useState } from 'react'
 import { Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
-import { db, IMAGE_BASE, MUSCLE_GROUPS, MUSCLES, uuid, type Exercise, type Muscle } from '../db'
-import { loggedSetsFor, useExerciseHistory, useExercises, useSettings } from '../hooks'
+import { db, IMAGE_BASE, MUSCLE_GROUPS, unitOf, MUSCLES, uuid, type Exercise, type Muscle } from '../db'
+import { loggedSetsFor, useExerciseHistory, useExercises } from '../hooks'
 import { bests, fmtDate, fmtWeight, toDisplay, volume } from '../lib'
 import MuscleMap from '../MuscleMap'
 import { CLASSIFICATIONS, MUSCLE_LABEL } from '../muscles'
@@ -121,7 +121,7 @@ const tip = { contentStyle: { background: 'var(--card)', border: 'none', borderR
 function ExerciseDetail({ id, onBack, onAdd, onEdit }: { id: string; onBack: () => void; onAdd?: (id: string) => void; onEdit: () => void }) {
   const e = useLiveQuery(() => db.exercises.get(id), [id])
   const hist = useExerciseHistory(id, '', Infinity)
-  const { unit } = useSettings()
+  const unit = unitOf(e)
   const [mode, setMode] = useState<'PR' | 'Vol.'>('PR')
   const [range, setRange] = useState<(typeof RANGES)[number]>('All Time')
   const sessions = useLiveQuery(async () => {

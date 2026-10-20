@@ -5,15 +5,12 @@ import {
   saveSessionToWorkout, setUnilateral, updateSet,
 } from '../actions'
 import { toast } from '../App'
-import { db, isBodyweight, isTimed, stepFor, type Exercise, type WorkoutExercise, type WorkoutLog, type WSet } from '../db'
-import { bySetOrder, logSummary, useExerciseHistory, useExercises, useSettings } from '../hooks'
+import { db, isBodyweight, isTimed, unitOf, type Exercise, type Unit, type WorkoutExercise, type WorkoutLog, type WSet } from '../db'
+import { bySetOrder, logSummary, useExerciseHistory, useExercises } from '../hooks'
 import { fmtClock, fmtDate, fmtDuration, fmtVolume, fmtWeight, fromDisplay, toDisplay } from '../lib'
 import MuscleMap from '../MuscleMap'
 import { Busy, Icon, Pager, RoundBtn, Sheet, Tile, TopBar } from '../ui'
 import Library, { HowTo, label } from './Library'
-
-type Field = 'weight' | 'reps' | 'time'
-export type Focus = { setId: string; field: Field; text: string | null } | null
 
 /** Logging screen. Active sessions get the timer/End flow; finished ones (from Stats) are editable with Delete. */
 export default function Session({ logId, onEnded, onClose }: { logId: string; onEnded?: (logId: string) => void; onClose?: () => void }) {
@@ -21,7 +18,6 @@ export default function Session({ logId, onEnded, onClose }: { logId: string; on
   const wes = useLiveQuery(() => db.workoutExercises.where('logId').equals(logId).sortBy('order'), [logId])
   const exercises = useExercises()
   const [page, setPage] = useState(0)
-  const [focus, setFocus] = useState<Focus>(null)
   const [lib, setLib] = useState<null | { replace?: string }>(null)
   const [review, setReview] = useState(false)
 
@@ -43,7 +39,7 @@ export default function Session({ logId, onEnded, onClose }: { logId: string; on
   }
 
   return (
-    <div className={focus ? 'pb-[22rem]' : 'pb-8'}>
+    <div className="pb-8">
       <header className="flex items-start gap-2 px-4 pb-3 pt-[calc(1rem+env(safe-area-inset-top))]">
         {onClose && <RoundBtn icon="chevL" label="Back" onClick={onClose} />}
         <div className="min-w-0 flex-1">
@@ -52,14 +48,14 @@ export default function Session({ logId, onEnded, onClose }: { logId: string; on
           <p className="text-sm tabular-nums text-muted">{active ? <Elapsed since={log.startedAt} /> : `${fmtDate(log.startedAt)} · ${fmtDuration((log.endedAt ?? log.startedAt) - log.startedAt)}`}</p>
         </div>
         <RoundBtn icon={active ? 'x' : 'trash'} label={active ? 'Discard workout' : 'Delete workout'} className="bg-danger text-on-accent" onClick={discard} />
-        {active && <button className="btn-dark min-h-10 px-4 text-sm" onClick={() => { setFocus(null); setReview(true) }}>End Workout</button>}
+        {active && <button className="btn-dark min-h-10 px-4 text-sm" onClick={() => setReview(true)}>End Workout</button>}
       </header>
 
-      <Pager index={Math.min(page, wes.length)} onIndex={(i) => { setPage(i); setFocus(null) }} pages={[
+      <Pager index={Math.min(page, wes.length)} onIndex={setPage} pages={[
         ...wes.map((we, i) => {
           const ex = exercises.get(we.exerciseId)
           return ex ? (
-            <ExerciseCard key={we.id} we={we} ex={ex} log={log} focus={focus} setFocus={setFocus}
+            <ExerciseCard key={we.id} we={we} ex={ex} log={log}
               onReplace={() => setLib({ replace: we.id })} first={i === 0} last={i === wes.length - 1}
               onMove={async (d) => { await moveExercise(logId, we.id, d); setPage(i + d) }} />
           ) : <div key={we.id} />
@@ -81,21 +77,21 @@ function Elapsed({ since }: { since: number }) {
   return <>{fmtClock((now - since) / 1000)}</>
 }
 
-const secToDigits = (s: number | null) => (s ? String(Math.floor(s / 60) * 100 + (s % 60)) : '')
-const digitsToSec = (d: string) => { const n = Number(d || 0); return Math.floor(n / 100) * 60 + (n % 100) }
-const fmtDigits = (d: string) => { const n = d.padStart(3, '0'); return `${Number(n.slice(0, -2))}:${n.slice(-2)}` }
+/** "130" → 90 s (last two digits are seconds), "1:30" → 90 s. */
+const parseTime = (t: string) => {
+  if (t.includes(':')) { const [m, sec] = t.split(':').map((x) => Number(x || 0)); return m * 60 + sec }
+  const n = Number(t || 0); return Math.floor(n / 100) * 60 + (n % 100)
+}
 
-function ExerciseCard({ we, ex, log, focus, setFocus, onReplace, onMove, first, last }: {
-  we: WorkoutExercise; ex: Exercise; log: WorkoutLog; focus: Focus; setFocus: (f: Focus) => void
-  onReplace: () => void; onMove: (d: -1 | 1) => void; first: boolean; last: boolean
+function ExerciseCard({ we, ex, log, onReplace, onMove, first, last }: {
+  we: WorkoutExercise; ex: Exercise; log: WorkoutLog; onReplace: () => void; onMove: (d: -1 | 1) => void; first: boolean; last: boolean
 }) {
-  const settings = useSettings(), { unit } = settings
+  const unit = unitOf(ex)
   const rows = useLiveQuery(() => db.sets.where('workoutExerciseId').equals(we.id).toArray().then((r) => r.sort(bySetOrder)), [we.id])
   const hist = useExerciseHistory(ex.id, log.id, log.status === 'active' ? Infinity : log.startedAt)
   const [menu, setMenu] = useState(false)
   const [info, setInfo] = useState(false)
   const timed = isTimed(ex), bw = isBodyweight(ex)
-  const second: Field = timed ? 'time' : 'reps'
 
   if (!rows) return null
   const setNo = new Map<number, number>()
@@ -111,73 +107,11 @@ function ExerciseCard({ we, ex, log, focus, setFocus, onReplace, onMove, first, 
     return p && (p.weight != null || p.reps != null || p.durationSec) ? { weight: p.weight, reps: p.reps, durationSec: p.durationSec ?? null } : null
   }
   const prevRow = (r: WSet) => [...rows].reverse().find((s) => s.order < r.order && s.side === r.side)
-  const valueOf = (r: WSet, f: Field) => (f === 'weight' ? toDisplay(r.weight, unit) : f === 'reps' ? r.reps : r.durationSec)
-  const save = (r: WSet, f: Field, v: number | null) =>
-    updateSet(r.id, f === 'weight' ? { weight: v == null ? null : fromDisplay(v, unit) } : f === 'reps' ? { reps: v == null ? null : Math.round(v) } : { durationSec: v })
-
   const copyRow = async (r: WSet) => {
     const src = prevRow(r) ?? placeholder(r)
     if (src) await updateSet(r.id, { weight: src.weight, reps: src.reps, durationSec: src.durationSec ?? null })
   }
-
-  const focused = focus && rows.find((r) => r.id === focus.setId)
-  const key = async (k: string) => {
-    if (!focus || !focused) return
-    const f = focus.field, cur = valueOf(focused, f)
-    const curText = f === 'time' ? secToDigits(cur) : cur == null ? '' : String(cur)
-    const ph = placeholder(focused)
-    const phVal = ph ? (f === 'weight' ? toDisplay(ph.weight, unit) : f === 'reps' ? ph.reps : ph.durationSec ?? null) : null
-    const write = (text: string) => {
-      setFocus({ ...focus, text })
-      if (f === 'time') return save(focused, f, text ? digitsToSec(text) : null)
-      return save(focused, f, text === '' || text === '.' ? null : Number(text))
-    }
-    if (/^\d$/.test(k) || k === '.') {
-      if (k === '.' && (f !== 'weight' || (focus.text ?? '').includes('.'))) return
-      return write((focus.text ?? '') + k)
-    }
-    if (k === 'back') return write((focus.text ?? curText).slice(0, -1))
-    if (k === '+' || k === '-') {
-      const step = f === 'weight' ? stepFor(settings) : f === 'reps' ? 1 : 15
-      const above = prevRow(focused)
-      const base = cur ?? phVal ?? (above ? valueOf(above, f) : null) ?? 0
-      setFocus({ ...focus, text: null })
-      return save(focused, f, Math.max(0, Math.round((base + (k === '+' ? step : -step)) * 100) / 100))
-    }
-    if (k === 'copy') {
-      const src = prevRow(focused)
-      const v = src ? valueOf(src, f) : phVal
-      setFocus({ ...focus, text: null })
-      return save(focused, f, v ?? null)
-    }
-    if (k === 'next') {
-      if (cur == null && phVal != null) await save(focused, f, phVal) // empty field accepts the greyed last-session value
-      if (f === 'weight') return setFocus({ setId: focused.id, field: second, text: null })
-      const i = rows.indexOf(focused)
-      return setFocus(rows[i + 1] ? { setId: rows[i + 1].id, field: 'weight', text: null } : null)
-    }
-    if (k === 'hide') setFocus(null)
-  }
-
-  const fieldBtn = (r: WSet, f: Field) => {
-    const isF = focus?.setId === r.id && focus.field === f
-    const v = valueOf(r, f)
-    const ph = placeholder(r)
-    const phText = !ph ? '' : f === 'weight' ? (ph.weight == null ? (bw ? 'BW' : '') : String(toDisplay(ph.weight, unit))) : f === 'reps' ? String(ph.reps ?? '') : ph.durationSec ? fmtClock(ph.durationSec) : ''
-    let shown: string, dim = false
-    if (isF && focus.text !== null) shown = f === 'time' ? fmtDigits(focus.text) : focus.text
-    else if (v != null) shown = f === 'time' ? fmtClock(v) : String(v)
-    else { shown = phText || (f === 'weight' ? (bw ? 'BW' : unit + 's') : f === 'time' ? '--:--' : 'reps'); dim = true }
-    return (
-      <button aria-label={`Set ${setNo.get(r.order)}${r.side ? ' ' + r.side : ''} ${f}`}
-        onClick={() => setFocus({ setId: r.id, field: f, text: null })}
-        className={`flex h-11 min-w-0 flex-1 items-center justify-center rounded-xl bg-panel tabular-nums ${isF ? 'ring-2 ring-accent' : ''}`}>
-        <span className={dim ? 'text-muted/60' : ''}>{shown}</span>
-        {isF && <span className="caret ml-px h-5 w-0.5 bg-accent" />}
-        {!dim && <span className="ml-1 text-xs text-muted">{f === 'weight' ? unit : f === 'reps' ? 'reps' : ''}</span>}
-      </button>
-    )
-  }
+  const setUnit = (u: Unit) => db.exercises.update(ex.id, { unit: u, updatedAt: Date.now() })
 
   return (
     <section className="card p-4">
@@ -187,7 +121,7 @@ function ExerciseCard({ we, ex, log, focus, setFocus, onReplace, onMove, first, 
         <RoundBtn icon="dots" label="Exercise options" onClick={() => setMenu(true)} />
       </div>
       <label className="mb-3 flex w-fit items-center gap-2 text-sm text-muted">
-        <input type="checkbox" className="peer sr-only" checked={we.unilateral} onChange={(e) => { setFocus(null); void setUnilateral(we.id, e.target.checked) }} />
+        <input type="checkbox" className="peer sr-only" checked={we.unilateral} onChange={(e) => void setUnilateral(we.id, e.target.checked)} />
         <span className="relative h-6 w-10 rounded-full bg-figure transition peer-checked:bg-accent after:absolute after:left-0.5 after:top-0.5 after:size-5 after:rounded-full after:bg-card after:transition peer-checked:after:translate-x-4 peer-focus-visible:ring-2 peer-focus-visible:ring-accent" />
         Unilateral
       </label>
@@ -208,30 +142,52 @@ function ExerciseCard({ we, ex, log, focus, setFocus, onReplace, onMove, first, 
         </div>
       </div>
 
+      <div className="mb-1 flex items-center gap-2 text-xs text-muted">
+        <span className="w-[4.25rem] shrink-0" />
+        <span className="flex flex-1 items-center justify-center gap-1.5">
+          Weight
+          {/* a <select> opens the native wheel picker on iPhone; the choice is remembered for this exercise */}
+          <select aria-label={`Weight unit for ${ex.name}`} value={unit} onChange={(e) => setUnit(e.target.value as Unit)}
+            className="rounded-full bg-panel px-2.5 py-0.5 font-semibold text-fg outline-none focus:ring-2 focus:ring-accent">
+            <option value="kg">kg</option>
+            <option value="lb">lb</option>
+          </select>
+        </span>
+        <span className="w-2" />
+        <span className="flex-1 text-center">{timed ? 'Time' : 'Reps'}</span>
+        <span className="w-7 shrink-0" />
+      </div>
       <div className="space-y-2">
-        {rows.map((r) => (
-          <div key={r.id} className="flex items-center gap-2">
-            <span className="w-7 shrink-0 text-center text-sm font-bold text-muted">
-              {r.side === 'L' ? '' : r.isDrop ? 'D' : setNo.get(r.order)}
-              {r.side && <span className="block text-[10px] font-normal">{r.side}</span>}
-            </span>
-            <button aria-label="Copy previous set" className="grid size-9 shrink-0 place-items-center text-accent" onClick={() => copyRow(r)}><Icon name="repeat" className="size-5" /></button>
-            {fieldBtn(r, 'weight')}
-            <span className="text-muted">×</span>
-            {fieldBtn(r, second)}
-            <span className={`w-7 shrink-0 text-center text-[10px] font-bold ${r.isPR ? 'text-accent' : 'text-transparent'}`}>PR</span>
-          </div>
-        ))}
+        {rows.map((r) => {
+          const ph = placeholder(r), n = setNo.get(r.order)
+          return (
+            <div key={r.id} className="flex items-center gap-2">
+              <span className="w-7 shrink-0 text-center text-sm font-bold text-muted">
+                {r.side === 'L' ? '' : r.isDrop ? 'D' : n}
+                {r.side && <span className="block text-[10px] font-normal">{r.side}</span>}
+              </span>
+              <button aria-label="Copy previous set" className="grid size-9 shrink-0 place-items-center text-accent" onClick={() => copyRow(r)}><Icon name="repeat" className="size-5" /></button>
+              <NumField kind="weight" label={`Set ${n}${r.side ? ' ' + r.side : ''} weight (${unit})`} value={toDisplay(r.weight, unit)}
+                placeholder={ph?.weight != null ? String(toDisplay(ph.weight, unit)) : bw ? 'BW' : unit}
+                onSave={(v) => updateSet(r.id, { weight: v == null ? null : fromDisplay(v, unit) })} />
+              <span className="text-muted">×</span>
+              {timed
+                ? <NumField kind="time" label={`Set ${n}${r.side ? ' ' + r.side : ''} time`} value={r.durationSec}
+                    placeholder={ph?.durationSec ? fmtClock(ph.durationSec) : '--:--'} onSave={(v) => updateSet(r.id, { durationSec: v })} />
+                : <NumField kind="reps" label={`Set ${n}${r.side ? ' ' + r.side : ''} reps`} value={r.reps}
+                    placeholder={ph?.reps != null ? String(ph.reps) : 'reps'} onSave={(v) => updateSet(r.id, { reps: v })} />}
+              <span className={`w-7 shrink-0 text-center text-[10px] font-bold ${r.isPR ? 'text-accent' : 'text-transparent'}`}>PR</span>
+            </div>
+          )
+        })}
       </div>
 
       <div className="my-4"><MuscleMap size="md" primary={ex.primaryMuscles} secondary={ex.secondaryMuscles} /></div>
       <div className="grid grid-cols-3 gap-2">
-        <button className="btn min-h-11 bg-danger/15 px-2 text-sm text-danger" onClick={() => { setFocus(null); void removeLastSet(we.id) }} disabled={!rows.length}>Remove Set</button>
-        <button className="btn-ghost min-h-11 px-2 text-sm" disabled={setNo.size >= MAX_SETS} onClick={() => dropSet(we.id, fromDisplay(stepFor(settings), unit))}>Drop Set</button>
+        <button className="btn min-h-11 bg-danger/15 px-2 text-sm text-danger" onClick={() => removeLastSet(we.id)} disabled={!rows.length}>Remove Set</button>
+        <button className="btn-ghost min-h-11 px-2 text-sm" disabled={setNo.size >= MAX_SETS} onClick={() => dropSet(we.id, unit === 'kg' ? 2.5 : fromDisplay(5, 'lb'))}>Drop Set</button>
         <button className="btn min-h-11 bg-accent/20 px-2 text-sm text-accent" disabled={setNo.size >= MAX_SETS} onClick={() => addSet(we.id)}>Add Set</button>
       </div>
-
-      {focus && focused && <Numpad field={focus.field} onKey={key} step={focus.field === 'weight' ? stepFor(settings) : focus.field === 'reps' ? 1 : 15} />}
 
       {menu && (
         <Sheet label="Exercise options" onClose={() => setMenu(false)}>
@@ -256,36 +212,32 @@ function ExerciseCard({ we, ex, log, focus, setFocus, onReplace, onMove, first, 
   )
 }
 
-/** Custom keypad docked at the bottom; covers the tab bar. */
-const Key = ({ k, onKey, children, className = '', disabled }: { k: string; onKey: (k: string) => void; children: React.ReactNode; className?: string; disabled?: boolean }) => (
-  <button onClick={() => onKey(k)} disabled={disabled} className={`grid h-13 place-items-center rounded-2xl bg-panel text-xl font-semibold active:bg-line disabled:opacity-25 ${className}`}>{children}</button>
-)
-
-function Numpad({ field, onKey, step }: { field: Field; onKey: (k: string) => void; step: number }) {
+/** Native input (iPhone numeric keypad). Keeps the typed text locally so "62." isn't eaten; saves on every change. */
+function NumField({ kind, value, placeholder, label, onSave }: {
+  kind: 'weight' | 'reps' | 'time'; value: number | null; placeholder: string; label: string; onSave: (v: number | null) => void
+}) {
+  const fmt = (v: number | null) => (v == null ? '' : kind === 'time' ? fmtClock(v) : String(v))
+  const parse = (t: string): number | null => {
+    const c = t.trim().replace(',', '.')
+    if (!c || c === '.') return null
+    if (kind === 'time') return parseTime(c) || null
+    const n = Number(c)
+    return isNaN(n) ? null : kind === 'reps' ? Math.round(n) : n
+  }
+  const [text, setText] = useState(fmt(value))
+  useEffect(() => { if (parse(text) !== value) setText(fmt(value)) }, [value]) // changed elsewhere (copy previous set)
   return (
-    <div className="phone-fixed bottom-0 z-[55] border-t border-line bg-card px-2 pb-[calc(.5rem+env(safe-area-inset-bottom))] pt-2 slide-up" role="group" aria-label="Number pad">
-      {/* Same arrangement as the reference: steps left, digits center, copy / tall Next / hide right */}
-      <div className="grid grid-cols-5 grid-rows-4 gap-2">
-        <Key onKey={onKey} k="+" className="text-base text-accent">+{step}</Key>
-        {['1', '2', '3'].map((d) => <Key onKey={onKey} key={d} k={d}>{d}</Key>)}
-        <Key onKey={onKey} k="copy" className="text-accent"><Icon name="repeat" /></Key>
-        <Key onKey={onKey} k="-" className="text-base text-accent">−{step}</Key>
-        {['4', '5', '6'].map((d) => <Key onKey={onKey} key={d} k={d}>{d}</Key>)}
-        <button onClick={() => onKey('next')} className="row-span-2 rounded-2xl bg-accent text-lg font-bold text-on-accent active:opacity-80">Next</button>
-        <span className="row-span-2" />
-        {['7', '8', '9'].map((d) => <Key onKey={onKey} key={d} k={d}>{d}</Key>)}
-        <Key onKey={onKey} k="." disabled={field !== 'weight'}>.</Key>
-        <Key onKey={onKey} k="0">0</Key>
-        <Key onKey={onKey} k="back"><Icon name="back" /></Key>
-        <Key onKey={onKey} k="hide"><Icon name="kbd" /></Key>
-      </div>
-    </div>
+    <input aria-label={label} placeholder={placeholder} value={text}
+      inputMode={kind === 'weight' ? 'decimal' : 'numeric'} pattern={kind === 'weight' ? undefined : '[0-9]*'} enterKeyHint="next"
+      onChange={(e) => { setText(e.target.value); onSave(parse(e.target.value)) }}
+      onFocus={(e) => e.target.select()} onBlur={() => setText(fmt(value))}
+      className="h-11 w-0 min-w-0 flex-1 rounded-xl bg-panel text-center tabular-nums outline-none placeholder:text-muted/60 focus:ring-2 focus:ring-accent" />
   )
 }
 
 function Review({ log, onBack, onEnded }: { log: WorkoutLog; onBack: () => void; onEnded: () => void }) {
   const exercises = useExercises()
-  const { unit } = useSettings()
+  const u = (exerciseId: string) => unitOf(exercises.get(exerciseId))
   const data = useLiveQuery(async () => {
     const [s, wes] = await Promise.all([logSummary(log.id, exercises), db.workoutExercises.where('logId').equals(log.id).sortBy('order')])
     return { ...s, wes }
@@ -311,7 +263,7 @@ function Review({ log, onBack, onEnded }: { log: WorkoutLog; onBack: () => void;
         <p className="text-sm text-muted">Review your workout before you finish. You can go back to edit your sets.</p>
         <div className="flex gap-2">
           <Tile label="Total Time" value={fmtDuration(now - log.startedAt)} icon="timer" />
-          <Tile label="Volume" value={fmtVolume(data.volume, unit)} icon="dumbbell" />
+          <Tile label="Volume" value={fmtVolume(data.volume, 'kg')} icon="dumbbell" />
         </div>
         <div className="card p-4">
           <MuscleMap size="md" primary={data.primary} secondary={data.secondary} />
@@ -323,7 +275,7 @@ function Review({ log, onBack, onEnded }: { log: WorkoutLog; onBack: () => void;
             <div key={s.id} className="flex items-center gap-2 py-1 text-sm">
               <Icon name="star" fill className="size-4 text-accent" />
               <span className="flex-1">{exercises.get(s.exerciseId)?.name}{s.side && ` (${s.side})`}</span>
-              <span className="font-semibold">{fmtWeight(s.weight, unit)} × {s.reps}</span>
+              <span className="font-semibold">{fmtWeight(s.weight, u(s.exerciseId))}{s.weight != null && ` ${u(s.exerciseId)}`} × {s.reps}</span>
             </div>
           )) : <p className="text-sm text-muted">No new PRs this time.</p>}
         </div>
@@ -335,7 +287,7 @@ function Review({ log, onBack, onEnded }: { log: WorkoutLog; onBack: () => void;
               {sets.length ? sets.map((s) => (
                 <div key={s.id} className="flex justify-between py-0.5 text-sm">
                   <span className="text-muted">Set {s.order + 1}{s.side && ` ${s.side}`}{s.isDrop && ' (drop)'}</span>
-                  <span>{fmtWeight(s.weight, unit)} × {s.reps ?? (s.durationSec ? fmtClock(s.durationSec) : '–')}</span>
+                  <span>{fmtWeight(s.weight, u(s.exerciseId))}{s.weight != null && ` ${u(s.exerciseId)}`} × {s.reps ?? (s.durationSec ? fmtClock(s.durationSec) : '–')}</span>
                 </div>
               )) : <p className="text-sm text-muted">No logged sets (empty rows are dropped when you end).</p>}
             </div>
@@ -356,7 +308,6 @@ function Review({ log, onBack, onEnded }: { log: WorkoutLog; onBack: () => void;
 
 export function Summary({ logId, onBack }: { logId: string; onBack: () => void }) {
   const exercises = useExercises()
-  const { unit } = useSettings()
   const log = useLiveQuery(() => db.workoutLogs.get(logId), [logId])
   const s = useLiveQuery(() => logSummary(logId, exercises), [logId, exercises.size])
   if (!log || !s) return null
@@ -370,7 +321,7 @@ export function Summary({ logId, onBack }: { logId: string; onBack: () => void }
         </div>
         <div className="flex gap-2">
           <Tile label="Time" value={fmtDuration((log.endedAt ?? Date.now()) - log.startedAt)} icon="timer" />
-          <Tile label="Volume" value={fmtVolume(s.volume, unit)} icon="dumbbell" />
+          <Tile label="Volume" value={fmtVolume(s.volume, 'kg')} icon="dumbbell" />
         </div>
         <button className="btn-outline w-full" onClick={onBack}>Back to Home</button>
       </div>

@@ -2,7 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { useState, type ReactNode } from 'react'
 import { removePlan, setPlan, startSession, type Selection } from '../actions'
 import { db, type Plan, type Workout, type WorkoutLog } from '../db'
-import { logSummary, musclesOf, useActiveLog, useExercises, useSettings, useWeekStatus } from '../hooks'
+import { logSummary, musclesOf, useActiveLog, useExercises, useWeekStatus } from '../hooks'
 import { addDays, dateKey, fmtDate, fmtDuration, fmtMDY, fmtVolume, fromKey, sundayOf } from '../lib'
 import MuscleMap from '../MuscleMap'
 import { Icon, NameModal, Pager, RoundBtn, Sheet, Spinner, Tile, WeekStrip, type IconName } from '../ui'
@@ -140,14 +140,13 @@ function DayCard({ p, isToday, onPlus, onMenu, onReview, onStartFree, onPlanRest
   p: Page; isToday: boolean; onPlus: () => void; onMenu: (p: Plan) => void; onReview: (logId: string) => void; onStartFree: () => void; onPlanRest: (p: Plan) => void
 }) {
   const exercises = useExercises()
-  const { unit } = useSettings()
   const prev = useLiveQuery(async () => {
     if (p.kind !== 'planned') return null
     const last = await db.workoutLogs.where('workoutId').equals(p.workout.id).filter((l) => l.status === 'done').reverse().sortBy('startedAt')
     if (!last[0]) return 'None'
     const s = await logSummary(last[0].id, exercises)
-    return `${fmtVolume(s.volume, unit)} · ${fmtDuration((last[0].endedAt ?? last[0].startedAt) - last[0].startedAt)}`
-  }, [p, exercises.size, unit])
+    return `${fmtVolume(s.volume, 'kg')} · ${fmtDuration((last[0].endedAt ?? last[0].startedAt) - last[0].startedAt)}`
+  }, [p, exercises.size])
   const review = useLiveQuery(async () => (p.kind === 'review' ? logSummary(p.log.id, exercises) : null), [p, exercises.size])
 
   switch (p.kind) {
@@ -172,7 +171,7 @@ function DayCard({ p, isToday, onPlus, onMenu, onReview, onStartFree, onPlanRest
           {review && <MuscleMap size="md" primary={review.primary} secondary={review.secondary} />}
           <div className="flex w-full gap-2">
             <Tile label="PRs" value={review?.prs.length ?? 0} />
-            <Tile label="Volume" value={fmtVolume(review?.volume ?? 0, unit)} />
+            <Tile label="Volume" value={fmtVolume(review?.volume ?? 0, 'kg')} />
             <Tile label="Time" value={fmtDuration((p.log.endedAt ?? p.log.startedAt) - p.log.startedAt)} />
           </div>
         </CardShell>

@@ -12,6 +12,7 @@ export type Exercise = Row & {
   aliases?: string[]
   /** logged as mm:ss instead of reps (holds, carries) */
   timed?: boolean
+  unit?: Unit
 }
 /** A set as stored in a saved workout (the plan / "next time starts from these"). */
 export type PlanSet = { weight: number | null; reps: number | null; durationSec?: number | null; side: Side; isDrop: boolean }
@@ -65,7 +66,7 @@ db.on('versionchange', () => {
 })
 
 // Bump when exercises.seed.json changes.
-const SEED_VERSION = 7
+const SEED_VERSION = 8
 
 type SeedRow = Omit<Exercise, 'updatedAt'> & { legacyIds?: string[] }
 
@@ -79,6 +80,9 @@ export async function seed() {
   await db.transaction('rw', [db.exercises, db.settings, db.workoutExercises, db.sets, db.workouts, db.plans], async () => {
     // Activities were removed (owner, 2026-10-19); drop any leftover activity plans
     await db.plans.filter((p) => (p.type as string) === 'activity').delete()
+    // The app-wide kg/lb setting became per-exercise (2026-10-19): carry an old "lb" choice over, then drop it
+    const oldUnit = (await db.settings.get('unit'))?.value
+    await db.settings.bulkDelete(['unit', 'weightStep'])
     const old = await db.exercises.toArray()
     const notes = new Map(old.map((e) => [e.id, e.notes]))
     const ids = new Set(data.map((e) => e.id))
@@ -103,21 +107,20 @@ export async function seed() {
         })
       } else await db.exercises.delete(o.id)
     }
-    await db.exercises.bulkPut(data.map(({ legacyIds: _, ...e }) => ({ ...e, notes: notes.get(e.id) ?? e.notes, updatedAt: now })))
+    const units = new Map(old.map((e) => [e.id, e.unit]))
+    await db.exercises.bulkPut(data.map(({ legacyIds: _, ...e }) => ({
+      ...e, notes: notes.get(e.id) ?? e.notes, unit: units.get(e.id) ?? (oldUnit === 'lb' ? 'lb' as const : undefined), updatedAt: now,
+    })))
+    if (oldUnit === 'lb') await db.exercises.filter((e) => e.isCustom && !e.unit).modify({ unit: 'lb' })
     await db.settings.put({ key: 'seedVersion', value: SEED_VERSION })
   })
 }
 
 export const uuid = () => crypto.randomUUID()
 
-export type Settings = { unit: 'kg' | 'lb'; weightStep: number | null }
-export const DEFAULT_SETTINGS: Settings = { unit: 'kg', weightStep: null }
-/** 2.5 kg / 5 lb unless overridden. */
-export const stepFor = (s: Settings) => s.weightStep ?? (s.unit === 'kg' ? 2.5 : 5)
-
-export async function setSetting<K extends keyof Settings>(key: K, value: Settings[K]) {
-  await db.settings.put({ key, value })
-}
+export type Unit = 'kg' | 'lb'
+/** Weights are stored in kg; each exercise remembers the unit it's shown/entered in (default kg). */
+export const unitOf = (e?: { unit?: Unit }): Unit => e?.unit ?? 'kg'
 
 export const IMAGE_BASE = 'https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/'
 

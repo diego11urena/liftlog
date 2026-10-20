@@ -24,7 +24,7 @@ Plain data is fine and wanted: PRs shown as facts, volume, time, history, charts
 
 ## Stack
 - React + TypeScript + Vite, `vite-plugin-pwa` (Workbox) for manifest and service worker
-- Tailwind CSS, mobile-first (design for a ~390px phone screen, thumb-reachable controls). The app is only ever used as an installed PWA on a phone, so it ALWAYS renders as a phone: max 430px wide and centered, even on a desktop browser. Fixed bars, sheets and the number pad stay inside that frame.
+- Tailwind CSS, mobile-first (design for a ~390px phone screen, thumb-reachable controls). The app is only ever used as an installed PWA on a phone, so it ALWAYS renders as a phone: max 430px wide and centered, even on a desktop browser. Fixed bars and sheets stay inside that frame.
 - Dexie (IndexedDB) as the primary data store
 - Recharts for charts
 - Optional phase 2: small Node (Fastify) + SQLite server on the home network that serves the built app and offers backup/sync endpoints
@@ -45,10 +45,10 @@ Service workers and "Add to Home Screen" install need HTTPS (localhost is the on
 7. **PRs**: detect and flag new records (heaviest weight, best estimated 1RM, rep PRs) during logging. The PR shown in the header (feature 6) must update live the moment a new PR is logged. Mark it with a plain "PR" label on the set; no animation, points, or badges.
 8. **Progress**: per-exercise charts (est. 1RM, volume, top set over time) and weekly volume per muscle group.
 9. **Week preview and planning**: plan each day (workout or rest), preview the week, start the planned workout. See "Workout tab" below.
-10. **Settings** (opens from the gear on the Profile tab): kg/lb, weight step, erase-all-data danger zone. That is the complete list; there is no reference recording to match (owner, 2026-10-19). Light UI only, no theme toggle (the palette lives in theme tokens so a dark theme could be added later). No export/import (owner decision 2026-10-19).
+10. **Settings** (opens from the gear on the Profile tab): only the erase-all-data danger zone. There is no app-wide kg/lb or weight-step setting: units are chosen per exercise while logging (owner decision 2026-10-19). That is the complete list; there is no reference recording to match (owner, 2026-10-19). Light UI only, no theme toggle (the palette lives in theme tokens so a dark theme could be added later). No export/import (owner decision 2026-10-19).
 
 ## Data model (Dexie tables)
-- `exercises`: id, name, aliases[], category ('strength'), classification, equipment, primaryMuscles[], secondaryMuscles[], instructions[], images[]?, isCustom, notes, timed? (muscles use the app's own canonical muscle enum, see below)
+- `exercises`: id, name, aliases[], category ('strength'), classification, equipment, primaryMuscles[], secondaryMuscles[], instructions[], images[]?, isCustom, notes, timed?, unit? ('kg'|'lb', default kg) (muscles use the app's own canonical muscle enum, see below)
 - `workouts`: id, name, startedAt, endedAt, status('active'|'done'), notes, templateId?
 - `workoutExercises`: id, workoutId, exerciseId, order, notes
 - `sets`: id, workoutExerciseId, order, weight, reps, rpe?, done, completedAt, isPR
@@ -162,10 +162,9 @@ Tapping **Start Workout** slides the Workout tab into this screen. The bottom ta
 - Three buttons under the diagram: **Remove Set** (red), **Drop Set** (neutral), **Add Set** (accent). A drop set adds a linked set row at reduced weight.
 - Also show, on this card, the PR header from feature 6 (last workout and PR with weight and reps). The reference does not show it here; that is my addition.
 
-**Custom number pad** (replaces the system keyboard, docked at the bottom, covers the tab bar while open):
-- Layout: left column with step buttons (**+2.5 / -2.5** when editing weight, **+1 / -1** when editing reps); center digits 1-9, 0, "." (dimmed for reps) and backspace; right column with a copy icon (copy previous set's value), a tall **Next** button (jumps to the next field: weight, then reps, then the next row), and a keyboard-hide icon.
-- The field being edited shows a text cursor. Weight step size should be configurable (2.5 kg / 5 lb default).
-- The reference's stacked-lines key (weight only, probably a plate calculator) is left out (owner decision 2026-10-19). Empty time fields show `--:--`.
+**Number entry: the iPhone's native numeric keypad** (owner decision 2026-10-19; the reference's custom number pad with ±step / copy / Next / plate keys is NOT built). Weight fields use `inputmode="decimal"`, reps and time fields `inputmode="numeric"`. Time is typed as digits (`130` = 1:30). Empty time fields show `--:--`.
+
+**kg / lb per exercise** (owner decision 2026-10-19): a small picker (a `<select>`, so iPhone shows its native wheel) sits in the header above the weight column of each exercise card. The choice is saved on the exercise (`exercises.unit`, default kg) and used everywhere that exercise's weights are shown. Weights are always stored in kg; totals that mix exercises (volume tiles, profile totals) show kg. Drop sets step down in 2.5 kg / 5 lb.
 
 **Rest timer bar**: NOT built (owner decision 2026-10-19). Workout notes live in the exercise card's "..." menu and the review screen instead.
 
@@ -186,7 +185,7 @@ Tapping **Start Workout** slides the Workout tab into this screen. The bottom ta
 
 ## Profile tab (spec from the third screen recording)
 The reference Profile tab is mostly social and gamified. Build ONLY the parts below, in this order, as one scrolling page with the same card style as the Workout tab. Everything else on that tab is deleted (see "Removed on purpose").
-1. **Top bar**: a gear icon button at the top right that opens Settings (kg/lb, weight step, danger zone to erase data). No avatar, name, level badge, flame/streak chip, or shop icon.
+1. **Top bar**: a gear icon button at the top right that opens Settings (danger zone to erase data). No avatar, name, level badge, flame/streak chip, or shop icon.
 2. **All-time totals row**: three centered stats separated by thin vertical dividers, each with a small icon above a value and a label: total training **time** (e.g. "1h 4m"), total **volume** (e.g. "6k kgs"), and number of **workouts** (e.g. "2 workouts"). These are sums over every logged workout (checked against the video: 4.7k + 1.3k volume = 6k, 2 workouts).
 3. **Muscles this week** card: a title with a large accent-colored percentage under it (e.g. "9%"), a small expand icon at the top right (opens the diagram full screen), and a big front and back body diagram with every muscle trained this week highlighted (primary `--accent`, secondary `--accent-soft`). My reading of the percentage (not stated in the video): the share of the app's muscle regions that were trained at least once in the current Monday-to-Sunday week. Show the formula in a tooltip or the full-screen view so it is not a mystery.
 4. **Week Overview** card: title "Week Overview" with a "Start Workout" pill at the right (starts today's planned workout; disabled if none), and the same 7-day strip as the Workout tab (filled accent circle = completed day, teal number = rest day, dark number = planned). Tapping a day jumps to that day on the Workout tab.

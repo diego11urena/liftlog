@@ -1,14 +1,7 @@
 import Dexie from 'dexie'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { db, DEFAULT_SETTINGS, type Exercise, type Muscle, type Settings, type WSet } from './db'
+import { db, type Exercise, type Muscle, type WSet } from './db'
 import { bests, dateKey, volume } from './lib'
-
-export function useSettings(): Settings {
-  const rows = useLiveQuery(() => db.settings.toArray(), [])
-  const s = { ...DEFAULT_SETTINGS }
-  for (const r of rows ?? []) if (r.key in s) (s as Record<string, unknown>)[r.key] = r.value
-  return s
-}
 
 export function useExercises() {
   return useLiveQuery(async () => new Map((await db.exercises.toArray()).map((e) => [e.id, e])), []) ?? new Map<string, Exercise>()

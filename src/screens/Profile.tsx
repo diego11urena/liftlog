@@ -1,15 +1,14 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useState } from 'react'
 import { eraseAll, startSession } from '../actions'
-import { db, MUSCLES, setSetting, stepFor } from '../db'
-import { musclesOf, useActiveLog, useExercises, useSettings, useWeekStatus } from '../hooks'
+import { db, MUSCLES } from '../db'
+import { musclesOf, useActiveLog, useExercises, useWeekStatus } from '../hooks'
 import { addDays, dateKey, fmtDuration, fmtVolume, sundayOf, volume, weekStart } from '../lib'
 import MuscleMap from '../MuscleMap'
-import { Icon, RoundBtn, Segmented, Sheet, WeekStrip, type IconName } from '../ui'
+import { Icon, RoundBtn, Sheet, WeekStrip, type IconName } from '../ui'
 import { label } from './Library'
 
 export default function Profile({ onJump }: { onJump: (dateKey: string) => void }) {
-  const { unit } = useSettings()
   const exercises = useExercises()
   const active = useActiveLog()
   const [settings, setSettings] = useState(false)
@@ -43,7 +42,7 @@ export default function Profile({ onJump }: { onJump: (dateKey: string) => void 
 
       <div className="card grid grid-cols-3 divide-x divide-line py-4 text-center">
         <Total icon="timer" value={fmtDuration(data?.time ?? 0)} label="time" />
-        <Total icon="dumbbell" value={fmtVolume(data?.volume ?? 0, unit)} label="volume" />
+        <Total icon="dumbbell" value={fmtVolume(data?.volume ?? 0, 'kg')} label="volume" />
         <Total icon="calendar" value={`${data?.workouts ?? 0}`} label={data?.workouts === 1 ? 'workout' : 'workouts'} />
       </div>
 
@@ -98,7 +97,6 @@ const Total = ({ icon, value, label }: { icon: IconName; value: string; label: s
 )
 
 function SettingsSheet({ onClose }: { onClose: () => void }) {
-  const s = useSettings()
   return (
     <Sheet label="Settings" onClose={onClose}>
       <div className="flex items-center justify-between p-4">
@@ -106,16 +104,7 @@ function SettingsSheet({ onClose }: { onClose: () => void }) {
         <RoundBtn icon="x" label="Close" onClick={onClose} />
       </div>
       <div className="space-y-3 px-4 pb-6">
-        <div className="card divide-y divide-line">
-          <div className="flex min-h-14 items-center justify-between gap-3 px-4">
-            Units <Segmented className="w-32" value={s.unit} options={['kg', 'lb'] as const} onChange={(v) => setSetting('unit', v)} />
-          </div>
-          <label className="flex min-h-14 items-center justify-between gap-3 px-4">
-            Weight step ({s.unit})
-            <input className="field w-24 text-right" inputMode="decimal" key={`${s.unit}${s.weightStep}`} defaultValue={s.weightStep ?? ''} placeholder={String(stepFor(s))}
-              onBlur={(e) => { const v = Number(e.target.value.replace(',', '.')); void setSetting('weightStep', e.target.value && v > 0 ? v : null) }} />
-          </label>
-        </div>
+        <p className="text-sm text-muted">Weight units are picked per exercise, right next to the weight while you log.</p>
         <div className="card p-4">
           <h3 className="mb-1 font-bold text-danger">Danger zone</h3>
           <p className="mb-3 text-sm text-muted">Erases every workout, plan, custom exercise and setting on this device. This can't be undone.</p>

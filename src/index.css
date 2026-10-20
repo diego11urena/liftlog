@@ -48,7 +48,5 @@ body { color: var(--text); -webkit-tap-highlight-color: transparent; overscroll-
 
 @keyframes pop { 0% { transform: scale(.92); opacity: 0 } 100% { transform: scale(1); opacity: 1 } }
 @keyframes slide-up { from { transform: translateY(100%) } to { transform: none } }
-@keyframes caret { 50% { opacity: 0 } }
 .pop { animation: pop .18s ease-out; }
 .slide-up { animation: slide-up .25s cubic-bezier(.2,.8,.2,1); }
-.caret { animation: caret 1s steps(1) infinite; }

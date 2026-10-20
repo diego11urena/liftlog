@@ -1,8 +1,8 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useState } from 'react'
 import { Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
-import { db, MUSCLE_GROUPS, type Muscle } from '../db'
-import { useExercises, useSettings } from '../hooks'
+import { db, MUSCLE_GROUPS, unitOf, type Muscle } from '../db'
+import { useExercises } from '../hooks'
 import { bests, fmtDate, fmtDuration, fmtVolume, toDisplay, volume, weekStart } from '../lib'
 import { Icon, Segmented } from '../ui'
 import Session from './Session'
@@ -23,7 +23,6 @@ export default function Stats() {
 }
 
 function History({ onOpen }: { onOpen: (id: string) => void }) {
-  const { unit } = useSettings()
   const exercises = useExercises()
   const rows = useLiveQuery(async () => {
     const logs = await db.workoutLogs.where('status').equals('done').reverse().sortBy('startedAt')
@@ -41,7 +40,7 @@ function History({ onOpen }: { onOpen: (id: string) => void }) {
             <div className="min-w-0 flex-1">
               <div className="flex justify-between gap-2"><span className="truncate font-bold">{l.name}</span><span className="shrink-0 text-sm text-muted">{fmtDate(l.startedAt)}</span></div>
               <div className="text-sm text-muted">
-                {fmtDuration((l.endedAt ?? l.startedAt) - l.startedAt)} · {sets} sets · {fmtVolume(vol, unit)}{prs > 0 && <span className="text-accent"> · {prs} PR{prs > 1 && 's'}</span>}
+                {fmtDuration((l.endedAt ?? l.startedAt) - l.startedAt)} · {sets} sets · {fmtVolume(vol, 'kg')}{prs > 0 && <span className="text-accent"> · {prs} PR{prs > 1 && 's'}</span>}
               </div>
               <div className="mt-1 truncate text-sm">{wes.map((w) => exercises.get(w.exerciseId)?.name).join(', ')}</div>
             </div>
@@ -60,7 +59,6 @@ const axis = { stroke: 'var(--muted)', fontSize: 11, tickLine: false, axisLine: 
 const tip = { contentStyle: { background: 'var(--card)', border: 'none', borderRadius: 12, color: 'var(--fg)' }, cursor: { stroke: 'var(--line)', fill: 'var(--line)' } }
 
 function Progress() {
-  const { unit } = useSettings()
   const exercises = useExercises()
   const sets = useLiveQuery(() => db.sets.filter((s) => s.completedAt > 0).toArray(), [])
   const [exId, setExId] = useState('')
@@ -73,6 +71,7 @@ function Progress() {
   for (const s of sets) counts.set(s.exerciseId, (counts.get(s.exerciseId) ?? 0) + 1)
   const logged = [...counts].sort((a, b) => b[1] - a[1]).map(([id]) => id)
   const current = exId || logged[0]
+  const unit = unitOf(exercises.get(current))
   const byLog = new Map<string, typeof sets>()
   for (const s of sets) if (s.exerciseId === current) byLog.set(s.logId, [...(byLog.get(s.logId) ?? []), s])
   const series = [...byLog.values()].map((ss) => {
