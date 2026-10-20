@@ -61,6 +61,14 @@ db.version(1).stores({
   settings: 'key',
 })
 
+// The DB was deleted or upgraded elsewhere (another tab, devtools, a newer build): this connection is dead and
+// every query would come back empty. Reload to reconnect and re-seed.
+db.on('versionchange', () => {
+  db.close()
+  location.reload()
+  return false
+})
+
 // Bump when exercises.seed.json changes.
 const SEED_VERSION = 2
 
