@@ -44,7 +44,7 @@ Service workers and "Add to Home Screen" install need HTTPS (localhost is the on
 7. **PRs**: detect and flag new records (heaviest weight, best estimated 1RM, rep PRs) during logging. The PR shown in the header (feature 6) must update live the moment a new PR is logged. Mark it with a plain "PR" label on the set; no animation, points, or badges.
 8. **Progress**: per-exercise charts (est. 1RM, volume, top set over time) and weekly volume per muscle group.
 9. **Week preview and planning**: plan each day (workout, rest, or activity), preview the week, start the planned workout. See "Workout tab" below.
-10. **Settings** (opens from the gear on the Profile tab): kg/lb, weight step, erase-all-data danger zone. Light UI only, no theme toggle (owner decision; the palette lives in theme tokens so a dark theme could be added later). No export/import (owner decision 2026-10-19). Settings was NOT removed: its layout and options must match the reference app's Settings screen, but that screen has not been recorded yet. Build only the items listed here, leave a clearly marked TODO for the rest, and ask me for the recording. Leave out anything social or gamified (account, friends, notifications about friends, subscription, trophies, level).
+10. **Settings** (opens from the gear on the Profile tab): kg/lb, weight step, erase-all-data danger zone. That is the complete list; there is no reference recording to match (owner, 2026-10-19). Light UI only, no theme toggle (the palette lives in theme tokens so a dark theme could be added later). No export/import (owner decision 2026-10-19).
 
 ## Data model (Dexie tables)
 - `exercises`: id, name, aliases[], category ('strength'|'activity'), classification, equipment, primaryMuscles[], secondaryMuscles[], instructions[], images[]?, isCustom, notes, timed? (muscles use the app's own canonical muscle enum, see below)
@@ -163,9 +163,9 @@ Tapping **Start Workout** slides the Workout tab into this screen. The bottom ta
 - Also show, on this card, the PR header from feature 6 (last workout and PR with weight and reps). The reference does not show it here; that is my addition.
 
 **Custom number pad** (replaces the system keyboard, docked at the bottom, covers the tab bar while open):
-- Layout: left column with step buttons (**+2.5 / -2.5** when editing weight, **+1 / -1** when editing reps) and a stacked-lines icon; center digits 1-9, 0, "." (dimmed for reps) and backspace; right column with a copy icon (copy previous set's value), a tall **Next** button (jumps to the next field: weight, then reps, then the next row), and a keyboard-hide icon.
+- Layout: left column with step buttons (**+2.5 / -2.5** when editing weight, **+1 / -1** when editing reps); center digits 1-9, 0, "." (dimmed for reps) and backspace; right column with a copy icon (copy previous set's value), a tall **Next** button (jumps to the next field: weight, then reps, then the next row), and a keyboard-hide icon.
 - The field being edited shows a text cursor. Weight step size should be configurable (2.5 kg / 5 lb default).
-- Checked against the recording (2026-10-19): the stacked-lines key only appears while editing weight (probably a plate calculator); not built yet, pending owner confirmation. Empty time fields show `--:--`.
+- The reference's stacked-lines key (weight only, probably a plate calculator) is left out (owner decision 2026-10-19). Empty time fields show `--:--`.
 
 **Rest timer bar**: NOT built (owner decision 2026-10-19). Workout notes live in the exercise card's "..." menu and the review screen instead.
 

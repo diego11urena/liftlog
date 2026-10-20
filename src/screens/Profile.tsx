@@ -97,9 +97,6 @@ const Total = ({ icon, value, label }: { icon: IconName; value: string; label: s
   </div>
 )
 
-// TODO(settings-recording): CLAUDE.md feature 10 says this screen's layout and options must match the reference
-// app's Settings screen, which hasn't been recorded yet. Only units, weight step and erase-all are built.
-// Waiting on the owner's screen recording; leave out anything social/gamified (account, friends, subscription, trophies).
 function SettingsSheet({ onClose }: { onClose: () => void }) {
   const s = useSettings()
   return (
