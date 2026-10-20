@@ -100,7 +100,7 @@ function Home({ date, setDate, go }: { date: string; setDate: (k: string) => voi
       )}
 
       <div className="phone-fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-30 px-4">
-        <button className="btn-accent w-full disabled:bg-card2 disabled:text-muted disabled:opacity-100" disabled={!canStart} onClick={start}>Start Workout</button>
+        <button className="btn-accent w-full disabled:bg-panel disabled:text-muted disabled:opacity-100" disabled={!canStart} onClick={start}>Start Workout</button>
       </div>
 
       {sheet && (
@@ -136,7 +136,7 @@ function CardShell({ title, sub, action, children }: { title: string; sub?: Reac
   )
 }
 
-const Dim = ({ icon }: { icon: IconName }) => <Icon name={icon} className="size-24 text-white/15" />
+const Dim = ({ icon }: { icon: IconName }) => <Icon name={icon} className="size-24 text-figure" />
 
 function DayCard({ p, isToday, onPlus, onMenu, onReview, onStartFree, onPlanRest }: {
   p: Page; isToday: boolean; onPlus: () => void; onMenu: (p: Plan) => void; onReview: (logId: string) => void; onStartFree: () => void; onPlanRest: (p: Plan) => void
@@ -197,7 +197,7 @@ function DayCard({ p, isToday, onPlus, onMenu, onReview, onStartFree, onPlanRest
     case 'empty':
       return (
         <CardShell title="Not Planned Yet!">
-          <button aria-label="Plan this day" onClick={onPlus} className="grid size-20 place-items-center rounded-full bg-white/10 active:scale-95"><Icon name="plus" className="size-9" /></button>
+          <button aria-label="Plan this day" onClick={onPlus} className="card grid size-20 place-items-center rounded-full! active:scale-95"><Icon name="plus" className="size-9" /></button>
           <p className="max-w-56 text-center text-sm text-muted">Tap + to plan a workout or add a rest day.</p>
           {isToday && <button className="chip mt-2" onClick={onStartFree}>or just start a freestyle workout below</button>}
         </CardShell>
@@ -249,7 +249,7 @@ function PlanSheet({ date, replace, hasLogs, onClose, onCreate }: { date: string
         </section>
       </div>
       <div className="p-4">
-        <button className="btn-accent w-full disabled:bg-card2 disabled:text-muted disabled:opacity-100" disabled={sel === initial || !sel || busy} onClick={apply}>
+        <button className="btn-accent w-full disabled:bg-panel disabled:text-muted disabled:opacity-100" disabled={sel === initial || !sel || busy} onClick={apply}>
           {busy ? <Spinner className="size-5" /> : cta}
         </button>
       </div>

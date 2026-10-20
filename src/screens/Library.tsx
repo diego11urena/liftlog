@@ -66,7 +66,7 @@ export default function Library({ onBack, onAdd }: { onBack: () => void; onAdd?:
         </label>
         <div className="no-scrollbar flex gap-2 overflow-x-auto">
           {chips.map((c) => (
-            <button key={c.k} onClick={() => setPicker(c.k)} className={`chip min-h-9 ${c.v ? 'bg-accent text-black font-semibold' : ''}`}>
+            <button key={c.k} onClick={() => setPicker(c.k)} className={`chip min-h-9 ${c.v ? 'bg-accent text-on-accent font-semibold' : ''}`}>
               {c.v || c.label} ▾
             </button>
           ))}
@@ -112,7 +112,7 @@ export default function Library({ onBack, onAdd }: { onBack: () => void; onAdd?:
 }
 
 export const Radio = ({ on }: { on: boolean }) => (
-  <span className={`grid size-6 place-items-center rounded-full border-2 ${on ? 'border-accent' : 'border-white/25'}`}>
+  <span className={`grid size-6 place-items-center rounded-full border-2 ${on ? 'border-accent' : 'border-muted/50'}`}>
     {on && <span className="size-3 rounded-full bg-accent" />}
   </span>
 )
@@ -223,7 +223,7 @@ export function HowTo({ e }: { e: Exercise }) {
       <h2 className="mb-2 font-bold">How to</h2>
       {e.images.length > 0 && (
         <div className="no-scrollbar mb-3 flex snap-x gap-2 overflow-x-auto">
-          {e.images.map((src) => <img key={src} src={IMAGE_BASE + src} alt="" loading="lazy" className="h-40 snap-start rounded-2xl bg-card2" />)}
+          {e.images.map((src) => <img key={src} src={IMAGE_BASE + src} alt="" loading="lazy" className="h-40 snap-start rounded-2xl bg-panel" />)}
         </div>
       )}
       <ol className="list-decimal space-y-2 pl-5 text-sm text-muted">{e.instructions.map((s, i) => <li key={i}>{s}</li>)}</ol>
@@ -265,7 +265,7 @@ function CustomFormInner({ e, activity, onDone }: { e?: Exercise; activity: bool
   return (
     <div className="pb-8">
       <TopBar title={e ? 'Edit' : activity ? 'New Activity' : 'New Exercise'} onBack={() => onDone(e?.id)}
-        right={e && <RoundBtn icon="trash" label="Delete" className="bg-danger text-white" onClick={remove} />} />
+        right={e && <RoundBtn icon="trash" label="Delete" className="bg-danger text-on-accent" onClick={remove} />} />
       <div className="space-y-3 px-4">
         <input className="field" placeholder="Name" value={name} onChange={(ev) => setName(ev.target.value)} />
         <select className="field" value={cls} onChange={(ev) => setCls(ev.target.value)} aria-label="Classification">
@@ -276,7 +276,7 @@ function CustomFormInner({ e, activity, onDone }: { e?: Exercise; activity: bool
         <div className="flex flex-wrap gap-2">
           {MUSCLES.map((m) => (
             <button key={m} onClick={() => cycle(m)}
-              className={`chip min-h-9 ${primary.includes(m) ? 'bg-accent text-black font-semibold' : secondary.includes(m) ? 'bg-accent-soft/40' : ''}`}>{label(m)}</button>
+              className={`chip min-h-9 ${primary.includes(m) ? 'bg-accent text-on-accent font-semibold' : secondary.includes(m) ? 'bg-accent-soft/40' : ''}`}>{label(m)}</button>
           ))}
         </div>
         <button className="btn-accent w-full" disabled={!name.trim() || (!activity && !primary.length)} onClick={save}>Save</button>

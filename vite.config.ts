@@ -20,8 +20,8 @@ export default defineConfig({
         name: 'Liftlog',
         short_name: 'Liftlog',
         description: 'Personal offline workout log',
-        theme_color: '#0c0d0f',
-        background_color: '#0c0d0f',
+        theme_color: '#F6F6F3',
+        background_color: '#F6F6F3',
         display: 'standalone',
         orientation: 'portrait',
         icons: [

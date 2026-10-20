@@ -116,9 +116,9 @@ function Progress() {
 
       <section className="card p-4">
         <div className="mb-2 flex items-center justify-between">
-          <button className="grid size-9 place-items-center rounded-full bg-card2" aria-label="Previous week" onClick={() => setWeek(weekStart(week - 1))}><Icon name="chevL" /></button>
+          <button className="grid size-9 place-items-center rounded-full bg-panel" aria-label="Previous week" onClick={() => setWeek(weekStart(week - 1))}><Icon name="chevL" /></button>
           <h2 className="text-sm font-semibold">Sets per muscle · {week === thisWeek ? 'this week' : `week of ${fmtDate(week)}`}</h2>
-          <button className="grid size-9 place-items-center rounded-full bg-card2 disabled:opacity-30" aria-label="Next week" disabled={week >= thisWeek} onClick={() => setWeek(weekStart(week + WEEK + 7200e3))}><Icon name="chevR" /></button>
+          <button className="grid size-9 place-items-center rounded-full bg-panel disabled:opacity-30" aria-label="Next week" disabled={week >= thisWeek} onClick={() => setWeek(weekStart(week + WEEK + 7200e3))}><Icon name="chevR" /></button>
         </div>
         {bars.length ? (
           <div style={{ height: bars.length * 28 + 24 }}>

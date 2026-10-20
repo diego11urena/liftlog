@@ -61,7 +61,7 @@ export default function Profile({ onJump }: { onJump: (dateKey: string) => void 
       <div className="card p-4">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="font-bold">Week Overview</h2>
-          <button className="btn-accent min-h-9 px-4 text-sm disabled:bg-card2 disabled:text-muted disabled:opacity-100" disabled={!data?.todayWorkout || !!active}
+          <button className="btn-accent min-h-9 px-4 text-sm disabled:bg-panel disabled:text-muted disabled:opacity-100" disabled={!data?.todayWorkout || !!active}
             onClick={async () => { await startSession(data!.todayWorkout); onJump(dateKey(Date.now())) }}>Start Workout</button>
         </div>
         <WeekStrip sunday={sunday} status={status} onSelect={onJump} />
@@ -78,7 +78,7 @@ export default function Profile({ onJump }: { onJump: (dateKey: string) => void 
             <p className="text-sm text-muted">{formula}</p>
             <MuscleMap primary={week.primary} secondary={week.secondary} />
             <div className="flex flex-wrap gap-1.5">
-              {week.primary.map((m) => <span key={m} className="chip bg-accent text-xs font-semibold text-black">{label(m)}</span>)}
+              {week.primary.map((m) => <span key={m} className="chip bg-accent text-xs font-semibold text-on-accent">{label(m)}</span>)}
               {week.secondary.map((m) => <span key={m} className="chip bg-accent-soft/40 text-xs">{label(m)}</span>)}
             </div>
           </div>
@@ -119,7 +119,7 @@ function SettingsSheet({ onClose }: { onClose: () => void }) {
         <div className="card p-4">
           <h3 className="mb-1 font-bold text-danger">Danger zone</h3>
           <p className="mb-3 text-sm text-muted">Erases every workout, plan, custom exercise and setting on this device. This can't be undone.</p>
-          <button className="btn w-full bg-danger text-white" onClick={() => {
+          <button className="btn w-full bg-danger text-on-accent" onClick={() => {
             if (confirm('Erase ALL data?') && confirm('Really erase everything? There is no backup.')) void eraseAll()
           }}>Erase all data</button>
         </div>

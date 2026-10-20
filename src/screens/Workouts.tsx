@@ -91,7 +91,7 @@ function Builder({ existing, newName, onClose }: { existing?: Workout; newName: 
   return (
     <div className="pb-28">
       <TopBar title={existing ? 'Edit Workout' : 'Create Workout'} onBack={onClose}
-        right={<RoundBtn icon="trash" label="Delete workout" className="bg-danger text-white" onClick={remove} />} />
+        right={<RoundBtn icon="trash" label="Delete workout" className="bg-danger text-on-accent" onClick={remove} />} />
       <div className="px-4">
         <div className="card overflow-hidden">
           <button className="flex w-full items-center gap-2 px-4 py-4 text-left" onClick={() => setRenaming(true)}>

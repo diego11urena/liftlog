@@ -24,7 +24,7 @@ export default function MuscleMap({ primary, secondary = [], size = 'lg', onMusc
   ]
   const h = { sm: 64, md: 190, lg: 260 }[size]
   const common = {
-    data, bodyColor: 'var(--body)', highlightedColors: ['var(--accent-soft)', 'var(--accent)'],
+    data, bodyColor: 'var(--figure)', highlightedColors: ['var(--accent-soft)', 'var(--accent)'],
     style: { height: h, width: h / 2 },
     onClick: onMuscle ? ({ muscle }: { muscle: LibMuscle }) => { const m = FROM_LIB[muscle]; if (m) onMuscle(m) } : undefined,
   }

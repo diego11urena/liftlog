@@ -51,8 +51,8 @@ export default function Session({ logId, onEnded, onClose }: { logId: string; on
             onBlur={(e) => e.target.value.trim() && db.workoutLogs.update(log.id, { name: e.target.value.trim(), updatedAt: Date.now() })} />
           <p className="text-sm tabular-nums text-muted">{active ? <Elapsed since={log.startedAt} /> : `${fmtDate(log.startedAt)} · ${fmtDuration((log.endedAt ?? log.startedAt) - log.startedAt)}`}</p>
         </div>
-        <RoundBtn icon={active ? 'x' : 'trash'} label={active ? 'Discard workout' : 'Delete workout'} className="bg-danger text-white" onClick={discard} />
-        {active && <button className="btn-white min-h-10 px-4 text-sm" onClick={() => { setFocus(null); setReview(true) }}>End Workout</button>}
+        <RoundBtn icon={active ? 'x' : 'trash'} label={active ? 'Discard workout' : 'Delete workout'} className="bg-danger text-on-accent" onClick={discard} />
+        {active && <button className="btn-dark min-h-10 px-4 text-sm" onClick={() => { setFocus(null); setReview(true) }}>End Workout</button>}
       </header>
 
       <Pager peek index={Math.min(page, wes.length)} onIndex={(i) => { setPage(i); setFocus(null) }} pages={[
@@ -171,8 +171,8 @@ function ExerciseCard({ we, ex, log, focus, setFocus, onReplace, onMove, first, 
     return (
       <button aria-label={`Set ${setNo.get(r.order)}${r.side ? ' ' + r.side : ''} ${f}`}
         onClick={() => setFocus({ setId: r.id, field: f, text: null })}
-        className={`flex h-11 min-w-0 flex-1 items-center justify-center rounded-xl bg-card2 tabular-nums ${isF ? 'ring-2 ring-accent' : ''}`}>
-        <span className={dim ? 'text-white/30' : ''}>{shown}</span>
+        className={`flex h-11 min-w-0 flex-1 items-center justify-center rounded-xl bg-panel tabular-nums ${isF ? 'ring-2 ring-accent' : ''}`}>
+        <span className={dim ? 'text-muted/60' : ''}>{shown}</span>
         {isF && <span className="caret ml-px h-5 w-0.5 bg-accent" />}
         {!dim && <span className="ml-1 text-xs text-muted">{f === 'weight' ? unit : f === 'reps' ? 'reps' : ''}</span>}
       </button>
@@ -188,7 +188,7 @@ function ExerciseCard({ we, ex, log, focus, setFocus, onReplace, onMove, first, 
       </div>
       <label className="mb-3 flex w-fit items-center gap-2 text-sm text-muted">
         <input type="checkbox" className="peer sr-only" checked={we.unilateral} onChange={(e) => { setFocus(null); void setUnilateral(we.id, e.target.checked) }} />
-        <span className="relative h-6 w-10 rounded-full bg-white/15 transition peer-checked:bg-accent after:absolute after:left-0.5 after:top-0.5 after:size-5 after:rounded-full after:bg-white after:transition peer-checked:after:translate-x-4 peer-focus-visible:ring-2 peer-focus-visible:ring-white" />
+        <span className="relative h-6 w-10 rounded-full bg-figure transition peer-checked:bg-accent after:absolute after:left-0.5 after:top-0.5 after:size-5 after:rounded-full after:bg-card after:transition peer-checked:after:translate-x-4 peer-focus-visible:ring-2 peer-focus-visible:ring-accent" />
         Unilateral
       </label>
 
@@ -258,7 +258,7 @@ function ExerciseCard({ we, ex, log, focus, setFocus, onReplace, onMove, first, 
 
 /** Custom keypad docked at the bottom; covers the tab bar. */
 const Key = ({ k, onKey, children, className = '', disabled }: { k: string; onKey: (k: string) => void; children: React.ReactNode; className?: string; disabled?: boolean }) => (
-  <button onClick={() => onKey(k)} disabled={disabled} className={`grid h-13 place-items-center rounded-2xl bg-card2 text-xl font-semibold active:bg-white/20 disabled:opacity-25 ${className}`}>{children}</button>
+  <button onClick={() => onKey(k)} disabled={disabled} className={`grid h-13 place-items-center rounded-2xl bg-panel text-xl font-semibold active:bg-line disabled:opacity-25 ${className}`}>{children}</button>
 )
 
 function Numpad({ field, onKey, step }: { field: Field; onKey: (k: string) => void; step: number }) {
@@ -279,7 +279,7 @@ function Numpad({ field, onKey, step }: { field: Field; onKey: (k: string) => vo
         </div>
         <div className="grid grid-rows-[auto_1fr] gap-2">
           <Key onKey={onKey} k="copy" className="text-accent"><Icon name="repeat" /></Key>
-          <button onClick={() => onKey('next')} className="rounded-2xl bg-accent text-lg font-bold text-black active:opacity-80">Next</button>
+          <button onClick={() => onKey('next')} className="rounded-2xl bg-accent text-lg font-bold text-on-accent active:opacity-80">Next</button>
         </div>
       </div>
     </div>
@@ -349,7 +349,7 @@ function Review({ log, onBack, onEnded }: { log: WorkoutLog; onBack: () => void;
         </label>
       </div>
       <div className="phone-fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-30 grid grid-cols-2 gap-2 px-4">
-        <button className="btn-white" onClick={saveBack}>Save Workout</button>
+        <button className="btn-outline" onClick={saveBack}>Save Workout</button>
         <button className="btn-accent" onClick={end}>End Workout</button>
       </div>
       {busy && <Busy />}
@@ -372,7 +372,7 @@ export function Summary({ logId, onBack }: { logId: string; onBack: () => void }
           <Tile label="Time" value={fmtDuration((log.endedAt ?? Date.now()) - log.startedAt)} icon="timer" />
           <Tile label="Volume" value={fmtVolume(s.volume, unit)} icon="dumbbell" />
         </div>
-        <button className="btn-accent w-full" onClick={onBack}>Back to Home</button>
+        <button className="btn-outline w-full" onClick={onBack}>Back to Home</button>
       </div>
     </div>
   )

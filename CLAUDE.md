@@ -6,6 +6,7 @@ A personal-use workout tracker inspired by the *flows and features* of the Arrow
 - Recreate features and flows from the descriptions in this file only. Do NOT copy Arrow's code, assets, icons, name, or branding. Use original UI, name, and wording.
 - Personal use only: no auth, no analytics, no third-party tracking.
 - Offline-first. The app must work with zero network after first load.
+- Every color comes from theme tokens defined in one file (see "Look and feel"). No hard-coded colors in components.
 - Never lose workout data. Autosave the in-progress workout after every set change. Resuming must always be possible; "discard" requires an explicit confirmation. (A known complaint about Arrow is that ending a restarted session drops it, so avoid that.)
 
 ## Removed on purpose (do NOT build, do NOT leave stubs or empty tabs)
@@ -36,14 +37,14 @@ Service workers and "Add to Home Screen" install need HTTPS (localhost is the on
 ## Core features (MVP)
 1. **Active workout screen**: add exercises, log sets (weight x reps; a set counts as logged once both are filled, there is no separate done checkbox), add/remove/reorder exercises, per-exercise and workout notes, workout timer.
 2. ~~Rest timer~~: removed by owner decision (2026-10-19). Do not build, even though the reference has one.
-3. **Exercise library (a headline feature)**: a HUGE built-in list (target 800+ exercises) with search, filters (muscle, equipment, category), and custom exercises. Every exercise has a **detail view with a human-body diagram (front and back) that highlights the targeted muscles**: primary muscles in a strong color, secondary muscles in a lighter shade. The same mini diagram appears on exercise cards in the picker and in the active workout. See "Exercise data and muscle diagram" below.
+3. **Exercise library (a headline feature)**: a CURATED built-in list of about 300 exercises people actually do in a gym (not the full 800+ dataset), with common gym names and aliases, search, filters (muscle, equipment, classification), and custom exercises. Every exercise has a **detail view with a detailed human-body diagram (front and back) that highlights the targeted muscles**: primary muscles in the accent color, secondary muscles in a lighter shade. The same mini diagram appears on exercise cards in the picker and in the active workout. See "Exercise data and muscle diagram" below.
 4. **Templates/routines**: save a workout as a template, start a workout from a template, prefill from last session.
 5. **History**: list of past workouts, open one to view or edit, delete with confirmation.
 6. **Last session + PR at a glance (headline feature)**: while logging any exercise, show a header on that exercise card with (a) **Last workout**: the weight x reps for each set from the most recent completed session of that exercise, with its date, and (b) **PR**: my best weight and the reps I did at it, plus my best reps at other key weights if useful. Also show the matching previous set (weight x reps) inline next to each set row. Tapping a previous value copies it into the current set. This must work fully offline, load instantly (index `sets` by exerciseId + completedAt), and show a clear "No history yet" state for new exercises.
-7. **PRs**: detect and flag new records (heaviest weight, best estimated 1RM, rep PRs) during logging. The PR shown in the header (feature 6) must update live the moment a new PR is logged, Mark it with a plain "PR" label on the set; no animation, points, or badges.
+7. **PRs**: detect and flag new records (heaviest weight, best estimated 1RM, rep PRs) during logging. The PR shown in the header (feature 6) must update live the moment a new PR is logged. Mark it with a plain "PR" label on the set; no animation, points, or badges.
 8. **Progress**: per-exercise charts (est. 1RM, volume, top set over time) and weekly volume per muscle group.
 9. **Week preview and planning**: plan each day (workout, rest, or activity), preview the week, start the planned workout. See "Workout tab" below.
-10. **Settings**: kg/lb, weight step, erase-all-data danger zone. Dark UI only (no theme toggle). No export/import (owner decision 2026-10-19).
+10. **Settings** (opens from the gear on the Profile tab): kg/lb, weight step, erase-all-data danger zone. Light UI only, no theme toggle (owner decision; the palette lives in theme tokens so a dark theme could be added later). No export/import (owner decision 2026-10-19). Settings was NOT removed: its layout and options must match the reference app's Settings screen, but that screen has not been recorded yet. Build only the items listed here, leave a clearly marked TODO for the rest, and ask me for the recording. Leave out anything social or gamified (account, friends, notifications about friends, subscription, trophies, level).
 
 ## Data model (Dexie tables)
 - `exercises`: id, name, category, equipment, primaryMuscles[], secondaryMuscles[], instructions[], images[]?, isCustom, notes (muscles use the app's own canonical muscle enum, see below)
@@ -55,70 +56,79 @@ Service workers and "Add to Home Screen" install need HTTPS (localhost is the on
 Use UUIDs and `updatedAt` on every row so sync can be added later without migration pain.
 
 ## Exercise data and muscle diagram
-**Data source (license matters):** use an openly licensed dataset, not content scraped from Arrow.
-- Preferred: `free-exercise-db` (github.com/yuhonas/free-exercise-db), public-domain JSON with ~800+ exercises, each with primary/secondary muscles, equipment, category, instructions, and photos. Verify the license in the repo before using.
-- Alternative: the wger API/dataset (check its per-asset licenses; some are CC-BY-SA and need attribution).
-- Write a one-time build script (`scripts/build-exercises.ts`) that downloads the dataset, maps its muscle names to the app's canonical muscle enum, and writes a single `exercises.seed.json` committed to the repo. At runtime, seed Dexie from that file on first launch. No runtime network calls.
+**Curated list, not the whole dataset.** The big open dataset has many obscure entries ("Venn press") and files common ones under odd names (the pec deck is "Butterfly" in some datasets).
+- Target about 300 exercises that people actually do in a commercial gym, named the way gym machines are labeled: "Seated Leg Extension Machine", "Pec Deck (Machine Fly)", "Lat Pulldown", "Incline Dumbbell Press", "Cable Crossover".
+- Build `scripts/curated-exercises.json`: each entry has `name`, `aliases[]`, `classification`, `primaryMuscles`, `secondaryMuscles`. Use the open dataset only as a source of instructions and photos when a curated entry matches one; otherwise write the entry by hand.
+- Preferred dataset: `free-exercise-db` (github.com/yuhonas/free-exercise-db), public domain; verify the license in the repo. Alternative: wger (check per-asset licenses; some are CC-BY-SA and need attribution).
+- Search must match aliases: "pec deck", "pec fly", "chest fly machine", "machine fly" and "butterfly" all find the same exercise.
+- Must include at minimum: pec deck, reverse pec deck, cable fly, cable crossover, dumbbell fly, bench press (barbell, dumbbell, incline, decline, machine), chest press machine, lat pulldown, seated cable row, T-bar row, leg press, hack squat, leg extension, leg curl (seated and lying), hip abductor and adductor machines, calf raise (standing and seated), shoulder press (machine and dumbbell), lateral raise (dumbbell, cable, machine), face pull, preacher curl, hammer curl, triceps pushdown, overhead triceps extension, dips, pull-ups, deadlift variations, Romanian deadlift, hip thrust, glute bridge, cable kickback, ab crunch machine, cable crunch, hanging leg raise, plank.
+- Everything not on the curated list is not imported. Custom exercises (the "+" button) cover the long tail.
+- A `scripts/check-exercises.ts` report prints curated entries missing primary muscles, aliases or classification; the build fails if any are incomplete.
+- A one-time build script (`scripts/build-exercises.ts`) merges the curated list with the dataset and writes a single `exercises.seed.json` committed to the repo. At runtime, seed Dexie from that file on first launch. No runtime network calls.
 - Cache exercise photos with the service worker (or bundle a compressed subset) so they work offline. Keep total install size reasonable; use WebP.
-- Flag any exercise whose muscles fail to map, and fix the mapping instead of dropping the exercise.
 
-**Canonical muscle enum:** chest, front-delts, side-delts, rear-delts, biceps, triceps, forearms, abs, obliques, traps, upper-back, lats, lower-back, glutes, quads, hamstrings, adductors, abductors, calves, neck.
+**Muscle regions (the canonical enum), about 40:** chest-upper, chest-lower, delt-front, delt-side, delt-rear, rotator-cuff, biceps, brachialis, triceps-long, triceps-lateral, triceps-medial, forearm-flexors, forearm-extensors, brachioradialis, abs-upper, abs-lower, obliques, serratus, hip-flexors, traps-upper, traps-middle, traps-lower, rhomboids, lats, teres, erector-spinae, glutes-max, glutes-med, quads-rectus-femoris, quads-vastus-lateralis, quads-vastus-medialis, adductors, abductors, hamstrings-biceps-femoris, hamstrings-semitendinosus, calves-gastrocnemius, soleus, tibialis, neck.
+- Curated entries set regions by hand. When mapping a coarse dataset muscle (chest, shoulders, quadriceps, hamstrings, etc.), map it to a sensible default set of regions and flag it for review; never drop an exercise because a muscle failed to map.
 
-**Diagram component** (`<MuscleMap primary={[]} secondary={[]} />`):
-- Render a front and a back body silhouette side by side as inline SVG, with one `<path>` per muscle region and `data-muscle` attributes.
-- Fill primary muscles with the accent color and secondary muscles with a lighter tint; unselected muscles stay a neutral gray. Must work in dark and light themes.
-- Fastest route: try the MIT-licensed `react-body-highlighter` package first (verify license and that the muscle regions cover the enum above). If it falls short, draw original SVG paths. Do not copy Arrow's artwork.
-- Provide a small variant (about 64px) for list cards and a large variant for the detail view.
+**Diagram component** (`<MuscleMap primary={[]} secondary={[]} />`): MUCH more detail than a basic silhouette.
+- The current diagram (react-body-highlighter) is too coarse: few regions and no internal detail. Replace it.
+- Requirement: a detailed anatomical figure, front and back, in the style of a muscle chart: a light gray silhouette with visible muscle separation lines and fiber-like shading, where highlighted muscles light up in the accent color.
+- Each region is its own SVG `<path>` with a `data-muscle` attribute, independently highlightable.
+- Do NOT copy or trace the Arrow app's artwork. Find an openly licensed, detailed anatomical illustration (public domain, CC0, or MIT-licensed SVG assets) and turn it into per-region SVG paths. Record the source and license in `docs/ASSETS.md`. If no suitable asset exists, draw an original one; stop and tell me before settling for a low-detail figure.
+- Primary muscles use the accent color, secondary muscles the soft accent, unselected muscles stay the neutral figure color.
+- Variants: small (about 64px) for list cards and a large variant for detail views. Quality check: render at 64px, 180px and 340px wide; at 340px the separation lines and individual muscle shapes must be clearly visible. Add a `/dev/muscles` page that lights each region one at a time.
 - Tapping a muscle on the diagram filters the exercise list to that muscle (nice-to-have).
 
 ## Screens
-Bottom tab nav (reference app has Profile | Friends | Workout | Nutrition | Stats): build **Profile** | **Workout** | **Stats** (history + progress charts). Profile is a personal overview page, specified in the "Profile tab" section below. Skip Friends and Nutrition entirely. The exercise library is NOT a tab: it opens from "Add Exercise" inside the Workout tab (see below). The active "log your sets" screen was not in the recording, so use features 1, 2, 6 and 7 above for it.
+Bottom tab nav (reference app has Profile | Friends | Workout | Nutrition | Stats): build **Profile** | **Workout** | **Stats** (history + progress charts). Profile is a personal overview page, specified in the "Profile tab" section below. Skip Friends and Nutrition entirely. The exercise library is NOT a tab: it opens from "Add Exercise" inside the Workout tab (see below). The active workout screen is specified in the "Active workout" section below.
 
 ## Workout tab (spec from a screen recording of the reference app)
 Replicate this layout and behavior closely. Use original icons, artwork, wording and name (see ground rules); only the layout, flow, and color mood are being matched.
 
-**Look and feel**
-- Dark UI only. App background near-black (~#0c0d0f), cards ~#1b1b1b with a slightly lighter inner panel (~#1e2020), very large corner radii (cards ~24px, buttons fully pill-shaped), generous padding.
-- One accent green (~#2bc231) used for the primary CTA, selected segmented-control pill, radio dots, and primary muscle highlights. Secondary muscles use a paler green (~#7baf7f). Muted gray text for secondary info.
-- Bold, large-ish sans-serif titles. Bottom tab bar: icon over a small label, active tab white, inactive gray.
+**Look and feel (LIGHT theme, our own palette: not Arrow's green)**
+- Light UI. The app is a phone-width PWA (see Stack). Define these as CSS variables / Tailwind theme tokens in one file: `--bg #F6F6F3` (page), `--card #FFFFFF` with a soft shadow (`0 1px 2px rgba(17,19,24,.06)`) and a hairline border `#E6E6E1`, `--panel #F0F0EC` (inner panels), `--text #111318`, `--text-2 #6B6F7A`, `--accent #2F5BFF` (primary buttons, selected pills, radio dots, primary muscles, completed-day circle), `--on-accent #FFFFFF`, `--accent-soft #9DB4FF` (secondary muscles), `--figure #D9DBE1` and `--figure-lines #B4B8C4` (body figure base and muscle separation lines), `--rest #14B8A6` (rest-day marker), `--danger #E5484D` (remove set, discard, delete).
+- Very large corner radii (cards ~24px, buttons fully pill-shaped), generous padding. Bold, large-ish sans-serif titles. Bottom tab bar: icon over a small label, active tab in `--accent`, inactive `--text-2`.
+- The reference's white pill buttons (End Workout in the header, Save Workout, Back to Home) become: header End Workout = solid `--text` pill with white text; Save Workout = outlined pill; the reference's green pills (Start Workout, Create Workout, Save Workout in the editor, End Workout on the review screen, Add Exercise) = solid `--accent` pills with `--on-accent` text. Disabled buttons use a muted `--panel` fill with `--text-2` text.
 - Sheets slide up from the bottom with a dimmed backdrop; loading states use a thin circular spinner.
+- Check contrast: text and the accent must meet WCAG AA on their backgrounds. The accent may change later; changing the tokens must be enough.
+- Contrast check results (2026-10-19): three spec values failed AA and were darkened the minimum needed: `--text-2` #6B6F7A → #676B76 (4.40 → 4.66 on `--panel`), `--rest` #14B8A6 → #0D7D70 (2.5 → 5.0 as text on white), `--danger` #E5484D → #D04146 (3.9 → 4.6 with white text). Tokens live in `src/index.css`.
 
 **1. Workout tab home (the main screen)**
 - Header, left: the plan name for the selected day as a large title (e.g. "Leg Day") with the date under it in gray (MM/DD/YYYY). Header, right: a round icon button (kettlebell-style icon, opens the same exercises library) and a pill button labeled "Workouts" (opens the Workouts screen).
-- **Week strip** under the header: left and right chevrons to change week, 7 round day buttons (S M T W T F S letters under the day numbers). The selected day has a small white dot under its letter and a brighter circle. The day number color shows what is planned: white = workout planned, light blue = rest day, gray = nothing planned; a **green filled circle = a workout was completed that day** (the header title also turns green for that day). Tapping a day changes the header title/date and the card below.
+- **Week strip** under the header: left and right chevrons to change week, 7 round day buttons (S M T W T F S letters under the day numbers). The selected day has a small dot under its letter and a stronger circle. The day number shows what is planned: `--text` (dark) = workout planned, `--rest` (teal) = rest day, `--text-2` (gray) = nothing planned; a **filled accent circle with a white number = a workout was completed that day** (the header title also turns `--accent` for that day). Tapping a day changes the header title/date and the card below.
 - **Day card** (large rounded card, horizontally swipeable, with pagination dots below it. Confirmed from the video: one page per workout planned that day plus a trailing page with the "+" button, so a day can hold several workouts, e.g. Leg Day, Chest day, then "+". Start Workout starts the workout on the visible page):
-  - *Planned workout*: title, a gray subtitle "Prev. <total volume> · <duration>" from the last time this workout was done (e.g. "Prev. 4.7k kgs · 1h 3m"; shows "Prev. None" if never done), and a round "..." menu button at the top right of the card. Inside, a darker panel with a "Planned Workout" chip, the **front and back body diagrams** showing every muscle the workout hits (primary bright green, secondary pale green), then the exercise names as centered chips (first 3 shown, then a "+N more" chip).
+  - *Planned workout*: title, a gray subtitle "Prev. <total volume> · <duration>" from the last time this workout was done (e.g. "Prev. 4.7k kgs · 1h 3m"; shows "Prev. None" if never done), and a round "..." menu button at the top right of the card. Inside, an inner `--panel` with a "Planned Workout" chip, the **front and back body diagrams** showing every muscle the workout hits (primary in `--accent`, secondary in `--accent-soft`), then the exercise names as centered chips (first 3 shown, then a "+N more" chip).
   - *Completed workout*: title "Workout Review" with the workout name under it and an eye icon at top right (opens the saved workout summary). Body diagram of the muscles trained, then three stat tiles: PRs (count), Volume, Time. Start Workout is disabled.
   - *Rest day*: title "Rest Day", subtitle "Recovery day", a big dim moon icon, and a small "Log a workout" chip at the bottom of the panel.
   - *Past day with nothing planned or logged*: title "No Workout", subtitle "Nothing logged", dim moon icon.
   - *Future day with nothing planned*: title "Not Planned Yet!", a centered round "+" button with the text "Tap + to plan a workout or add a rest day."
   - *Today with nothing planned*: the same "+" empty state as above, but "Start Workout" is enabled.
-- **Start Workout**: a full-width green pill pinned above the tab bar. Enabled only for today when a workout is planned (or empty-state freestyle). Disabled (dark, dim text) for past/future days and rest days. A day with no plan is titled "Freestyle" and can still start an empty workout.
+- **Start Workout**: a full-width accent pill pinned above the tab bar. Enabled only for today when a workout is planned (or empty-state freestyle). Disabled (muted fill, dim text) for past/future days and rest days. A day with no plan is titled "Freestyle" and can still start an empty workout.
 
 **2. Plan-the-day sheet** (opens from the "+" button or the "..." menu)
 - Full-height sheet with a back chevron on the left, the date centered ("Oct 19, 2026"), and a "+" button on the right (creates a new workout).
-- Sections: **Presets** (rows: "Rest" with a moon icon, "Activities" with a shoe icon for cardio/other activities) and **Your Workouts** (the user's saved workouts, e.g. "Leg Day", "Chest day"). Each row has a radio circle on the right; the selected one shows a green dot. Single-select.
+- Sections: **Presets** (rows: "Rest" with a moon icon, "Activities" with a shoe icon for cardio/other activities) and **Your Workouts** (the user's saved workouts, e.g. "Leg Day", "Chest day"). Each row has a radio circle on the right; the selected one shows an accent dot. Single-select.
 - Bottom CTA is context-aware: disabled "Change to Selection" while nothing has changed; "Set <Workout Name> for Today" (or the date) when a workout is selected; "Set as Rest Day" when Rest is selected. The CTA shows a brief loading state, then the sheet closes and the card updates. Observation: the Rest preset was missing from this sheet on one visit (Oct 19, after a workout was already planned that day); treat it as "hide Rest if the day already has a started or logged workout" and confirm with me if unsure.
 
 **3. Workouts screen** (from the "Workouts" pill)
-- Back chevron + centered title "Workouts". A two-option segmented control: **Workouts** | **Routines** (selected one is a filled green pill). "Routines" is a multi-day plan list; build it after everything else, as an empty placeholder first.
+- Back chevron + centered title "Workouts". A two-option segmented control: **Workouts** | **Routines** (selected one is a filled accent pill). "Routines" is a multi-day plan list; build it after everything else, as an empty placeholder first.
 - List of saved workouts as full-width rows with a trailing chevron; tapping opens the workout editor.
-- Green "Create Workout" pill pinned at the bottom.
+- Accent "Create Workout" pill pinned at the bottom.
 
 **4. Create / edit workout flow**
-- Tapping "Create Workout" first opens a small centered modal sheet: muscle-icon badge, title "Workout Name", helper text "Name your workout. You can edit it later.", a text input (auto-focused, keyboard opens), and a green "Confirm Workout Name" button that is disabled until text is entered.
+- Tapping "Create Workout" first opens a small centered modal sheet: muscle-icon badge, title "Workout Name", helper text "Name your workout. You can edit it later.", a text input (auto-focused, keyboard opens), and an accent "Confirm Workout Name" button that is disabled until text is entered.
 - Then the **Create Workout** screen: back chevron, centered title, and a red round trash button at the top right (delete with confirmation). A card shows the workout name with a pencil icon (tap to rename using the same modal), the list of exercises (each row has a drag handle on the right for reordering), and an "+ Add Exercise" row with a plus-in-circle icon.
-- "Save Workout" green pill at the bottom. While saving, dim the screen with a spinner; then return to the Workouts list, where the new workout now appears. Opening an existing workout uses this same screen.
+- "Save Workout" accent pill at the bottom. While saving, dim the screen with a spinner; then return to the Workouts list, where the new workout now appears. Opening an existing workout uses this same screen.
 
 **5. Add Exercise (exercise library)**
 - Top bar: back chevron, a segmented control **Exercises** | **Activities**, and a "+" button on the right (create custom exercise/activity).
 - Search field ("Search") with three filter chips below: **Muscle Group**, **Primary Muscle**, **Classification** (each opens a picker; chips show active state).
 - Alphabetical list with sticky letter headers (A, B, C...), rows with the exercise name and a trailing chevron. Some rows also show a small clock icon before the chevron (appears on e.g. Abductor Machine and Adductor Machine; probably "recently used", so show it for exercises I have logged recently).
 - Tapping a row opens the **Exercise detail** screen:
-  - Back chevron and the exercise name centered, with "Class: <classification>" under the title (e.g. "Body Weight/Weighted"). When the library was opened to add to a workout, a full-width green **Add Exercise** button is pinned at the bottom (adds it, then returns). The reference's small "+" in the top bar was too easy to miss, so it was replaced (owner request 2026-10-19). Custom exercises show a pencil (edit) in the top bar instead.
+  - Back chevron and the exercise name centered, with "Class: <classification>" under the title (e.g. "Body Weight/Weighted"). When the library was opened to add to a workout, a full-width accent **Add Exercise** button is pinned at the bottom (adds it, then returns). The reference's small "+" in the top bar was too easy to miss, so it was replaced (owner request 2026-10-19). Custom exercises show a pencil (edit) in the top bar instead.
   - No "How to" section (instructions or photos) on this screen (owner request 2026-10-19). The active-workout card's "i" icon still opens them.
-  - Large card with front and back body diagrams, targeted muscles in green.
-  - A small stats card: "No data / Log this exercise first" with a green edit icon when there is no history; once logged, show last workout and PR (feature 6 above).
+  - Large card with front and back body diagrams, targeted muscles in the accent color.
+  - A small stats card: "No data / Log this exercise first" with an accent edit icon when there is no history; once logged, show last workout and PR (feature 6 above).
   - **PR Progress** card: a segmented toggle "PR" | "Vol." and a chart, with a range selector "Month | Year | All Time". Empty state: icon, "No Data", "Log this exercise to activate insights and data."
   - **Primary muscles:** and **Secondary muscles:** listed as label + gray value (e.g. "Abs", "Obliques").
 - Each exercise needs a "classification" field (e.g. Body Weight/Weighted, Machine, Barbell, Dumbbell, Cable); derive it from the dataset's equipment/category, and add it to the `exercises` table.
@@ -140,14 +150,14 @@ Replicate this layout and behavior closely. Use original icons, artwork, wording
 ## Active workout (spec from the second screen recording)
 Tapping **Start Workout** slides the Workout tab into this screen. The bottom tab bar stays visible. Autosave after every edit (ground rules).
 
-**Header**: workout name (large) with a count-up timer under it (mm:ss). Right side: a red round **X** button (discard workout; always confirm) and a white pill **End Workout**.
+**Header**: workout name (large) with a count-up timer under it (mm:ss). Right side: a red round **X** button (discard workout; always confirm) and a solid `--text` pill **End Workout** (the reference's is white).
 
 **Exercise pager**: one full card per exercise, swiped horizontally (neighbor cards peek at the edges), with page dots under the card (one per exercise). Each card has:
 - Exercise name; a small info "i" icon next to it on some exercises (opens form info/instructions from the dataset); a round "..." menu at top right (replace/remove exercise, notes).
 - A **Unilateral** toggle under the name. Off: each set is one row. On: each set splits into two stacked rows labeled **R** and **L**, each with its own kgs and reps.
-- **Set rows**: set number, a green circular-arrows icon (copies the previous set's values into this set), a weight field ("kgs") then "x" then a reps field ("reps"). Empty fields show **greyed placeholders with last session's values for that same set** (e.g. 20 kgs x 9 reps); typing replaces them. This is the "last workout" feature from the spec above and must be implemented exactly this way. Bodyweight exercises show "BW" in the weight field and use an mm:ss time field instead of reps (e.g. glute bridge).
-- The exercise's own front and back **body diagram** below the sets, primary muscles bright green, secondary pale green.
-- Three buttons under the diagram: **Remove Set** (red), **Drop Set** (neutral), **Add Set** (green). A drop set adds a linked set row at reduced weight.
+- **Set rows**: set number, an accent circular-arrows icon (copies the previous set's values into this set), a weight field ("kgs") then "x" then a reps field ("reps"). Empty fields show **greyed placeholders with last session's values for that same set** (e.g. 20 kgs x 9 reps); typing replaces them. This is the "last workout" feature from the spec above and must be implemented exactly this way. Bodyweight exercises show "BW" in the weight field and use an mm:ss time field instead of reps (e.g. glute bridge).
+- The exercise's own front and back **body diagram** below the sets, primary muscles in `--accent`, secondary in `--accent-soft`.
+- Three buttons under the diagram: **Remove Set** (red), **Drop Set** (neutral), **Add Set** (accent). A drop set adds a linked set row at reduced weight.
 - Also show, on this card, the PR header from feature 6 (last workout and PR with weight and reps). The reference does not show it here; that is my addition.
 
 **Custom number pad** (replaces the system keyboard, docked at the bottom, covers the tab bar while open):
@@ -157,10 +167,10 @@ Tapping **Start Workout** slides the Workout tab into this screen. The bottom ta
 **Rest timer bar**: NOT built (owner decision 2026-10-19). Workout notes live in the exercise card's "..." menu and the review screen instead.
 
 **Ending a workout**
-1. **End Workout** (the white pill) opens the **review screen** (not a confirmation). Header: back chevron, workout name centered, pencil icon on the right (edit sets). Content, top to bottom: a note "Review your workout before you finish. You can go back to edit your sets", two stat tiles (**Total Time**, **Volume** in kgs), the body diagram of muscles trained with a muscle-name chip (e.g. "Quads"), a **PRs** card listing each new PR as exercise name + weight x reps with a star icon, then one card per exercise with every set listed (Set 1, Set 2... with R/L rows and weight x reps).
-2. Two pinned buttons at the bottom: white **Save Workout** and green **End Workout**. End Workout shows a spinner, logs the session, and goes to the summary. Save Workout = save this session's exercises, sets, and weights back to the saved workout (so next time starts from them) and keep the session open (confirmed by owner 2026-10-19).
+1. **End Workout** (the header pill) opens the **review screen** (not a confirmation). Header: back chevron, workout name centered, pencil icon on the right (edit sets). Content, top to bottom: a note "Review your workout before you finish. You can go back to edit your sets", two stat tiles (**Total Time**, **Volume** in kgs), the body diagram of muscles trained with a muscle-name chip (e.g. "Quads"), a **PRs** card listing each new PR as exercise name + weight x reps with a star icon, then one card per exercise with every set listed (Set 1, Set 2... with R/L rows and weight x reps).
+2. Two pinned buttons at the bottom: outlined **Save Workout** and accent **End Workout**. End Workout shows a spinner, logs the session, and goes to the summary. Save Workout = save this session's exercises, sets, and weights back to the saved workout (so next time starts from them) and keep the session open (confirmed by owner 2026-10-19).
 3. **Workout summary** screen: back chevron, workout name, large body diagram of muscles trained, two tiles (**Time**, **Volume**), and a **Back to Home** button. No Share button.
-4. Back on the Workout tab, that day's circle is now green and its card shows the "Workout Review" card described above.
+4. Back on the Workout tab, that day's circle is now a filled accent circle and its card shows the "Workout Review" card described above.
 
 **Definitions**
 - Volume = sum of weight x reps over every logged set, counting R and L rows separately (e.g. 20kg x 25 x2 + 25kg x 6 x2 = 1,300 kg, shown as "1.3k kgs"). Show "k" above 1,000.
@@ -172,24 +182,24 @@ Tapping **Start Workout** slides the Workout tab into this screen. The bottom ta
 - `workoutExercises`: add `unilateral` (bool).
 
 ## Profile tab (spec from the third screen recording)
-The reference Profile tab is mostly social and gamified. Build ONLY the parts below, in this order, as one scrolling page with the same dark card style as the Workout tab. Everything else on that tab is deleted (see "Removed on purpose").
+The reference Profile tab is mostly social and gamified. Build ONLY the parts below, in this order, as one scrolling page with the same card style as the Workout tab. Everything else on that tab is deleted (see "Removed on purpose").
 1. **Top bar**: a gear icon button at the top right that opens Settings (kg/lb, weight step, danger zone to erase data). No avatar, name, level badge, flame/streak chip, or shop icon.
 2. **All-time totals row**: three centered stats separated by thin vertical dividers, each with a small icon above a value and a label: total training **time** (e.g. "1h 4m"), total **volume** (e.g. "6k kgs"), and number of **workouts** (e.g. "2 workouts"). These are sums over every logged workout (checked against the video: 4.7k + 1.3k volume = 6k, 2 workouts).
-3. **Muscles this week** card: a title with a large green percentage under it (e.g. "9%"), a small expand icon at the top right (opens the diagram full screen), and a big front and back body diagram with every muscle trained this week highlighted in green (primary bright, secondary pale). My reading of the percentage (not stated in the video): the share of the app's muscle regions that were trained at least once in the current Monday-to-Sunday week. Show the formula in a tooltip or the full-screen view so it is not a mystery.
-4. **Week Overview** card: title "Week Overview" with a "Start Workout" pill at the right (starts today's planned workout; disabled if none), and the same 7-day strip as the Workout tab (green circle = completed day, light blue number = rest day, white = planned). Tapping a day jumps to that day on the Workout tab.
+3. **Muscles this week** card: a title with a large accent-colored percentage under it (e.g. "9%"), a small expand icon at the top right (opens the diagram full screen), and a big front and back body diagram with every muscle trained this week highlighted (primary `--accent`, secondary `--accent-soft`). My reading of the percentage (not stated in the video): the share of the app's muscle regions that were trained at least once in the current Monday-to-Sunday week. Show the formula in a tooltip or the full-screen view so it is not a mystery.
+4. **Week Overview** card: title "Week Overview" with a "Start Workout" pill at the right (starts today's planned workout; disabled if none), and the same 7-day strip as the Workout tab (filled accent circle = completed day, teal number = rest day, dark number = planned). Tapping a day jumps to that day on the Workout tab.
 Nothing else on this tab. No streaks, no levels, no trophies, no leaderboard, no upsell cards.
 
 ## Build order
 1. Scaffold Vite + PWA, Tailwind, Dexie schema
-2. Exercise dataset build script, canonical muscle mapping, seeding, `MuscleMap` component, exercise library and detail screens
+2. Curated exercise list and build script, muscle region mapping, seeding, detailed `MuscleMap` component (with `/dev/muscles` check page), exercise library and detail screens
 3. Workout tab: week strip, day cards, plan-the-day sheet, Workouts screen, Create/Edit workout flow (see "Workout tab" section)
 4. Active workout logging with autosave and resume (Start Workout from the tab opens this)
-6. History and previous-performance display
-7. Templates
-8. PR detection and progress charts
-9. Profile tab (totals, muscles this week, week overview)
-10. PWA polish (icons, install prompt, offline test)
-11. Phase 2: Fastify + SQLite backup/sync
+5. History and previous-performance display
+6. Templates
+7. PR detection and progress charts
+8. Profile tab (totals, muscles this week, week overview)
+9. PWA polish (icons, install prompt, offline test)
+10. Phase 2: Fastify + SQLite backup/sync
 
 ## Quality bar
 - Logging a set should take at most 2 taps after entering numbers.
