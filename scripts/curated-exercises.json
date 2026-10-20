@@ -55,7 +55,7 @@
 {"name":"Straight-Arm Pulldown","aliases":["straight arm lat pulldown","stiff arm pulldown","cable pullover"],"classification":"Cable","primaryMuscles":["lats"],"secondaryMuscles":["teres","triceps-long"]},
 {"name":"Machine Pullover","aliases":["pullover machine","nautilus pullover"],"classification":"Machine","primaryMuscles":["lats"],"secondaryMuscles":["teres","chest"]},
 {"name":"Seated Cable Row","aliases":["cable row","low row","seated row","v grip cable row"],"classification":"Cable","primaryMuscles":["lats","mid-back"],"secondaryMuscles":["biceps","delt-rear","erector-spinae"]},
-{"name":"Close Grip Row","aliases":["close grip cable row","close-grip seated row","v-bar row","narrow grip row"],"classification":"Cable","primaryMuscles":["lats","mid-back"],"secondaryMuscles":["biceps","delt-rear"]},
+{"name":"Close Grip Row","aliases":["close grip machine row","neutral grip row","neutral grip machine row","close-grip seated row","narrow grip row"],"classification":"Machine","primaryMuscles":["lats","mid-back"],"secondaryMuscles":["biceps","delt-rear"]},
 {"name":"Wide-Grip Seated Cable Row","aliases":["wide grip cable row","wide cable row"],"classification":"Cable","primaryMuscles":["mid-back","delt-rear"],"secondaryMuscles":["lats","biceps"]},
 {"name":"Single-Arm Cable Row","aliases":["one arm cable row","unilateral cable row"],"classification":"Cable","primaryMuscles":["lats"],"secondaryMuscles":["mid-back","biceps"]},
 {"name":"Seated Row Machine","aliases":["machine row","chest supported row machine","seated machine row"],"classification":"Machine","primaryMuscles":["mid-back","lats"],"secondaryMuscles":["biceps","delt-rear"]},
