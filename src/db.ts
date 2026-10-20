@@ -78,7 +78,7 @@ db.on('versionchange', () => {
 })
 
 // Bump when exercises.seed.json changes.
-const SEED_VERSION = 8
+const SEED_VERSION = 9
 
 type SeedRow = Omit<Exercise, 'updatedAt'> & { legacyIds?: string[] }
 
@@ -144,8 +144,6 @@ export const uuid = (): string => {
 export type Unit = 'kg' | 'lb'
 /** Weights are stored in kg; each exercise remembers the unit it's shown/entered in (default kg). */
 export const unitOf = (e?: { unit?: Unit }): Unit => e?.unit ?? 'kg'
-
-export const IMAGE_BASE = 'https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/'
 
 export const isBodyweight = (e: Exercise) => e.equipment === 'body only'
 /** Holds and similar: logged as mm:ss instead of reps. */

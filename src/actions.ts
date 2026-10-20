@@ -83,7 +83,13 @@ export async function setUnilateral(weId: string, on: boolean) {
 }
 
 /** Save a field and re-evaluate "logged" + PR for the row. */
-export async function updateSet(id: string, patch: Partial<Pick<WSet, 'weight' | 'reps' | 'durationSec'>>) {
+/** One transaction per save: Dexie queues overlapping read-write transactions on the same tables, so a weight save
+ *  and a reps save fired back to back can't both read the old row and leave the set marked as not logged. */
+export function updateSet(id: string, patch: Partial<Pick<WSet, 'weight' | 'reps' | 'durationSec'>>) {
+  return db.transaction('rw', db.sets, db.exercises, db.workoutLogs, () => saveSet(id, patch))
+}
+
+async function saveSet(id: string, patch: Partial<Pick<WSet, 'weight' | 'reps' | 'durationSec'>>) {
   const s = await db.sets.get(id)
   if (!s) return
   const next = { ...s, ...patch }

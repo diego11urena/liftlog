@@ -35,12 +35,6 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,svg,png,json}'],
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
         navigateFallbackDenylist: [/^\/api\//],
-        runtimeCaching: [{
-          // Exercise photos: cached the first time they're viewed.
-          urlPattern: /^https:\/\/raw\.githubusercontent\.com\/yuhonas\/free-exercise-db\//,
-          handler: 'CacheFirst',
-          options: { cacheName: 'exercise-images', expiration: { maxEntries: 2000 }, cacheableResponse: { statuses: [0, 200] } },
-        }],
       },
     }),
   ],

@@ -38,7 +38,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-## Exercise instructions and photos
+## Exercise data
 
-- **Source:** free-exercise-db (https://github.com/yuhonas/free-exercise-db). **License:** The Unlicense
-  (public domain). Used only for instructions/photos of curated exercises that match a dataset entry.
+The exercise list (`scripts/curated-exercises.json`) is written by hand. No third-party exercise dataset, instructions or photos are used.

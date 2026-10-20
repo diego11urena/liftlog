@@ -10,7 +10,7 @@ import { bySetOrder, logSummary, useExerciseHistory, useExercises } from '../hoo
 import { fmtClock, fmtDate, fmtDuration, fmtVolume, fmtWeight, fromDisplay, toDisplay } from '../lib'
 import MuscleMap from '../MuscleMap'
 import { ask, Busy, Icon, Pager, RoundBtn, Sheet, Tile, TopBar } from '../ui'
-import Library, { HowTo, label } from './Library'
+import Library, { label } from './Library'
 
 /** Logging screen. Active sessions get the timer/End flow; finished ones (from Stats) are editable with Delete. */
 export default function Session({ logId, onEnded, onClose }: { logId: string; onEnded?: (logId: string) => void; onClose?: () => void }) {
@@ -92,7 +92,6 @@ function ExerciseCard({ we, ex, log, onReplace, onMove, first, last }: {
   const rows = useLiveQuery(() => db.sets.where('workoutExerciseId').equals(we.id).toArray().then((r) => r.sort(bySetOrder)), [we.id])
   const hist = useExerciseHistory(ex.id, log.id, log.status === 'active' ? Infinity : log.startedAt)
   const [menu, setMenu] = useState(false)
-  const [info, setInfo] = useState(false)
   const timed = isTimed(ex), bw = isBodyweight(ex)
 
   if (!rows) return null
@@ -100,9 +99,11 @@ function ExerciseCard({ we, ex, log, onReplace, onMove, first, last }: {
   for (const r of rows) if (!setNo.has(r.order)) setNo.set(r.order, setNo.size + 1)
 
   /** Last session's value for the same set (falls back to the saved workout's plan). */
+  /** Gray hint = the last set you did of this exercise: the latest logged set above this row in this workout,
+   *  else the last set of your previous session, else the saved workout's numbers (owner, 2026-10-19). */
   const placeholder = (r: WSet) => {
-    const l = hist?.last?.sets
-    const m = l?.find((s) => s.order === r.order && s.side === r.side) ?? l?.find((s) => s.order === r.order)
+    const lastOf = (l: WSet[]) => l.filter((s) => s.side === r.side).at(-1) ?? l.at(-1) // prefer the same side (R/L)
+    const m = lastOf(rows.filter((s) => s.completedAt && s.order < r.order)) ?? lastOf(hist?.last?.sets ?? [])
     if (m) return m
     const plan = we.planSets?.filter((s) => s.side === r.side || (!s.side && !r.side))
     const p = plan?.[r.order]
@@ -119,7 +120,6 @@ function ExerciseCard({ we, ex, log, onReplace, onMove, first, last }: {
     <section className="card p-4">
       <div className="mb-1 flex items-start gap-2">
         <h2 className="min-w-0 flex-1 text-xl font-bold leading-tight">{ex.name}</h2>
-        {(ex.instructions.length > 0 || ex.images.length > 0) && <RoundBtn icon="info" label="How to" onClick={() => setInfo(true)} />}
         <RoundBtn icon="dots" label="Exercise options" onClick={() => setMenu(true)} />
       </div>
       <label className="mb-3 flex w-fit items-center gap-2 text-sm text-muted">
@@ -128,20 +128,12 @@ function ExerciseCard({ we, ex, log, onReplace, onMove, first, last }: {
         Unilateral
       </label>
 
-      {/* Last workout + PR at a glance */}
-      <div className="panel mb-3 grid grid-cols-2 gap-2 p-3 text-sm">
-        {hist?.last ? (
-          <div>
-            <div className="text-xs text-muted">Last · {fmtDate(hist.last.date)}</div>
-            <div className="font-semibold">{hist.last.sets.map((s) => `${fmtWeight(s.weight, unit)}×${s.reps ?? (s.durationSec ? fmtClock(s.durationSec) : '–')}`).join(', ')}</div>
-          </div>
-        ) : <div className="text-muted">{hist ? 'No history yet' : '…'}</div>}
-        <div className="text-right">
-          <div className="text-xs text-muted">PR</div>
-          {hist?.top ? (
-            <div className="font-semibold text-accent">{fmtWeight(hist.top.weight, unit)}{hist.top.weight != null && ` ${unit}`} × {hist.top.reps}</div>
-          ) : <div className="text-muted">–</div>}
-        </div>
+      {/* PR at a glance, e.g. "20kg 10 reps" (last session's numbers are the gray hints in the boxes) */}
+      <div className="panel mb-3 flex items-baseline justify-between gap-2 px-3 py-2.5">
+        <span className="text-xs font-semibold uppercase tracking-wide text-muted">PR</span>
+        {hist?.top
+          ? <span className="font-bold text-accent">{hist.top.weight == null ? 'BW' : `${fmtWeight(hist.top.weight, unit)}${unit}`} {hist.top.reps} reps</span>
+          : <span className="text-sm text-muted">{hist ? 'No PR yet' : '…'}</span>}
       </div>
 
       <div className="mb-1 flex items-center gap-2 text-xs text-muted">
@@ -205,7 +197,6 @@ function ExerciseCard({ we, ex, log, onReplace, onMove, first, last }: {
           </div>
         </Sheet>
       )}
-      {info && <Sheet label="How to" onClose={() => setInfo(false)}><div className="p-4"><h2 className="mb-2 text-lg font-bold">{ex.name}</h2><HowTo e={ex} /></div></Sheet>}
     </section>
   )
 }

@@ -1,7 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useState } from 'react'
 import { Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
-import { db, IMAGE_BASE, MUSCLE_GROUPS, unitOf, MUSCLES, uuid, type Exercise, type Muscle } from '../db'
+import { db, MUSCLE_GROUPS, unitOf, MUSCLES, uuid, type Exercise, type Muscle } from '../db'
 import { loggedSetsFor, useExerciseHistory, useExercises } from '../hooks'
 import { bests, fmtDate, fmtWeight, toDisplay, volume } from '../lib'
 import MuscleMap from '../MuscleMap'
@@ -211,20 +211,6 @@ function ExerciseDetail({ id, onBack, onAdd, onEdit }: { id: string; onBack: () 
           <button className="btn-accent w-full" onClick={() => onAdd(id)}>Add Exercise</button>
         </div>
       )}
-    </div>
-  )
-}
-
-export function HowTo({ e }: { e: Exercise }) {
-  return (
-    <div className="card p-4">
-      <h2 className="mb-2 font-bold">How to</h2>
-      {e.images.length > 0 && (
-        <div className="no-scrollbar mb-3 flex snap-x gap-2 overflow-x-auto">
-          {e.images.map((src) => <img key={src} src={IMAGE_BASE + src} alt="" loading="lazy" className="h-40 snap-start rounded-2xl bg-panel" />)}
-        </div>
-      )}
-      <ol className="list-decimal space-y-2 pl-5 text-sm text-muted">{e.instructions.map((s, i) => <li key={i}>{s}</li>)}</ol>
     </div>
   )
 }

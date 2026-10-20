@@ -35,7 +35,7 @@ export default function App() {
   return (
     // Fixed full-screen frame: only <main> scrolls, the page never does, so the iOS keyboard can't
     // leave the layout shifted and the tab bar always sits at the bottom.
-    <div className="phone-fixed inset-y-0 flex flex-col bg-bg">
+    <div className="app-frame phone-fixed inset-y-0 flex flex-col bg-bg">
       <main key={tab} className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain">
         {tab === 'Profile' && <Profile onJump={(k) => { setDate(k); setTab('Workout') }} />}
         {tab === 'Workout' && <WorkoutTab date={date} setDate={setDate} />}
