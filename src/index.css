@@ -28,6 +28,9 @@
   --color-rest: var(--rest); --color-danger: var(--danger); --color-scrim: var(--scrim);
 }
 
+/* the page itself never scrolls or rubber-bands sideways; swipeable rows (exercise pager, day cards, chips)
+   scroll inside their own containers, so they still work */
+html, body { overflow-x: hidden; overflow-x: clip; overscroll-behavior-x: none; }
 html { background: var(--panel); }
 body { color: var(--text); -webkit-tap-highlight-color: transparent; overscroll-behavior-y: none; font-family: system-ui, -apple-system, 'SF Pro Text', Roboto, sans-serif; }
 /* 16px+ inputs: no iOS zoom-on-focus */

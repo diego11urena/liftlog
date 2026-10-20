@@ -24,7 +24,7 @@ Plain data is fine and wanted: PRs shown as facts, volume, time, history, charts
 
 ## Stack
 - React + TypeScript + Vite, `vite-plugin-pwa` (Workbox) for manifest and service worker
-- Tailwind CSS, mobile-first (design for a ~390px phone screen, thumb-reachable controls). The app is only ever used as an installed PWA on a phone, so it ALWAYS renders as a phone: max 430px wide and centered, even on a desktop browser. Fixed bars and sheets stay inside that frame.
+- Tailwind CSS, mobile-first (design for a ~390px phone screen, thumb-reachable controls). The app is only ever used as an installed PWA on a phone, so it ALWAYS renders as a phone: max 430px wide and centered, even on a desktop browser. Fixed bars and sheets stay inside that frame. The page never scrolls or rubber-bands horizontally (owner, 2026-10-19); only swipe rows (exercise pager, day cards, chip rows) scroll sideways, inside their own containers.
 - Dexie (IndexedDB) as the primary data store
 - Recharts for charts
 - Optional phase 2: small Node (Fastify) + SQLite server on the home network that serves the built app and offers backup/sync endpoints
