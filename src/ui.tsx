@@ -3,7 +3,7 @@ import { addDays, dateKey } from './lib'
 
 // Original stroke icons (24×24).
 const PATHS = {
-  chevL: 'M15 18l-6-6 6-6', chevR: 'M9 18l6-6-6-6', plus: 'M12 5v14M5 12h14', x: 'M6 6l12 12M18 6 6 18',
+  chevL: 'M15 18l-6-6 6-6', chevR: 'M9 18l6-6-6-6', chevD: 'M6 9l6 6 6-6', plus: 'M12 5v14M5 12h14', x: 'M6 6l12 12M18 6 6 18',
   dots: 'M5 12h.01M12 12h.01M19 12h.01',
   moon: 'M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z',
   bell: 'M9 8.5a3 3 0 0 1 6 0M8 8.5h8l1.6 3.2A6.2 6.2 0 1 1 6.4 11.7Z', // kettlebell

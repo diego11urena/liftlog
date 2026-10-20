@@ -144,16 +144,8 @@ function ExerciseCard({ we, ex, log, onReplace, onMove, first, last }: {
 
       <div className="mb-1 flex items-center gap-2 text-xs text-muted">
         <span className="w-[4.25rem] shrink-0" />
-        <span className="flex flex-1 items-center justify-center gap-1.5">
-          Weight
-          {/* a <select> opens the native wheel picker on iPhone; the choice is remembered for this exercise */}
-          <select aria-label={`Weight unit for ${ex.name}`} value={unit} onChange={(e) => setUnit(e.target.value as Unit)}
-            className="rounded-full bg-panel px-2.5 py-0.5 font-semibold text-fg outline-none focus:ring-2 focus:ring-accent">
-            <option value="kg">kg</option>
-            <option value="lb">lb</option>
-          </select>
-        </span>
-        <span className="w-2" />
+        <span className="flex-1 text-center">Weight</span>
+        <span className="w-[4.25rem] shrink-0" />
         <span className="flex-1 text-center">{timed ? 'Time' : 'Reps'}</span>
         <span className="w-7 shrink-0" />
       </div>
@@ -168,8 +160,9 @@ function ExerciseCard({ we, ex, log, onReplace, onMove, first, last }: {
               </span>
               <button aria-label="Copy previous set" className="grid size-9 shrink-0 place-items-center text-accent" onClick={() => copyRow(r)}><Icon name="repeat" className="size-5" /></button>
               <NumField kind="weight" label={`Set ${n}${r.side ? ' ' + r.side : ''} weight (${unit})`} value={toDisplay(r.weight, unit)}
-                placeholder={ph?.weight != null ? String(toDisplay(ph.weight, unit)) : bw ? 'BW' : unit}
+                placeholder={ph?.weight != null ? String(toDisplay(ph.weight, unit)) : bw ? 'BW' : '0'}
                 onSave={(v) => updateSet(r.id, { weight: v == null ? null : fromDisplay(v, unit) })} />
+              <UnitPicker unit={unit} label={`Weight unit for ${ex.name}`} onChange={setUnit} />
               <span className="text-muted">×</span>
               {timed
                 ? <NumField kind="time" label={`Set ${n}${r.side ? ' ' + r.side : ''} time`} value={r.durationSec}
@@ -209,6 +202,21 @@ function ExerciseCard({ we, ex, log, onReplace, onMove, first, last }: {
       )}
       {info && <Sheet label="How to" onClose={() => setInfo(false)}><div className="p-4"><h2 className="mb-2 text-lg font-bold">{ex.name}</h2><HowTo e={ex} /></div></Sheet>}
     </section>
+  )
+}
+
+/** kg/lb pill beside the weight. A real <select>, so iPhone opens its native wheel picker; every row of an
+ *  exercise shows the same value because the unit is saved on the exercise. */
+function UnitPicker({ unit, label, onChange }: { unit: Unit; label: string; onChange: (u: Unit) => void }) {
+  return (
+    <span className="relative shrink-0">
+      <select aria-label={label} value={unit} onChange={(e) => onChange(e.target.value as Unit)}
+        className="h-11 w-14 appearance-none rounded-xl border-2 border-accent bg-card pl-2.5 pr-5 font-semibold text-accent outline-none focus:ring-2 focus:ring-accent">
+        <option value="kg">kg</option>
+        <option value="lb">lb</option>
+      </select>
+      <Icon name="chevD" className="pointer-events-none absolute right-1.5 top-1/2 size-3.5 -translate-y-1/2 text-accent" />
+    </span>
   )
 }
 

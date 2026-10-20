@@ -164,7 +164,7 @@ Tapping **Start Workout** slides the Workout tab into this screen. The bottom ta
 
 **Number entry: the iPhone's native numeric keypad** (owner decision 2026-10-19; the reference's custom number pad with ±step / copy / Next / plate keys is NOT built). Weight fields use `inputmode="decimal"`, reps and time fields `inputmode="numeric"`. Time is typed as digits (`130` = 1:30). Empty time fields show `--:--`.
 
-**kg / lb per exercise** (owner decision 2026-10-19): a small picker (a `<select>`, so iPhone shows its native wheel) sits in the header above the weight column of each exercise card. The choice is saved on the exercise (`exercises.unit`, default kg) and used everywhere that exercise's weights are shown. Weights are always stored in kg; totals that mix exercises (volume tiles, profile totals) show kg. Drop sets step down in 2.5 kg / 5 lb.
+**kg / lb per exercise** (owner decision 2026-10-19): a clearly visible kg ⌄ / lb ⌄ pill (a `<select>`, so iPhone shows its native wheel) sits right beside the weight field on every set row; all rows of an exercise share the value. The choice is saved on the exercise (`exercises.unit`, default kg) and used everywhere that exercise's weights are shown. Weights are always stored in kg; totals that mix exercises (volume tiles, profile totals) show kg. Drop sets step down in 2.5 kg / 5 lb.
 
 **Rest timer bar**: NOT built (owner decision 2026-10-19). Workout notes live in the exercise card's "..." menu and the review screen instead.
 
