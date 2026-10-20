@@ -167,7 +167,7 @@ function ExerciseCard({ we, ex, log, focus, setFocus, onReplace, onMove, first, 
     let shown: string, dim = false
     if (isF && focus.text !== null) shown = f === 'time' ? fmtDigits(focus.text) : focus.text
     else if (v != null) shown = f === 'time' ? fmtClock(v) : String(v)
-    else { shown = phText || (f === 'weight' ? (bw ? 'BW' : unit + 's') : f === 'time' ? '0:00' : 'reps'); dim = true }
+    else { shown = phText || (f === 'weight' ? (bw ? 'BW' : unit + 's') : f === 'time' ? '--:--' : 'reps'); dim = true }
     return (
       <button aria-label={`Set ${setNo.get(r.order)}${r.side ? ' ' + r.side : ''} ${f}`}
         onClick={() => setFocus({ setId: r.id, field: f, text: null })}
@@ -264,23 +264,20 @@ const Key = ({ k, onKey, children, className = '', disabled }: { k: string; onKe
 function Numpad({ field, onKey, step }: { field: Field; onKey: (k: string) => void; step: number }) {
   return (
     <div className="phone-fixed bottom-0 z-[55] border-t border-line bg-card px-2 pb-[calc(.5rem+env(safe-area-inset-bottom))] pt-2 slide-up" role="group" aria-label="Number pad">
-      <div className="grid grid-cols-[1fr_3fr_1fr] gap-2">
-        <div className="grid gap-2">
-          <Key onKey={onKey} k="+" className="text-base text-accent">+{step}</Key>
-          <Key onKey={onKey} k="-" className="text-base text-accent">−{step}</Key>
-          <Key onKey={onKey} k="hide"><Icon name="kbd" /></Key>
-          <span />
-        </div>
-        <div className="grid grid-cols-3 gap-2">
-          {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((d) => <Key onKey={onKey} key={d} k={d}>{d}</Key>)}
-          <Key onKey={onKey} k="." disabled={field !== 'weight'}>.</Key>
-          <Key onKey={onKey} k="0">0</Key>
-          <Key onKey={onKey} k="back"><Icon name="back" /></Key>
-        </div>
-        <div className="grid grid-rows-[auto_1fr] gap-2">
-          <Key onKey={onKey} k="copy" className="text-accent"><Icon name="repeat" /></Key>
-          <button onClick={() => onKey('next')} className="rounded-2xl bg-accent text-lg font-bold text-on-accent active:opacity-80">Next</button>
-        </div>
+      {/* Same arrangement as the reference: steps left, digits center, copy / tall Next / hide right */}
+      <div className="grid grid-cols-5 grid-rows-4 gap-2">
+        <Key onKey={onKey} k="+" className="text-base text-accent">+{step}</Key>
+        {['1', '2', '3'].map((d) => <Key onKey={onKey} key={d} k={d}>{d}</Key>)}
+        <Key onKey={onKey} k="copy" className="text-accent"><Icon name="repeat" /></Key>
+        <Key onKey={onKey} k="-" className="text-base text-accent">−{step}</Key>
+        {['4', '5', '6'].map((d) => <Key onKey={onKey} key={d} k={d}>{d}</Key>)}
+        <button onClick={() => onKey('next')} className="row-span-2 rounded-2xl bg-accent text-lg font-bold text-on-accent active:opacity-80">Next</button>
+        <span className="row-span-2" />
+        {['7', '8', '9'].map((d) => <Key onKey={onKey} key={d} k={d}>{d}</Key>)}
+        <Key onKey={onKey} k="." disabled={field !== 'weight'}>.</Key>
+        <Key onKey={onKey} k="0">0</Key>
+        <Key onKey={onKey} k="back"><Icon name="back" /></Key>
+        <Key onKey={onKey} k="hide"><Icon name="kbd" /></Key>
       </div>
     </div>
   )
@@ -365,9 +362,12 @@ export function Summary({ logId, onBack }: { logId: string; onBack: () => void }
   if (!log || !s) return null
   return (
     <div className="pb-8">
-      <TopBar title={log.name} onBack={onBack} sub={fmtDate(log.startedAt)} />
+      <TopBar title="Workout Summary" onBack={onBack} />
       <div className="space-y-3 px-4">
-        <div className="card py-6"><MuscleMap primary={s.primary} secondary={s.secondary} /></div>
+        <div className="card py-4">
+          <h2 className="mb-3 px-4 text-lg font-bold">{log.name} <span className="text-sm font-normal text-muted">· {fmtDate(log.startedAt)}</span></h2>
+          <MuscleMap primary={s.primary} secondary={s.secondary} />
+        </div>
         <div className="flex gap-2">
           <Tile label="Time" value={fmtDuration((log.endedAt ?? Date.now()) - log.startedAt)} icon="timer" />
           <Tile label="Volume" value={fmtVolume(s.volume, unit)} icon="dumbbell" />

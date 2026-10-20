@@ -165,13 +165,14 @@ Tapping **Start Workout** slides the Workout tab into this screen. The bottom ta
 **Custom number pad** (replaces the system keyboard, docked at the bottom, covers the tab bar while open):
 - Layout: left column with step buttons (**+2.5 / -2.5** when editing weight, **+1 / -1** when editing reps) and a stacked-lines icon; center digits 1-9, 0, "." (dimmed for reps) and backspace; right column with a copy icon (copy previous set's value), a tall **Next** button (jumps to the next field: weight, then reps, then the next row), and a keyboard-hide icon.
 - The field being edited shows a text cursor. Weight step size should be configurable (2.5 kg / 5 lb default).
+- Checked against the recording (2026-10-19): the stacked-lines key only appears while editing weight (probably a plate calculator); not built yet, pending owner confirmation. Empty time fields show `--:--`.
 
 **Rest timer bar**: NOT built (owner decision 2026-10-19). Workout notes live in the exercise card's "..." menu and the review screen instead.
 
 **Ending a workout**
 1. **End Workout** (the header pill) opens the **review screen** (not a confirmation). Header: back chevron, workout name centered, pencil icon on the right (edit sets). Content, top to bottom: a note "Review your workout before you finish. You can go back to edit your sets", two stat tiles (**Total Time**, **Volume** in kgs), the body diagram of muscles trained with a muscle-name chip (e.g. "Quads"), a **PRs** card listing each new PR as exercise name + weight x reps with a star icon, then one card per exercise with every set listed (Set 1, Set 2... with R/L rows and weight x reps).
 2. Two pinned buttons at the bottom: outlined **Save Workout** and accent **End Workout**. End Workout shows a spinner, logs the session, and goes to the summary. Save Workout = save this session's exercises, sets, and weights back to the saved workout (so next time starts from them) and keep the session open (confirmed by owner 2026-10-19).
-3. **Workout summary** screen: back chevron, workout name, large body diagram of muscles trained, two tiles (**Time**, **Volume**), and a **Back to Home** button. No Share button.
+3. **Workout summary** screen: back chevron and the title "Workout Summary"; a card with the workout name, large body diagram of muscles trained, two tiles (**Time**, **Volume**), and a **Back to Home** button. No Share button.
 4. Back on the Workout tab, that day's circle is now a filled accent circle and its card shows the "Workout Review" card described above.
 
 **Definitions**

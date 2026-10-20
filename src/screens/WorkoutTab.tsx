@@ -68,8 +68,8 @@ function Home({ date, setDate, go }: { date: string; setDate: (k: string) => voi
   }
   const cur = pages[Math.min(page, pages.length - 1)]
   const doneDay = !!data?.logs.length
-  const title = !cur ? '' : cur.kind === 'review' ? cur.log.name : cur.kind === 'planned' ? cur.workout.name : cur.kind === 'rest' ? 'Rest Day'
-    : cur.kind === 'activity' ? 'Activity' : cur.kind === 'none' ? 'No Workout' : isToday ? 'Freestyle' : 'Not Planned Yet'
+  const title = !cur ? '' : cur.kind === 'review' ? cur.log.name : cur.kind === 'planned' ? cur.workout.name : cur.kind === 'rest' ? 'Rest'
+    : cur.kind === 'activity' ? 'Activity' : cur.kind === 'none' ? 'No Workout' : isToday ? 'Freestyle' : 'Not Planned Yet!'
   const canStart = isToday && !!cur && (cur.kind === 'planned' || cur.kind === 'empty' || cur.kind === 'activity')
   const start = () => {
     if (!cur || !canStart) return
