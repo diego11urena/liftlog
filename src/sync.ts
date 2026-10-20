@@ -62,10 +62,10 @@ export async function sync() {
 
 /** One-time move to a new address: `#import=<gzip+base64url JSON of rows>` (made by scripts/export-link.ts).
  *  The part after # never leaves the phone. Rows merge like sync (newer wins), so opening it twice is harmless. */
-export async function importFromLink() {
-  const m = location.hash.match(/^#import=([A-Za-z0-9_-]+)$/)
+export async function importFromLink(text = location.hash) {
+  const m = text.trim().match(/#import=([A-Za-z0-9_-]+)$/)
   if (!m) return 0
-  history.replaceState(null, '', location.pathname)
+  if (text === location.hash) history.replaceState(null, '', location.pathname)
   const bytes = Uint8Array.from(atob(m[1].replace(/-/g, '+').replace(/_/g, '/')), (c) => c.charCodeAt(0))
   const json = await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'))).text()
   const changes = JSON.parse(json) as Change[]

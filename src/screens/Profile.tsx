@@ -1,6 +1,8 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useState } from 'react'
 import { eraseAll, startSession } from '../actions'
+import { toast } from '../App'
+import { importFromLink } from '../sync'
 import { db, MUSCLES } from '../db'
 import { musclesOf, useActiveLog, useExercises, useWeekStatus } from '../hooks'
 import { addDays, dateKey, fmtDuration, fmtVolume, sundayOf, volume, weekStart } from '../lib'
@@ -96,6 +98,26 @@ const Total = ({ icon, value, label }: { icon: IconName; value: string; label: s
   </div>
 )
 
+/** One-time move from another address: paste the #import= link (Home Screen apps don't share Safari's storage). */
+function ImportBox() {
+  const [text, setText] = useState('')
+  const run = async () => {
+    try {
+      const n = await importFromLink(text)
+      toast(n ? `Imported ${n} items` : 'That doesn\'t look like an import link')
+      if (n) setText('')
+    } catch (e) { toast(`Import failed: ${(e as Error).message}`) }
+  }
+  return (
+    <div className="card p-4">
+      <h3 className="mb-1 font-bold">Move data here</h3>
+      <p className="mb-3 text-sm text-muted">Paste a Liftlog import link to bring workouts over from another address. Existing data is kept.</p>
+      <textarea className="field mb-2 min-h-20 py-3 text-sm" placeholder="https://…/#import=…" value={text} onChange={(e) => setText(e.target.value)} />
+      <button className="btn-accent w-full" disabled={!text.includes('#import=')} onClick={run}>Import</button>
+    </div>
+  )
+}
+
 function SettingsSheet({ onClose }: { onClose: () => void }) {
   return (
     <Sheet label="Settings" onClose={onClose}>
@@ -105,6 +127,7 @@ function SettingsSheet({ onClose }: { onClose: () => void }) {
       </div>
       <div className="space-y-3 px-4 pb-6">
         <p className="text-sm text-muted">Weight units are picked per exercise, right next to the weight while you log.</p>
+        <ImportBox />
         <div className="card p-4">
           <h3 className="mb-1 font-bold text-danger">Danger zone</h3>
           <p className="mb-3 text-sm text-muted">Erases every workout, plan, custom exercise and setting on this device. This can't be undone.</p>
