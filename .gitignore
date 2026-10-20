@@ -32,3 +32,4 @@ dist-ssr
 
 # sync server data (SQLite)
 server/data/
+.vercel

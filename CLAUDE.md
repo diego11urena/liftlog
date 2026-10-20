@@ -29,11 +29,11 @@ Plain data is fine and wanted: PRs shown as facts, volume, time, history, charts
 - Recharts for charts
 - Optional phase 2: small Node (Fastify) + SQLite server on the home network that serves the built app and offers backup/sync endpoints
 
-## Hosting on Wi-Fi (important)
-Service workers and "Add to Home Screen" install need HTTPS (localhost is the only exception). Plain `http://192.168.x.x` will NOT install as a PWA.
-- Default plan: run the server on my computer and expose it with **Tailscale** (`tailscale serve`) for a trusted HTTPS URL that also works away from home.
-- Fallback: `mkcert` local certificate for LAN-only use.
-- Document the exact commands in README.md.
+## Hosting (owner decision 2026-10-19)
+The app is a free PWA used only on the owner's iPhone, anywhere (Wi-Fi or cellular), never on the Mac.
+- Hosted as a static site on the owner's free Vercel Hobby account: project `liftlog`, https://liftlog-livid.vercel.app. Deploy with `npx vercel deploy --prod`. Install from Safari → Share → Add to Home Screen.
+- All data lives on the phone (IndexedDB, persistent storage requested). There is no server in production: `/api/sync` returns 404 there and the app stops trying to sync.
+- The Mac sync server (`server/`, `npm run serve`, `npm run install-service`) still exists for local use, and `scripts/export-link.ts` turns its SQLite copy into a one-time `#import=` link that moves data to a new address. The Tailscale plan is dropped.
 
 ## Core features (MVP)
 1. **Active workout screen**: add exercises, log sets (weight x reps; a set counts as logged once both are filled, there is no separate done checkbox), add/remove/reorder exercises, per-exercise and workout notes, workout timer.

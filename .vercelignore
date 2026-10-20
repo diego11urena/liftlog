@@ -1,0 +1,4 @@
+server/data/
+CLAUDE.backup-before-merge.md
+*.pem
+.env*

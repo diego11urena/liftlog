@@ -23,9 +23,10 @@ function installHooks() {
   }
 }
 
-let running = false, again = false
+let running = false, again = false, noServer = false
 
 export async function sync() {
+  if (noServer) return
   if (running) { again = true; return }
   running = true
   try {
@@ -42,6 +43,8 @@ export async function sync() {
     let seq = meta.seq, more = true
     while (more) {
       const res = await fetch('/api/sync', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ since: seq, changes }) })
+      // a static host (e.g. Vercel) has no sync server: stop trying; data simply lives on this device
+      if (res.status === 404 || res.status === 405) { noServer = true; return }
       if (!res.ok) throw new Error(`sync ${res.status}`)
       const body = (await res.json()) as { seq: number; more: boolean; changes: Change[] }
       await apply(body.changes)
@@ -55,6 +58,19 @@ export async function sync() {
     running = false
     if (again) { again = false; soon() }
   }
+}
+
+/** One-time move to a new address: `#import=<gzip+base64url JSON of rows>` (made by scripts/export-link.ts).
+ *  The part after # never leaves the phone. Rows merge like sync (newer wins), so opening it twice is harmless. */
+export async function importFromLink() {
+  const m = location.hash.match(/^#import=([A-Za-z0-9_-]+)$/)
+  if (!m) return 0
+  history.replaceState(null, '', location.pathname)
+  const bytes = Uint8Array.from(atob(m[1].replace(/-/g, '+').replace(/_/g, '/')), (c) => c.charCodeAt(0))
+  const json = await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'))).text()
+  const changes = JSON.parse(json) as Change[]
+  await apply(changes)
+  return changes.length
 }
 
 /** Take the server's rows where they're newer than ours. */
