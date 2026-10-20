@@ -5,6 +5,8 @@ All data stays on this device's browser storage (there is no export/backup by de
 
 ## Run
 
+`npm run serve` builds and starts the server (app + sync) on :4173. Every device that opens it syncs its data through the Mac (`server/data/liftlog.sqlite`, git-ignored; back up that file).
+
 ```sh
 npm install
 npm run dev          # http://localhost:5173 (also on your LAN, but see HTTPS below)

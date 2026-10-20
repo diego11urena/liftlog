@@ -8,7 +8,8 @@ import { VitePWA } from 'vite-plugin-pwa'
 const https = existsSync('cert.pem') ? { cert: readFileSync('cert.pem'), key: readFileSync('key.pem') } : undefined
 
 export default defineConfig({
-  server: { host: true, https },
+  // `npm run dev` talks to the sync server started with `npm run serve`
+  server: { host: true, https, proxy: { '/api': 'http://localhost:4173' } },
   preview: { host: true, https },
   plugins: [
     react(),
@@ -33,6 +34,7 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,json}'],
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+        navigateFallbackDenylist: [/^\/api\//],
         runtimeCaching: [{
           // Exercise photos: cached the first time they're viewed.
           urlPattern: /^https:\/\/raw\.githubusercontent\.com\/yuhonas\/free-exercise-db\//,

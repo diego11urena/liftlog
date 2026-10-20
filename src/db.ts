@@ -36,6 +36,8 @@ export type WSet = Row & {
   completedAt: number; isPR: boolean
 }
 export type Setting = { key: string; value: unknown }
+/** A local delete, kept until it's been sent to the sync server. */
+export type Tombstone = { key: string; tbl: string; id: string; deletedAt: number }
 
 export const db = new Dexie('liftlog') as Dexie & {
   exercises: EntityTable<Exercise, 'id'>
@@ -45,6 +47,7 @@ export const db = new Dexie('liftlog') as Dexie & {
   workoutExercises: EntityTable<WorkoutExercise, 'id'>
   sets: EntityTable<WSet, 'id'>
   settings: EntityTable<Setting, 'key'>
+  tombstones: EntityTable<Tombstone, 'key'>
 }
 
 db.version(1).stores({
@@ -56,6 +59,15 @@ db.version(1).stores({
   sets: 'id, workoutExerciseId, logId, [exerciseId+completedAt]',
   settings: 'key',
 })
+db.version(2).stores({ tombstones: 'key, deletedAt' })
+
+/** While on, writes aren't re-stamped or logged for sync: applying another device's changes, and the local seed. */
+export const quiet = { on: false }
+export async function quietly<T>(fn: () => Promise<T>) {
+  quiet.on = true
+  try { return await fn() } finally { quiet.on = false }
+}
+
 
 // The DB was deleted or upgraded elsewhere (another tab, devtools, a newer build): this connection is dead and
 // every query would come back empty. Reload to reconnect and re-seed.
@@ -76,8 +88,8 @@ export async function seed() {
   const v = (await db.settings.get('seedVersion'))?.value
   if (v === SEED_VERSION) return
   const data = (await import('./data/exercises.seed.json')).default as SeedRow[]
-  const now = Date.now()
-  await db.transaction('rw', [db.exercises, db.settings, db.workoutExercises, db.sets, db.workouts, db.plans], async () => {
+  // every device runs this itself, so none of it is synced
+  await quietly(() => db.transaction('rw', [db.exercises, db.settings, db.workoutExercises, db.sets, db.workouts, db.plans], async () => {
     // Activities were removed (owner, 2026-10-19); drop any leftover activity plans
     await db.plans.filter((p) => (p.type as string) === 'activity').delete()
     // The app-wide kg/lb setting became per-exercise (2026-10-19): carry an old "lb" choice over, then drop it
@@ -107,13 +119,15 @@ export async function seed() {
         })
       } else await db.exercises.delete(o.id)
     }
-    const units = new Map(old.map((e) => [e.id, e.unit]))
+    const prev = new Map(old.map((e) => [e.id, e]))
+    // built-ins keep their old timestamp (new ones get 1) so a reseed never beats a real edit synced from another device
     await db.exercises.bulkPut(data.map(({ legacyIds: _, ...e }) => ({
-      ...e, notes: notes.get(e.id) ?? e.notes, unit: units.get(e.id) ?? (oldUnit === 'lb' ? 'lb' as const : undefined), updatedAt: now,
+      ...e, notes: notes.get(e.id) ?? e.notes, unit: prev.get(e.id)?.unit ?? (oldUnit === 'lb' ? 'lb' as const : undefined),
+      updatedAt: prev.get(e.id)?.updatedAt ?? 1,
     })))
     if (oldUnit === 'lb') await db.exercises.filter((e) => e.isCustom && !e.unit).modify({ unit: 'lb' })
     await db.settings.put({ key: 'seedVersion', value: SEED_VERSION })
-  })
+  }))
 }
 
 export const uuid = () => crypto.randomUUID()

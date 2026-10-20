@@ -11,11 +11,15 @@
     "test": "vitest run",
     "build:exercises": "node --experimental-strip-types scripts/build-exercises.ts",
     "build:body": "node --experimental-strip-types scripts/build-body.ts",
-    "check:exercises": "node --experimental-strip-types scripts/check-exercises.ts"
+    "check:exercises": "node --experimental-strip-types scripts/check-exercises.ts",
+    "serve": "npm run build && node --experimental-strip-types --disable-warning=ExperimentalWarning server/index.ts",
+    "start": "node --experimental-strip-types --disable-warning=ExperimentalWarning server/index.ts"
   },
   "dependencies": {
+    "@fastify/static": "^10.1.6",
     "dexie": "^4.4.6",
     "dexie-react-hooks": "^4.4.0",
+    "fastify": "^5.12.7",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "recharts": "^3.10.1"

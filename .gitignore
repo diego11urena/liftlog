@@ -29,3 +29,6 @@ dist-ssr
 *.pem
 *.key
 *.crt
+
+# sync server data (SQLite)
+server/data/

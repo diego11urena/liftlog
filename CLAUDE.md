@@ -201,7 +201,7 @@ Nothing else on this tab. No streaks, no levels, no trophies, no leaderboard, no
 7. PR detection and progress charts
 8. Profile tab (totals, muscles this week, week overview)
 9. PWA polish (icons, install prompt, offline test)
-10. Phase 2: Fastify + SQLite backup/sync
+10. Phase 2: Fastify + SQLite backup/sync — built 2026-10-19 (`server/`, `src/sync.ts`): `npm run serve` serves the app on :4173 and `/api/sync`; devices push/pull rows, last write wins by `updatedAt`, deletes travel as tombstones.
 
 ## Quality bar
 - Logging a set should take at most 2 taps after entering numbers.

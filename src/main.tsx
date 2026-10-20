@@ -5,14 +5,16 @@ import './index.css'
 import App from './App.tsx'
 import DevMuscles from './DevMuscles.tsx'
 import { seed } from './db.ts'
+import { startSync } from './sync.ts'
 
 registerSW({ immediate: true })
 navigator.storage?.persist?.() // ask the browser not to evict workout data
 
-seed().finally(() =>
+seed().finally(() => {
+  startSync() // after the seed: its writes are local-only
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
       {location.pathname === '/dev/muscles' ? <DevMuscles /> : <App />}
     </StrictMode>,
-  ),
-)
+  )
+})
