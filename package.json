@@ -9,17 +9,19 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "test": "vitest run",
-    "build:exercises": "node --experimental-strip-types scripts/build-exercises.ts"
+    "build:exercises": "node --experimental-strip-types scripts/build-exercises.ts",
+    "build:body": "node --experimental-strip-types scripts/build-body.ts",
+    "check:exercises": "node --experimental-strip-types scripts/check-exercises.ts"
   },
   "dependencies": {
     "dexie": "^4.4.6",
     "dexie-react-hooks": "^4.4.0",
     "react": "^19.3.1",
-    "react-body-highlighter": "^2.0.5",
     "react-dom": "^19.3.1",
     "recharts": "^3.10.1"
   },
   "devDependencies": {
+    "@musclemap/assets": "^1.1.0",
     "@tailwindcss/vite": "^4.3.3",
     "@types/node": "^24.19.2",
     "@types/react": "^19.3.0",

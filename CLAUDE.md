@@ -47,7 +47,7 @@ Service workers and "Add to Home Screen" install need HTTPS (localhost is the on
 10. **Settings** (opens from the gear on the Profile tab): kg/lb, weight step, erase-all-data danger zone. Light UI only, no theme toggle (owner decision; the palette lives in theme tokens so a dark theme could be added later). No export/import (owner decision 2026-10-19). Settings was NOT removed: its layout and options must match the reference app's Settings screen, but that screen has not been recorded yet. Build only the items listed here, leave a clearly marked TODO for the rest, and ask me for the recording. Leave out anything social or gamified (account, friends, notifications about friends, subscription, trophies, level).
 
 ## Data model (Dexie tables)
-- `exercises`: id, name, category, equipment, primaryMuscles[], secondaryMuscles[], instructions[], images[]?, isCustom, notes (muscles use the app's own canonical muscle enum, see below)
+- `exercises`: id, name, aliases[], category ('strength'|'activity'), classification, equipment, primaryMuscles[], secondaryMuscles[], instructions[], images[]?, isCustom, notes, timed? (muscles use the app's own canonical muscle enum, see below)
 - `workouts`: id, name, startedAt, endedAt, status('active'|'done'), notes, templateId?
 - `workoutExercises`: id, workoutId, exerciseId, order, notes
 - `sets`: id, workoutExerciseId, order, weight, reps, rpe?, done, completedAt, isPR
@@ -64,6 +64,7 @@ Use UUIDs and `updatedAt` on every row so sync can be added later without migrat
 - Must include at minimum: pec deck, reverse pec deck, cable fly, cable crossover, dumbbell fly, bench press (barbell, dumbbell, incline, decline, machine), chest press machine, lat pulldown, seated cable row, T-bar row, leg press, hack squat, leg extension, leg curl (seated and lying), hip abductor and adductor machines, calf raise (standing and seated), shoulder press (machine and dumbbell), lateral raise (dumbbell, cable, machine), face pull, preacher curl, hammer curl, triceps pushdown, overhead triceps extension, dips, pull-ups, deadlift variations, Romanian deadlift, hip thrust, glute bridge, cable kickback, ab crunch machine, cable crunch, hanging leg raise, plank.
 - Everything not on the curated list is not imported. Custom exercises (the "+" button) cover the long tail.
 - A `scripts/check-exercises.ts` report prints curated entries missing primary muscles, aliases or classification; the build fails if any are incomplete.
+- As built (2026-10-19): 297 entries (18 activities). Entries may use region shorthands (`chest`, `quads`, `triceps`, `mid-back`, ... defined in `src/muscles.ts`) that the build expands, and an optional `timed: true` (logged as mm:ss) or `activity: true`. 173 entries carry dataset instructions/photos via exact name/alias match or the hand-confirmed `DATASET` table in the build script. On upgrade, logged history on old dataset exercises moves to the curated entry that replaced them; old exercises in use without a replacement are kept as custom.
 - A one-time build script (`scripts/build-exercises.ts`) merges the curated list with the dataset and writes a single `exercises.seed.json` committed to the repo. At runtime, seed Dexie from that file on first launch. No runtime network calls.
 - Cache exercise photos with the service worker (or bundle a compressed subset) so they work offline. Keep total install size reasonable; use WebP.
 
@@ -78,6 +79,7 @@ Use UUIDs and `updatedAt` on every row so sync can be added later without migrat
 - Primary muscles use the accent color, secondary muscles the soft accent, unselected muscles stay the neutral figure color.
 - Variants: small (about 64px) for list cards and a large variant for detail views. Quality check: render at 64px, 180px and 340px wide; at 340px the separation lines and individual muscle shapes must be clearly visible. Add a `/dev/muscles` page that lights each region one at a time.
 - Tapping a muscle on the diagram filters the exercise list to that muscle (nice-to-have).
+- As built (2026-10-19, owner chose this source): MuscleMap (MIT, github.com/Jsplice/MuscleMap) male front/back paths, split into our regions by `scripts/build-body.ts` → `src/data/body.json`; separation lines and per-muscle fiber hatching are our own. 38 of 39 regions have art: `neck` lights the upper traps; `brachialis` is one small shape on one arm. Details in `docs/ASSETS.md`. Check page: `/dev/muscles`.
 
 ## Screens
 Bottom tab nav (reference app has Profile | Friends | Workout | Nutrition | Stats): build **Profile** | **Workout** | **Stats** (history + progress charts). Profile is a personal overview page, specified in the "Profile tab" section below. Skip Friends and Nutrition entirely. The exercise library is NOT a tab: it opens from "Add Exercise" inside the Workout tab (see below). The active workout screen is specified in the "Active workout" section below.

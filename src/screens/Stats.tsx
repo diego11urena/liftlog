@@ -1,11 +1,10 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useState } from 'react'
 import { Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
-import { db, MUSCLES, type Muscle } from '../db'
+import { db, MUSCLE_GROUPS, type Muscle } from '../db'
 import { useExercises, useSettings } from '../hooks'
 import { bests, fmtDate, fmtDuration, fmtVolume, toDisplay, volume, weekStart } from '../lib'
 import { Icon, Segmented } from '../ui'
-import { label } from './Library'
 import Session from './Session'
 
 export default function Stats() {
@@ -82,14 +81,18 @@ function Progress() {
     return { t: Math.max(...ss.map((s) => s.completedAt)), v: Math.round(toDisplay(v, unit) ?? 0) }
   }).sort((a, b) => a.t - b.t)
 
-  const per = Object.fromEntries(MUSCLES.map((m) => [m, 0])) as Record<Muscle, number>
+  // Sets per muscle group this week: a set counts 1 for each group its primary muscles hit, ½ for secondary-only groups
+  const groupOf = (m: Muscle) => Object.keys(MUSCLE_GROUPS).find((g) => MUSCLE_GROUPS[g].includes(m))!
+  const per: Record<string, number> = Object.fromEntries(Object.keys(MUSCLE_GROUPS).map((g) => [g, 0]))
   for (const s of sets) {
     if (s.completedAt < week || s.completedAt >= week + WEEK) continue
     const e = exercises.get(s.exerciseId)
-    e?.primaryMuscles.forEach((m) => (per[m] += 1))
-    e?.secondaryMuscles.forEach((m) => (per[m] += 0.5))
+    if (!e) continue
+    const prim = new Set(e.primaryMuscles.map(groupOf)), sec = new Set(e.secondaryMuscles.map(groupOf))
+    prim.forEach((g) => (per[g] += 1))
+    sec.forEach((g) => !prim.has(g) && (per[g] += 0.5))
   }
-  const bars = MUSCLES.map((m) => ({ m: label(m), v: per[m] })).filter((b) => b.v > 0).sort((a, b) => b.v - a.v)
+  const bars = Object.entries(per).map(([m, v]) => ({ m, v })).filter((b) => b.v > 0).sort((a, b) => b.v - a.v)
   const thisWeek = weekStart(Date.now())
 
   return (
@@ -117,7 +120,7 @@ function Progress() {
       <section className="card p-4">
         <div className="mb-2 flex items-center justify-between">
           <button className="grid size-9 place-items-center rounded-full bg-panel" aria-label="Previous week" onClick={() => setWeek(weekStart(week - 1))}><Icon name="chevL" /></button>
-          <h2 className="text-sm font-semibold">Sets per muscle · {week === thisWeek ? 'this week' : `week of ${fmtDate(week)}`}</h2>
+          <h2 className="text-sm font-semibold">Sets per muscle group · {week === thisWeek ? 'this week' : `week of ${fmtDate(week)}`}</h2>
           <button className="grid size-9 place-items-center rounded-full bg-panel disabled:opacity-30" aria-label="Next week" disabled={week >= thisWeek} onClick={() => setWeek(weekStart(week + WEEK + 7200e3))}><Icon name="chevR" /></button>
         </div>
         {bars.length ? (
@@ -133,7 +136,7 @@ function Progress() {
             </ResponsiveContainer>
           </div>
         ) : <p className="py-6 text-center text-sm text-muted">No sets logged this week.</p>}
-        <p className="mt-1 text-xs text-muted">Primary muscle = 1 set, secondary = ½.</p>
+        <p className="mt-1 text-xs text-muted">A set counts 1 for groups it mainly works, ½ for groups it only assists.</p>
       </section>
     </div>
   )

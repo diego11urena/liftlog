@@ -13,9 +13,11 @@ npm run build        # production build to dist/
 npm run preview      # serve dist/ on :4173
 ```
 
-`npm run build:exercises` re-downloads [free-exercise-db](https://github.com/yuhonas/free-exercise-db)
-(Unlicense, public domain) and regenerates `src/data/exercises.seed.json`. If you change it, bump
-`SEED_VERSION` in `src/db.ts`. Unmapped muscle names fail the script on purpose. Fix the mapping instead of dropping exercises.
+Data scripts (outputs are committed; run only when the source changes):
+
+- `npm run check:exercises`: validates `scripts/curated-exercises.json` (aliases, classification, muscles, required exercises).
+- `npm run build:exercises`: curated list + instructions/photos from [free-exercise-db](https://github.com/yuhonas/free-exercise-db) (public domain) → `src/data/exercises.seed.json`. Bump `SEED_VERSION` in `src/db.ts` after changing it.
+- `npm run build:body`: MuscleMap (MIT) figure → `src/data/body.json`. Open `/dev/muscles` to check every region. Sources and licenses: `docs/ASSETS.md`.
 
 ## Hosting on your phone (needs HTTPS)
 

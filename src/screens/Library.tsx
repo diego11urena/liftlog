@@ -5,10 +5,10 @@ import { db, IMAGE_BASE, isActivity, MUSCLE_GROUPS, MUSCLES, uuid, type Exercise
 import { loggedSetsFor, useExerciseHistory, useExercises, useSettings } from '../hooks'
 import { bests, fmtDate, fmtWeight, toDisplay, volume } from '../lib'
 import MuscleMap from '../MuscleMap'
+import { CLASSIFICATIONS, MUSCLE_LABEL } from '../muscles'
 import { Icon, RoundBtn, Segmented, Sheet, TopBar } from '../ui'
 
-export const label = (s: string) => s.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
-const CLASSES = ['Barbell', 'Dumbbell', 'Machine', 'Cable', 'Kettlebell', 'Band', 'Body Weight/Weighted', 'Other']
+export const label = (s: string) => MUSCLE_LABEL[s as Muscle] ?? s.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
 const SEGS = ['Exercises', 'Activities'] as const
 const DAY = 86400e3
 
@@ -32,7 +32,7 @@ export default function Library({ onBack, onAdd }: { onBack: () => void; onAdd?:
   const words = q.toLowerCase().split(/\s+/).filter(Boolean)
   const list = [...all.values()]
     .filter((e) => isActivity(e) === (seg === 'Activities'))
-    .filter((e) => words.every((w) => e.name.toLowerCase().includes(w)))
+    .filter((e) => { const hay = [e.name, ...(e.aliases ?? [])].join(' | ').toLowerCase(); return words.every((w) => hay.includes(w)) })
     .filter((e) => !group || e.primaryMuscles.some((m) => MUSCLE_GROUPS[group].includes(m)))
     .filter((e) => !muscle || e.primaryMuscles.includes(muscle as Muscle))
     .filter((e) => !cls || e.classification === cls)
@@ -50,7 +50,7 @@ export default function Library({ onBack, onAdd }: { onBack: () => void; onAdd?:
   ]
   const pickerData = picker === 'group' ? { title: 'Muscle Group', opts: Object.keys(MUSCLE_GROUPS), v: group, set: setGroup }
     : picker === 'muscle' ? { title: 'Primary Muscle', opts: [...MUSCLES], v: muscle, set: setMuscle }
-    : picker === 'cls' ? { title: 'Classification', opts: CLASSES, v: cls, set: setCls } : null
+    : picker === 'cls' ? { title: 'Classification', opts: CLASSIFICATIONS, v: cls, set: setCls } : null
 
   return (
     <div>
@@ -269,7 +269,7 @@ function CustomFormInner({ e, activity, onDone }: { e?: Exercise; activity: bool
       <div className="space-y-3 px-4">
         <input className="field" placeholder="Name" value={name} onChange={(ev) => setName(ev.target.value)} />
         <select className="field" value={cls} onChange={(ev) => setCls(ev.target.value)} aria-label="Classification">
-          {CLASSES.map((c) => <option key={c}>{c}</option>)}
+          {CLASSIFICATIONS.map((c) => <option key={c}>{c}</option>)}
         </select>
         <div className="card py-4"><MuscleMap size="md" primary={primary} secondary={secondary} onMuscle={cycle} /></div>
         <p className="text-sm text-muted">Tap to cycle: primary → secondary → off</p>
