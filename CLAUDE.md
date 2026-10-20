@@ -19,6 +19,7 @@ The reference app is a social, gamified product. Delete all of that. This app ha
 - Avatar, username, level badge on the avatar, "Add some friends", the shop/bag icon, the 3 empty "+" slots under the stats, Weekly challenges bar, Streak Multiplier card, Next Trophy card, Friend Leaderboard card, the "Diamond" premium-tier card, and the early-access/beta sign-up banner on the reference Profile tab
 - Steps / Apple Health connection (not possible in a PWA, and out of scope)
 - Accounts, login, cloud profile, analytics, push notifications
+- Routines (multi-day plans) and Activities (cardio/other activities: the library's Activities tab, the plan sheet's Activities preset, activity day cards, cardio entries in the exercise list). Removed by owner decision 2026-10-19.
 Plain data is fine and wanted: PRs shown as facts, volume, time, history, charts.
 
 ## Stack
@@ -38,16 +39,16 @@ Service workers and "Add to Home Screen" install need HTTPS (localhost is the on
 1. **Active workout screen**: add exercises, log sets (weight x reps; a set counts as logged once both are filled, there is no separate done checkbox), add/remove/reorder exercises, per-exercise and workout notes, workout timer.
 2. ~~Rest timer~~: removed by owner decision (2026-10-19). Do not build, even though the reference has one.
 3. **Exercise library (a headline feature)**: a CURATED built-in list of about 300 exercises people actually do in a gym (not the full 800+ dataset), with common gym names and aliases, search, filters (muscle, equipment, classification), and custom exercises. Every exercise has a **detail view with a detailed human-body diagram (front and back) that highlights the targeted muscles**: primary muscles in the accent color, secondary muscles in a lighter shade. The same mini diagram appears on exercise cards in the picker and in the active workout. See "Exercise data and muscle diagram" below.
-4. **Templates/routines**: save a workout as a template, start a workout from a template, prefill from last session.
+4. **Saved workouts (templates)**: save a workout as a template, start a workout from a template, prefill from last session.
 5. **History**: list of past workouts, open one to view or edit, delete with confirmation.
 6. **Last session + PR at a glance (headline feature)**: while logging any exercise, show a header on that exercise card with (a) **Last workout**: the weight x reps for each set from the most recent completed session of that exercise, with its date, and (b) **PR**: my best weight and the reps I did at it, plus my best reps at other key weights if useful. Also show the matching previous set (weight x reps) inline next to each set row. Tapping a previous value copies it into the current set. This must work fully offline, load instantly (index `sets` by exerciseId + completedAt), and show a clear "No history yet" state for new exercises.
 7. **PRs**: detect and flag new records (heaviest weight, best estimated 1RM, rep PRs) during logging. The PR shown in the header (feature 6) must update live the moment a new PR is logged. Mark it with a plain "PR" label on the set; no animation, points, or badges.
 8. **Progress**: per-exercise charts (est. 1RM, volume, top set over time) and weekly volume per muscle group.
-9. **Week preview and planning**: plan each day (workout, rest, or activity), preview the week, start the planned workout. See "Workout tab" below.
+9. **Week preview and planning**: plan each day (workout or rest), preview the week, start the planned workout. See "Workout tab" below.
 10. **Settings** (opens from the gear on the Profile tab): kg/lb, weight step, erase-all-data danger zone. That is the complete list; there is no reference recording to match (owner, 2026-10-19). Light UI only, no theme toggle (the palette lives in theme tokens so a dark theme could be added later). No export/import (owner decision 2026-10-19).
 
 ## Data model (Dexie tables)
-- `exercises`: id, name, aliases[], category ('strength'|'activity'), classification, equipment, primaryMuscles[], secondaryMuscles[], instructions[], images[]?, isCustom, notes, timed? (muscles use the app's own canonical muscle enum, see below)
+- `exercises`: id, name, aliases[], category ('strength'), classification, equipment, primaryMuscles[], secondaryMuscles[], instructions[], images[]?, isCustom, notes, timed? (muscles use the app's own canonical muscle enum, see below)
 - `workouts`: id, name, startedAt, endedAt, status('active'|'done'), notes, templateId?
 - `workoutExercises`: id, workoutId, exerciseId, order, notes
 - `sets`: id, workoutExerciseId, order, weight, reps, rpe?, done, completedAt, isPR
@@ -64,7 +65,7 @@ Use UUIDs and `updatedAt` on every row so sync can be added later without migrat
 - Must include at minimum: pec deck, reverse pec deck, cable fly, cable crossover, dumbbell fly, bench press (barbell, dumbbell, incline, decline, machine), chest press machine, lat pulldown, seated cable row, T-bar row, leg press, hack squat, leg extension, leg curl (seated and lying), hip abductor and adductor machines, calf raise (standing and seated), shoulder press (machine and dumbbell), lateral raise (dumbbell, cable, machine), face pull, preacher curl, hammer curl, triceps pushdown, overhead triceps extension, dips, pull-ups, deadlift variations, Romanian deadlift, hip thrust, glute bridge, cable kickback, ab crunch machine, cable crunch, hanging leg raise, plank.
 - Everything not on the curated list is not imported. Custom exercises (the "+" button) cover the long tail.
 - A `scripts/check-exercises.ts` report prints curated entries missing primary muscles, aliases or classification; the build fails if any are incomplete.
-- As built (2026-10-19): 299 entries (18 activities). Entries may use region shorthands (`chest`, `quads`, `triceps`, `mid-back`, ... defined in `src/muscles.ts`) that the build expands, and an optional `timed: true` (logged as mm:ss) or `activity: true`. 173 entries carry dataset instructions/photos via exact name/alias match or the hand-confirmed `DATASET` table in the build script. On upgrade, logged history on old dataset exercises moves to the curated entry that replaced them; old exercises in use without a replacement are kept as custom.
+- As built (2026-10-19): 281 entries (activities removed). Entries may use region shorthands (`chest`, `quads`, `triceps`, `mid-back`, ... defined in `src/muscles.ts`) that the build expands, and an optional `timed: true` (logged as mm:ss). 164 entries carry dataset instructions/photos via exact name/alias match or the hand-confirmed `DATASET` table in the build script. On upgrade, logged history on old dataset exercises moves to the curated entry that replaced them; old exercises in use without a replacement are kept as custom.
 - A one-time build script (`scripts/build-exercises.ts`) merges the curated list with the dataset and writes a single `exercises.seed.json` committed to the repo. At runtime, seed Dexie from that file on first launch. No runtime network calls.
 - Cache exercise photos with the service worker (or bundle a compressed subset) so they work offline. Keep total install size reasonable; use WebP.
 
@@ -109,11 +110,11 @@ Replicate this layout and behavior closely. Use original icons, artwork, wording
 
 **2. Plan-the-day sheet** (opens from the "+" button or the "..." menu)
 - Full-height sheet with a back chevron on the left, the date centered ("Oct 19, 2026"), and a "+" button on the right (creates a new workout).
-- Sections: **Presets** (rows: "Rest" with a moon icon, "Activities" with a shoe icon for cardio/other activities) and **Your Workouts** (the user's saved workouts, e.g. "Leg Day", "Chest day"). Each row has a radio circle on the right; the selected one shows an accent dot. Single-select.
+- Sections: **Presets** (one row: "Rest" with a moon icon; the reference's "Activities" preset is not built) and **Your Workouts** (the user's saved workouts, e.g. "Leg Day", "Chest day"). Each row has a radio circle on the right; the selected one shows an accent dot. Single-select.
 - Bottom CTA is context-aware: disabled "Change to Selection" while nothing has changed; "Set <Workout Name> for Today" (or the date) when a workout is selected; "Set as Rest Day" when Rest is selected. The CTA shows a brief loading state, then the sheet closes and the card updates. Observation: the Rest preset was missing from this sheet on one visit (Oct 19, after a workout was already planned that day); treat it as "hide Rest if the day already has a started or logged workout" and confirm with me if unsure.
 
 **3. Workouts screen** (from the "Workouts" pill)
-- Back chevron + centered title "Workouts". A two-option segmented control: **Workouts** | **Routines** (selected one is a filled accent pill). "Routines" is a multi-day plan list; build it after everything else, as an empty placeholder first.
+- Back chevron + centered title "Workouts". No Workouts | Routines toggle: routines are not built (owner, 2026-10-19).
 - List of saved workouts as full-width rows with a trailing chevron; tapping opens the workout editor.
 - Accent "Create Workout" pill pinned at the bottom.
 
@@ -123,7 +124,7 @@ Replicate this layout and behavior closely. Use original icons, artwork, wording
 - "Save Workout" accent pill at the bottom. While saving, dim the screen with a spinner; then return to the Workouts list, where the new workout now appears. Opening an existing workout uses this same screen.
 
 **5. Add Exercise (exercise library)**
-- Top bar: back chevron, a segmented control **Exercises** | **Activities**, and a "+" button on the right (create custom exercise/activity).
+- Top bar: back chevron, the title "Exercises" (the reference's Exercises | Activities toggle is not built), and a "+" button on the right (create custom exercise).
 - Search field ("Search") with three filter chips below: **Muscle Group**, **Primary Muscle**, **Classification** (each opens a picker; chips show active state).
 - Alphabetical list with sticky letter headers (A, B, C...), rows with the exercise name and a trailing chevron. Some rows also show a small clock icon before the chevron (appears on e.g. Abductor Machine and Adductor Machine; probably "recently used", so show it for exercises I have logged recently).
 - Tapping a row opens the **Exercise detail** screen:
@@ -136,8 +137,7 @@ Replicate this layout and behavior closely. Use original icons, artwork, wording
 - Each exercise needs a "classification" field (e.g. Body Weight/Weighted, Machine, Barbell, Dumbbell, Cable); derive it from the dataset's equipment/category, and add it to the `exercises` table.
 
 **Data model additions**
-- `plans`: id, date (YYYY-MM-DD, unique), type ('workout'|'rest'|'activity'), workoutId?  (one row per planned day; drives the week strip and day card)
-- `routines`: id, name, days[] (later)
+- `plans`: id, date (YYYY-MM-DD, unique), type ('workout'|'rest'), workoutId?  (one row per planned day; drives the week strip and day card)
 - `workouts` (saved definitions, the "Your Workouts" list) are separate from `workoutLogs` (completed sessions): templates in the earlier model map to saved workouts. Keep `workoutLogs` for history and the "Prev. volume · duration" subtitle.
 - Saved workouts store their exercises as an ordered embedded array (`workouts.exercises[{exerciseId, unilateral, sets[]}]`); array order is the drag order. `workoutExercises` rows belong to logged sessions only.
 

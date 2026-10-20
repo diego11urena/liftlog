@@ -59,4 +59,4 @@ const LEGACY: Record<string, Muscle[]> = {
 export const upgradeMuscles = (list: string[]) =>
   [...new Set(list.flatMap((m) => LEGACY[m] ?? ((MUSCLES as readonly string[]).includes(m) ? [m as Muscle] : [])))]
 
-export const CLASSIFICATIONS = ['Barbell', 'Dumbbell', 'Machine', 'Smith Machine', 'Cable', 'Kettlebell', 'Band', 'Body Weight/Weighted', 'Cardio', 'Other']
+export const CLASSIFICATIONS = ['Barbell', 'Dumbbell', 'Machine', 'Smith Machine', 'Cable', 'Kettlebell', 'Band', 'Body Weight/Weighted', 'Other']

@@ -3,13 +3,12 @@ import { useRef, useState } from 'react'
 import { createWorkout, deleteWorkout } from '../actions'
 import { db, type PlanSet, type Workout } from '../db'
 import { useExercises } from '../hooks'
-import { Busy, Icon, NameModal, RoundBtn, Segmented, TopBar } from '../ui'
+import { Busy, Icon, NameModal, RoundBtn, TopBar } from '../ui'
 import Library, { label } from './Library'
 
 /** "Workouts" screen from the Workouts pill. */
 export default function WorkoutsScreen({ onBack }: { onBack: () => void }) {
   const workouts = useLiveQuery(() => db.workouts.orderBy('name').toArray(), [])
-  const [seg, setSeg] = useState<'Workouts' | 'Routines'>('Workouts')
   const [naming, setNaming] = useState(false)
   const [editing, setEditing] = useState<{ id?: string; name: string } | null>(null)
 
@@ -18,10 +17,7 @@ export default function WorkoutsScreen({ onBack }: { onBack: () => void }) {
     <div className="pb-28">
       <TopBar title="Workouts" onBack={onBack} />
       <div className="space-y-3 px-4">
-        <Segmented value={seg} options={['Workouts', 'Routines'] as const} onChange={setSeg} />
-        {seg === 'Routines' ? (
-          <div className="card p-6 text-center text-muted">Multi-day routines are coming later.</div>
-        ) : !workouts?.length ? (
+        {!workouts?.length ? (
           <div className="card p-6 text-center text-muted">No saved workouts yet.</div>
         ) : (
           <ul className="card divide-y divide-line overflow-hidden">
@@ -37,11 +33,9 @@ export default function WorkoutsScreen({ onBack }: { onBack: () => void }) {
           </ul>
         )}
       </div>
-      {seg === 'Workouts' && (
-        <div className="phone-fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-30 px-4">
-          <button className="btn-accent w-full" onClick={() => setNaming(true)}>Create Workout</button>
-        </div>
-      )}
+      <div className="phone-fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-30 px-4">
+        <button className="btn-accent w-full" onClick={() => setNaming(true)}>Create Workout</button>
+      </div>
       {naming && <NameModal onClose={() => setNaming(false)} onConfirm={(name) => { setNaming(false); setEditing({ name }) }} />}
     </div>
   )

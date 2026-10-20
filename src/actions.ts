@@ -170,7 +170,7 @@ export async function deleteWorkout(id: string) {
 
 // ---------- plans ----------
 
-export type Selection = { type: 'rest' } | { type: 'activity' } | { type: 'workout'; workoutId: string }
+export type Selection = { type: 'rest' } | { type: 'workout'; workoutId: string }
 
 /** Rest replaces everything on the day; anything else removes a rest plan. `replaceId` edits one page in place. */
 export async function setPlan(date: string, sel: Selection, replaceId?: string) {

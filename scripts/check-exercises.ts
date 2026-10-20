@@ -4,7 +4,7 @@ import { MUSCLES, SHORTHAND } from '../src/muscles.ts'
 
 export type Curated = {
   name: string; aliases: string[]; classification: string; primaryMuscles: string[]; secondaryMuscles: string[]
-  timed?: boolean; activity?: boolean
+  timed?: boolean
 }
 
 import { CLASSIFICATIONS } from '../src/muscles.ts'

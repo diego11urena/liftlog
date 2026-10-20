@@ -30,7 +30,6 @@ type Page =
   | { kind: 'review'; log: WorkoutLog }
   | { kind: 'planned'; plan: Plan; workout: Workout }
   | { kind: 'rest'; plan: Plan }
-  | { kind: 'activity'; plan: Plan }
   | { kind: 'none' }
   | { kind: 'empty' }
 
@@ -57,7 +56,6 @@ function Home({ date, setDate, go }: { date: string; setDate: (k: string) => voi
     for (const log of data.logs) pages.push({ kind: 'review', log })
     for (const plan of data.plans) {
       if (plan.type === 'rest') pages.push({ kind: 'rest', plan })
-      else if (plan.type === 'activity') pages.push({ kind: 'activity', plan })
       else {
         const w = plan.workoutId ? data.workouts.get(plan.workoutId) : undefined
         if (w && !doneIds.has(w.id)) pages.push({ kind: 'planned', plan, workout: w })
@@ -69,11 +67,11 @@ function Home({ date, setDate, go }: { date: string; setDate: (k: string) => voi
   const cur = pages[Math.min(page, pages.length - 1)]
   const doneDay = !!data?.logs.length
   const title = !cur ? '' : cur.kind === 'review' ? cur.log.name : cur.kind === 'planned' ? cur.workout.name : cur.kind === 'rest' ? 'Rest'
-    : cur.kind === 'activity' ? 'Activity' : cur.kind === 'none' ? 'No Workout' : isToday ? 'Freestyle' : 'Not Planned Yet!'
-  const canStart = isToday && !!cur && (cur.kind === 'planned' || cur.kind === 'empty' || cur.kind === 'activity')
+    : cur.kind === 'none' ? 'No Workout' : isToday ? 'Freestyle' : 'Not Planned Yet!'
+  const canStart = isToday && !!cur && (cur.kind === 'planned' || cur.kind === 'empty')
   const start = () => {
     if (!cur || !canStart) return
-    void startSession(cur.kind === 'planned' ? cur.workout : undefined, cur.kind === 'activity' ? 'Activity' : 'Freestyle')
+    void startSession(cur.kind === 'planned' ? cur.workout : undefined, 'Freestyle')
   }
   const pick = (k: string) => { setDate(k); setPage(0) }
 
@@ -186,12 +184,6 @@ function DayCard({ p, isToday, onPlus, onMenu, onReview, onStartFree, onPlanRest
           <button className="chip mt-4" onClick={() => onPlanRest(p.plan)}>Log a workout</button>
         </CardShell>
       )
-    case 'activity':
-      return (
-        <CardShell title="Activity" sub="Cardio or other activity" action={<RoundBtn icon="dots" label="Plan options" onClick={() => onMenu(p.plan)} />}>
-          <Dim icon="shoe" />
-        </CardShell>
-      )
     case 'none':
       return <CardShell title="No Workout" sub="Nothing logged"><Dim icon="moon" /></CardShell>
     case 'empty':
@@ -216,11 +208,11 @@ function PlanSheet({ date, replace, hasLogs, onClose, onCreate }: { date: string
   // Hide Rest once the day already has a started or logged workout.
   const hideRest = hasLogs || (isToday && !!activeToday)
   const chosen = workouts?.find((w) => w.id === sel)
-  const cta = sel === initial || !sel ? 'Change to Selection' : sel === 'rest' ? 'Set as Rest Day' : sel === 'activity' ? `Set Activity for ${when}` : `Set ${chosen?.name} for ${when}`
+  const cta = sel === initial || !sel ? 'Change to Selection' : sel === 'rest' ? 'Set as Rest Day' : `Set ${chosen?.name} for ${when}`
 
   const apply = async () => {
     setBusy(true)
-    const s: Selection = sel === 'rest' ? { type: 'rest' } : sel === 'activity' ? { type: 'activity' } : { type: 'workout', workoutId: sel }
+    const s: Selection = sel === 'rest' ? { type: 'rest' } : { type: 'workout', workoutId: sel }
     await Promise.all([setPlan(date, s, replace?.id), new Promise((r) => setTimeout(r, 300))])
     onClose()
   }
@@ -236,10 +228,9 @@ function PlanSheet({ date, replace, hasLogs, onClose, onCreate }: { date: string
       <div className="flex-1 space-y-4 overflow-y-auto px-4">
         <section>
           <h3 className="mb-2 text-sm font-semibold text-muted">Presets</h3>
-          <ul className="card divide-y divide-line overflow-hidden">
-            {!hideRest && row('rest', 'Rest', 'moon')}
-            {row('activity', 'Activities', 'shoe')}
-          </ul>
+          {hideRest ? <p className="card p-4 text-sm text-muted">Rest isn't available once a workout is logged or started that day.</p> : (
+            <ul className="card divide-y divide-line overflow-hidden">{row('rest', 'Rest', 'moon')}</ul>
+          )}
         </section>
         <section>
           <h3 className="mb-2 text-sm font-semibold text-muted">Your Workouts</h3>

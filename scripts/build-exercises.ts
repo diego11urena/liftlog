@@ -33,9 +33,7 @@ const DATASET: Record<string, string> = {
   'Jump Squat': 'Freehand_Jump_Squat', 'Box Jump': 'Front_Box_Jump', 'Lying Leg Curl': 'Lying_Leg_Curls', 'Barbell Hip Thrust': 'Barbell_Hip_Thrust',
   'Standing Calf Raise Machine': 'Standing_Calf_Raises', 'Donkey Calf Raise': 'Donkey_Calf_Raises', 'Kettlebell Swing': 'One-Arm_Kettlebell_Swings',
   'Lying Leg Raise': 'Flat_Bench_Lying_Leg_Raise', 'Weighted Decline Crunch': 'Decline_Crunch', 'Kettlebell Goblet Squat': 'Goblet_Squat',
-  'Medicine Ball Slam': 'One-Arm_Medicine_Ball_Slam', 'Treadmill Run': 'Running_Treadmill', 'Incline Treadmill Walk': 'Walking_Treadmill',
-  'Stationary Bike': 'Bicycling_Stationary', 'Outdoor Cycling': 'Bicycling', 'Rowing Machine': 'Rowing_Stationary', 'Elliptical': 'Elliptical_Trainer',
-  'Stair Climber': 'Stairmaster', 'Jump Rope': 'Rope_Jumping', 'Sled Push': 'Sled_Push', 'Sled Pull': 'Sled_Drag_-_Harness',
+  'Medicine Ball Slam': 'One-Arm_Medicine_Ball_Slam', 'Sled Push': 'Sled_Push', 'Sled Pull': 'Sled_Drag_-_Harness',
 }
 
 const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '')
@@ -56,7 +54,7 @@ async function main() {
     if (src) matched++
     const primary = expand(c.primaryMuscles)
     return {
-      id: slug(c.name), name: c.name, aliases: c.aliases, category: c.activity ? 'activity' : 'strength', classification: c.classification,
+      id: slug(c.name), name: c.name, aliases: c.aliases, category: 'strength', classification: c.classification,
       equipment: c.classification === 'Body Weight/Weighted' ? 'body only' : c.classification.toLowerCase(),
       primaryMuscles: primary, secondaryMuscles: expand(c.secondaryMuscles).filter((m) => !primary.includes(m)),
       instructions: src?.instructions ?? [], images: src?.images ?? [], isCustom: false, notes: '',

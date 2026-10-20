@@ -288,24 +288,6 @@
 {"name":"Battle Ropes","aliases":["battle rope","rope waves"],"classification":"Other","primaryMuscles":["delt-front","delt-side"],"secondaryMuscles":["abs","forearm-flexors","biceps"],"timed":true},
 {"name":"Medicine Ball Slam","aliases":["ball slam","slam ball"],"classification":"Other","primaryMuscles":["lats","abs"],"secondaryMuscles":["delt-front","triceps"]},
 {"name":"Landmine Rotation","aliases":["landmine twist","landmine 180"],"classification":"Barbell","primaryMuscles":["obliques"],"secondaryMuscles":["abs","delt-front"]},
-{"name":"Suitcase Carry","aliases":["single arm farmer carry","suitcase walk"],"classification":"Dumbbell","primaryMuscles":["obliques","forearm-flexors"],"secondaryMuscles":["traps-upper","glutes-med"],"timed":true},
+{"name":"Suitcase Carry","aliases":["single arm farmer carry","suitcase walk"],"classification":"Dumbbell","primaryMuscles":["obliques","forearm-flexors"],"secondaryMuscles":["traps-upper","glutes-med"],"timed":true}
 
-{"name":"Treadmill Run","aliases":["running","treadmill","run treadmill"],"classification":"Cardio","activity":true,"primaryMuscles":["quads","calves"],"secondaryMuscles":["hamstrings","glutes-max"]},
-{"name":"Incline Treadmill Walk","aliases":["incline walk","treadmill walk","12-3-30"],"classification":"Cardio","activity":true,"primaryMuscles":["glutes-max","calves"],"secondaryMuscles":["hamstrings","quads"]},
-{"name":"Outdoor Run","aliases":["run","jog","jogging"],"classification":"Cardio","activity":true,"primaryMuscles":["quads","calves"],"secondaryMuscles":["hamstrings","glutes-max"]},
-{"name":"Walk","aliases":["walking","outdoor walk"],"classification":"Cardio","activity":true,"primaryMuscles":["calves"],"secondaryMuscles":["quads","glutes-max"]},
-{"name":"Stationary Bike","aliases":["exercise bike","bike","upright bike","recumbent bike"],"classification":"Cardio","activity":true,"primaryMuscles":["quads"],"secondaryMuscles":["glutes-max","hamstrings","calves"]},
-{"name":"Spin Bike","aliases":["spinning","indoor cycling","peloton"],"classification":"Cardio","activity":true,"primaryMuscles":["quads"],"secondaryMuscles":["glutes-max","hamstrings","calves"]},
-{"name":"Outdoor Cycling","aliases":["cycling","road bike","biking"],"classification":"Cardio","activity":true,"primaryMuscles":["quads"],"secondaryMuscles":["glutes-max","hamstrings","calves"]},
-{"name":"Air Bike","aliases":["assault bike","fan bike","echo bike"],"classification":"Cardio","activity":true,"primaryMuscles":["quads","delt-front"],"secondaryMuscles":["glutes-max","lats","triceps"]},
-{"name":"Rowing Machine","aliases":["rower","erg","row erg","concept2"],"classification":"Cardio","activity":true,"primaryMuscles":["lats","quads"],"secondaryMuscles":["mid-back","biceps","glutes-max","hamstrings"]},
-{"name":"Ski Erg","aliases":["skierg","ski machine"],"classification":"Cardio","activity":true,"primaryMuscles":["lats","triceps"],"secondaryMuscles":["abs","delt-rear"]},
-{"name":"Elliptical","aliases":["cross trainer","elliptical trainer"],"classification":"Cardio","activity":true,"primaryMuscles":["quads","glutes-max"],"secondaryMuscles":["hamstrings","calves"]},
-{"name":"Stair Climber","aliases":["stairmaster","stair machine","stepmill"],"classification":"Cardio","activity":true,"primaryMuscles":["glutes-max","quads"],"secondaryMuscles":["calves","hamstrings"]},
-{"name":"Jump Rope","aliases":["skipping","skip rope"],"classification":"Cardio","activity":true,"primaryMuscles":["calves"],"secondaryMuscles":["quads","delt-side","forearm-flexors"]},
-{"name":"Swimming","aliases":["swim","laps"],"classification":"Cardio","activity":true,"primaryMuscles":["lats","delt-front"],"secondaryMuscles":["triceps","quads","abs"]},
-{"name":"Hiking","aliases":["hike"],"classification":"Cardio","activity":true,"primaryMuscles":["quads","glutes-max"],"secondaryMuscles":["calves","hamstrings"]},
-{"name":"Yoga","aliases":["yoga flow","vinyasa"],"classification":"Other","activity":true,"primaryMuscles":["hamstrings","abs"],"secondaryMuscles":["delt-front","glutes-max"]},
-{"name":"Stretching","aliases":["stretch","mobility","cool down"],"classification":"Other","activity":true,"primaryMuscles":["hamstrings"],"secondaryMuscles":["quads","hip-flexors"]},
-{"name":"Sports","aliases":["basketball","soccer","football","tennis","pickleball"],"classification":"Other","activity":true,"primaryMuscles":["quads","calves"],"secondaryMuscles":["glutes-max","hamstrings"]}
 ]

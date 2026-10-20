@@ -1,7 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useState } from 'react'
 import { Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
-import { db, IMAGE_BASE, isActivity, MUSCLE_GROUPS, MUSCLES, uuid, type Exercise, type Muscle } from '../db'
+import { db, IMAGE_BASE, MUSCLE_GROUPS, MUSCLES, uuid, type Exercise, type Muscle } from '../db'
 import { loggedSetsFor, useExerciseHistory, useExercises, useSettings } from '../hooks'
 import { bests, fmtDate, fmtWeight, toDisplay, volume } from '../lib'
 import MuscleMap from '../MuscleMap'
@@ -9,13 +9,11 @@ import { CLASSIFICATIONS, MUSCLE_LABEL } from '../muscles'
 import { Icon, RoundBtn, Segmented, Sheet, TopBar } from '../ui'
 
 export const label = (s: string) => MUSCLE_LABEL[s as Muscle] ?? s.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
-const SEGS = ['Exercises', 'Activities'] as const
 const DAY = 86400e3
 
 /** "Add Exercise" library. With `onAdd`, the detail screen's "Add Exercise" button adds it and returns. */
 export default function Library({ onBack, onAdd }: { onBack: () => void; onAdd?: (exerciseId: string) => void }) {
   const all = useExercises()
-  const [seg, setSeg] = useState<(typeof SEGS)[number]>('Exercises')
   const [q, setQ] = useState('')
   const [group, setGroup] = useState(''), [muscle, setMuscle] = useState(''), [cls, setCls] = useState('')
   const [picker, setPicker] = useState<null | 'group' | 'muscle' | 'cls'>(null)
@@ -26,12 +24,11 @@ export default function Library({ onBack, onAdd }: { onBack: () => void; onAdd?:
     return new Set((await db.workoutExercises.where('logId').anyOf(ids).toArray()).map((w) => w.exerciseId))
   }, []) ?? new Set<string>()
 
-  if (custom) return <CustomForm id={custom.id} activity={seg === 'Activities'} onDone={(id) => { setCustom(null); if (id) setDetail(id) }} />
+  if (custom) return <CustomForm id={custom.id} onDone={(id) => { setCustom(null); if (id) setDetail(id) }} />
   if (detail) return <ExerciseDetail id={detail} onBack={() => setDetail(null)} onAdd={onAdd} onEdit={() => setCustom({ id: detail })} />
 
   const words = q.toLowerCase().split(/\s+/).filter(Boolean)
   const list = [...all.values()]
-    .filter((e) => isActivity(e) === (seg === 'Activities'))
     .filter((e) => { const hay = [e.name, ...(e.aliases ?? [])].join(' | ').toLowerCase(); return words.every((w) => hay.includes(w)) })
     .filter((e) => !group || e.primaryMuscles.some((m) => MUSCLE_GROUPS[group].includes(m)))
     .filter((e) => !muscle || e.primaryMuscles.includes(muscle as Muscle))
@@ -57,8 +54,8 @@ export default function Library({ onBack, onAdd }: { onBack: () => void; onAdd?:
       <div className="sticky top-0 z-30 bg-bg px-4 pb-3 pt-[calc(.75rem+env(safe-area-inset-top))]">
         <div className="mb-3 flex items-center gap-3">
           <RoundBtn icon="chevL" label="Back" onClick={onBack} />
-          <Segmented className="flex-1" value={seg} options={SEGS} onChange={setSeg} />
-          <RoundBtn icon="plus" label={`New custom ${seg === 'Activities' ? 'activity' : 'exercise'}`} onClick={() => setCustom({})} />
+          <h1 className="flex-1 text-center text-lg font-bold">Exercises</h1>
+          <RoundBtn icon="plus" label="New custom exercise" onClick={() => setCustom({})} />
         </div>
         <label className="field mb-2 flex items-center gap-2">
           <Icon name="search" className="size-5 text-muted" />
@@ -231,15 +228,15 @@ export function HowTo({ e }: { e: Exercise }) {
   )
 }
 
-function CustomForm({ id, activity, onDone }: { id?: string; activity: boolean; onDone: (id?: string) => void }) {
+function CustomForm({ id, onDone }: { id?: string; onDone: (id?: string) => void }) {
   const existing = useLiveQuery(() => (id ? db.exercises.get(id) : undefined), [id])
   if (id && !existing) return null
-  return <CustomFormInner key={id} e={existing} activity={existing ? isActivity(existing) : activity} onDone={onDone} />
+  return <CustomFormInner key={id} e={existing} onDone={onDone} />
 }
 
-function CustomFormInner({ e, activity, onDone }: { e?: Exercise; activity: boolean; onDone: (id?: string) => void }) {
+function CustomFormInner({ e, onDone }: { e?: Exercise; onDone: (id?: string) => void }) {
   const [name, setName] = useState(e?.name ?? '')
-  const [cls, setCls] = useState(e?.classification ?? (activity ? 'Other' : 'Barbell'))
+  const [cls, setCls] = useState(e?.classification ?? 'Barbell')
   const [primary, setPrimary] = useState<Muscle[]>(e?.primaryMuscles ?? [])
   const [secondary, setSecondary] = useState<Muscle[]>(e?.secondaryMuscles ?? [])
   const cycle = (m: Muscle) => {
@@ -250,7 +247,7 @@ function CustomFormInner({ e, activity, onDone }: { e?: Exercise; activity: bool
   const save = async () => {
     const nid = e?.id ?? uuid()
     await db.exercises.put({
-      id: nid, name: name.trim(), category: activity ? 'activity' : 'strength', classification: cls,
+      id: nid, name: name.trim(), category: 'strength', classification: cls,
       equipment: cls === 'Body Weight/Weighted' ? 'body only' : cls.toLowerCase(),
       primaryMuscles: primary, secondaryMuscles: secondary, instructions: e?.instructions ?? [], images: [], isCustom: true, notes: e?.notes ?? '', updatedAt: Date.now(),
     })
@@ -264,7 +261,7 @@ function CustomFormInner({ e, activity, onDone }: { e?: Exercise; activity: bool
   }
   return (
     <div className="pb-8">
-      <TopBar title={e ? 'Edit' : activity ? 'New Activity' : 'New Exercise'} onBack={() => onDone(e?.id)}
+      <TopBar title={e ? 'Edit' : 'New Exercise'} onBack={() => onDone(e?.id)}
         right={e && <RoundBtn icon="trash" label="Delete" className="bg-danger text-on-accent" onClick={remove} />} />
       <div className="space-y-3 px-4">
         <input className="field" placeholder="Name" value={name} onChange={(ev) => setName(ev.target.value)} />
@@ -279,7 +276,7 @@ function CustomFormInner({ e, activity, onDone }: { e?: Exercise; activity: bool
               className={`chip min-h-9 ${primary.includes(m) ? 'bg-accent text-on-accent font-semibold' : secondary.includes(m) ? 'bg-accent-soft/40' : ''}`}>{label(m)}</button>
           ))}
         </div>
-        <button className="btn-accent w-full" disabled={!name.trim() || (!activity && !primary.length)} onClick={save}>Save</button>
+        <button className="btn-accent w-full" disabled={!name.trim() || !primary.length} onClick={save}>Save</button>
       </div>
     </div>
   )

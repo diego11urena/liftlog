@@ -10,14 +10,14 @@ export type Exercise = Row & {
   primaryMuscles: Muscle[]; secondaryMuscles: Muscle[]
   instructions: string[]; images: string[]; isCustom: boolean; notes: string
   aliases?: string[]
-  /** logged as mm:ss instead of reps (holds, carries, activities) */
+  /** logged as mm:ss instead of reps (holds, carries) */
   timed?: boolean
 }
 /** A set as stored in a saved workout (the plan / "next time starts from these"). */
 export type PlanSet = { weight: number | null; reps: number | null; durationSec?: number | null; side: Side; isDrop: boolean }
 /** Saved workout definition ("Your Workouts"). Exercises are embedded and ordered. */
 export type Workout = Row & { name: string; exercises: { exerciseId: string; unilateral: boolean; sets: PlanSet[] }[] }
-export type Plan = Row & { date: string; type: 'workout' | 'rest' | 'activity'; workoutId?: string }
+export type Plan = Row & { date: string; type: 'workout' | 'rest'; workoutId?: string }
 /** One logged session. */
 export type WorkoutLog = Row & {
   name: string; workoutId?: string; startedAt: number; endedAt?: number; status: 'active' | 'done'; notes: string
@@ -65,7 +65,7 @@ db.on('versionchange', () => {
 })
 
 // Bump when exercises.seed.json changes.
-const SEED_VERSION = 6
+const SEED_VERSION = 7
 
 type SeedRow = Omit<Exercise, 'updatedAt'> & { legacyIds?: string[] }
 
@@ -76,7 +76,9 @@ export async function seed() {
   if (v === SEED_VERSION) return
   const data = (await import('./data/exercises.seed.json')).default as SeedRow[]
   const now = Date.now()
-  await db.transaction('rw', [db.exercises, db.settings, db.workoutExercises, db.sets, db.workouts], async () => {
+  await db.transaction('rw', [db.exercises, db.settings, db.workoutExercises, db.sets, db.workouts, db.plans], async () => {
+    // Activities were removed (owner, 2026-10-19); drop any leftover activity plans
+    await db.plans.filter((p) => (p.type as string) === 'activity').delete()
     const old = await db.exercises.toArray()
     const notes = new Map(old.map((e) => [e.id, e.notes]))
     const ids = new Set(data.map((e) => e.id))
@@ -96,7 +98,7 @@ export async function seed() {
         await db.exercises.delete(o.id)
       } else if (o.isCustom || used.has(o.id)) {
         await db.exercises.update(o.id, {
-          isCustom: true, classification: o.classification ?? 'Other',
+          isCustom: true, category: 'strength', classification: o.classification === 'Cardio' ? 'Other' : (o.classification ?? 'Other'),
           primaryMuscles: upgradeMuscles(o.primaryMuscles), secondaryMuscles: upgradeMuscles(o.secondaryMuscles),
         })
       } else await db.exercises.delete(o.id)
@@ -119,8 +121,6 @@ export async function setSetting<K extends keyof Settings>(key: K, value: Settin
 
 export const IMAGE_BASE = 'https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/'
 
-/** Activities = cardio-type entries, shown under the library's "Activities" segment. */
-export const isActivity = (e: Exercise) => e.category === 'cardio' || e.category === 'activity'
 export const isBodyweight = (e: Exercise) => e.equipment === 'body only'
 /** Holds and similar: logged as mm:ss instead of reps. */
-export const isTimed = (e: Exercise) => e.timed ?? isActivity(e)
+export const isTimed = (e: Exercise) => !!e.timed
