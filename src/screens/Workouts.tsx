@@ -14,7 +14,7 @@ export default function WorkoutsScreen({ onBack }: { onBack: () => void }) {
 
   if (editing) return <WorkoutBuilder id={editing.id} newName={editing.name} onClose={() => setEditing(null)} />
   return (
-    <div className="pb-28">
+    <div className="pb-4">
       <TopBar title="Workouts" onBack={onBack} />
       <div className="space-y-3 px-4">
         {!workouts?.length ? (
@@ -33,7 +33,7 @@ export default function WorkoutsScreen({ onBack }: { onBack: () => void }) {
           </ul>
         )}
       </div>
-      <div className="phone-fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-30 px-4">
+      <div className="mt-4 pb-6 px-4">
         <button className="btn-accent w-full" onClick={() => setNaming(true)}>Create Workout</button>
       </div>
       {naming && <NameModal onClose={() => setNaming(false)} onConfirm={(name) => { setNaming(false); setEditing({ name }) }} />}
@@ -83,7 +83,7 @@ function Builder({ existing, newName, onClose }: { existing?: Workout; newName: 
   }
 
   return (
-    <div className="pb-28">
+    <div className="pb-4">
       <TopBar title={existing ? 'Edit Workout' : 'Create Workout'} onBack={onClose}
         right={<RoundBtn icon="trash" label="Delete workout" className="bg-danger text-on-accent" onClick={remove} />} />
       <div className="px-4">
@@ -128,7 +128,7 @@ function Builder({ existing, newName, onClose }: { existing?: Workout; newName: 
           </ul>
         </div>
       </div>
-      <div className="phone-fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-30 px-4">
+      <div className="mt-4 pb-6 px-4">
         <button className="btn-accent w-full" onClick={save} disabled={!name.trim()}>Save Workout</button>
       </div>
       {renaming && <NameModal initial={name} onClose={() => setRenaming(false)} onConfirm={(n) => { setName(n); setRenaming(false) }} />}

@@ -33,10 +33,10 @@
 html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
 /* same color as the app/tab bar, so nothing different can ever show around or under the frame */
 html, body { background: var(--bg); }
-/* Home Screen app: iOS can report a short viewport at launch, leaving a gap under the tab bar.
-   Size the frame to the full screen (large viewport) instead of the reported layout viewport. */
+/* Home Screen app: with the see-through status bar iOS reports a viewport one status bar shorter than the screen,
+   leaving a gap under the tab bar. main.tsx measures the real screen height into --app-h. */
 @media (display-mode: standalone) {
-  .app-frame { bottom: auto; height: 100vh; height: 100lvh; }
+  .app-frame { bottom: auto; height: var(--app-h, 100vh); }
 }
 body { color: var(--text); -webkit-tap-highlight-color: transparent; overscroll-behavior-y: none; font-family: system-ui, -apple-system, 'SF Pro Text', Roboto, sans-serif; }
 /* 16px+ inputs: no iOS zoom-on-focus */

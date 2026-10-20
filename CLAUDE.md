@@ -94,6 +94,8 @@ Replicate this layout and behavior closely. Use original icons, artwork, wording
 - Sheets slide up from the bottom with a dimmed backdrop; loading states use a thin circular spinner.
 - No native browser dialogs (window.confirm/alert) anywhere: confirmations use the app's own dialog (`ask()` in `src/ui.tsx`); destructive ones are red and focus Cancel (owner, 2026-10-19).
 - App shell: a fixed full-screen frame where only `<main>` scrolls and the tab bar is part of the frame, so the iOS keyboard can never leave dead space under the tabs (owner, 2026-10-19).
+- In the Home Screen app the frame height is the measured screen height (`--app-h`, set in main.tsx): with the see-through status bar iOS reports a viewport one status bar short, which left a gap under the tabs. The tab bar is compact (52px + the home-indicator inset).
+- No floating/pinned action buttons: Start Workout, Create Workout, Save Workout, Add Exercise and the review screen's Save/End Workout sit in the page under the content and scroll with it (owner, 2026-10-20). This overrides "pinned at the bottom" wording elsewhere in this file.
 - Check contrast: text and the accent must meet WCAG AA on their backgrounds. The accent may change later; changing the tokens must be enough.
 - Contrast check results (2026-10-19): three spec values failed AA and were darkened the minimum needed: `--text-2` #6B6F7A → #676B76 (4.40 → 4.66 on `--panel`), `--rest` #14B8A6 → #0D7D70 (2.5 → 5.0 as text on white), `--danger` #E5484D → #D04146 (3.9 → 4.6 with white text). Tokens live in `src/index.css`.
 

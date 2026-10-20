@@ -137,7 +137,7 @@ function ExerciseDetail({ id, onBack, onAdd, onEdit }: { id: string; onBack: () 
     .map((s) => ({ t: s.t, v: Math.round(toDisplay(mode === 'PR' ? s.top : s.vol, unit) ?? 0) }))
 
   return (
-    <div className={onAdd ? 'pb-28' : 'pb-8'}>
+    <div className="pb-4">
       <TopBar title={e.name} onBack={onBack} sub={`Class: ${e.classification}`}
         right={e.isCustom ? <RoundBtn icon="pencil" label="Edit" onClick={onEdit} /> : null} />
       <div className="space-y-3 px-4">
@@ -207,7 +207,7 @@ function ExerciseDetail({ id, onBack, onAdd, onEdit }: { id: string; onBack: () 
       </div>
 
       {onAdd && (
-        <div className="phone-fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-30 px-4">
+        <div className="mt-4 pb-6 px-4">
           <button className="btn-accent w-full" onClick={() => onAdd(id)}>Add Exercise</button>
         </div>
       )}

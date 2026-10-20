@@ -78,7 +78,7 @@ function Home({ date, setDate, go }: { date: string; setDate: (k: string) => voi
   const pick = (k: string) => { setDate(k); setPage(0) }
 
   return (
-    <div className="pb-32">
+    <div className="pb-4">
       <header className="flex items-start gap-2 px-4 pb-3 pt-[calc(1rem+env(safe-area-inset-top))]">
         <div className="min-w-0 flex-1">
           <h1 className={`truncate text-3xl font-bold ${doneDay ? 'text-accent' : ''}`}>{title}</h1>
@@ -99,7 +99,7 @@ function Home({ date, setDate, go }: { date: string; setDate: (k: string) => voi
         ))} />
       )}
 
-      <div className="phone-fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-30 px-4">
+      <div className="mt-4 pb-6 px-4">
         <button className="btn-accent w-full disabled:bg-panel disabled:text-muted disabled:opacity-100" disabled={!canStart} onClick={start}>Start Workout</button>
       </div>
 

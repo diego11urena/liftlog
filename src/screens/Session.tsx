@@ -262,7 +262,7 @@ function Review({ log, onBack, onEnded }: { log: WorkoutLog; onBack: () => void;
   }
 
   return (
-    <div className="pb-44">
+    <div className="pb-4">
       <TopBar title={log.name} onBack={onBack} right={<RoundBtn icon="pencil" label="Edit sets" onClick={onBack} />} />
       <div className="space-y-3 px-4">
         <p className="text-sm text-muted">Review your workout before you finish. You can go back to edit your sets.</p>
@@ -302,7 +302,7 @@ function Review({ log, onBack, onEnded }: { log: WorkoutLog; onBack: () => void;
           <textarea className="field mt-1 min-h-20 py-3 text-fg" defaultValue={log.notes} onBlur={(e) => db.workoutLogs.update(log.id, { notes: e.target.value, updatedAt: Date.now() })} />
         </label>
       </div>
-      <div className="phone-fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-30 grid grid-cols-2 gap-2 px-4">
+      <div className="mt-4 pb-6 grid grid-cols-2 gap-2 px-4">
         <button className="btn-outline" onClick={saveBack}>Save Workout</button>
         <button className="btn-accent" onClick={end}>End Workout</button>
       </div>

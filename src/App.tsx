@@ -51,7 +51,7 @@ export default function App() {
         <div className="flex">
           {TABS.map((t) => (
             <button key={t.name} onClick={() => setTab(t.name)} aria-current={tab === t.name ? 'page' : undefined}
-              className={`flex min-h-16 flex-1 flex-col items-center justify-center gap-0.5 text-[11px] font-medium ${tab === t.name ? 'text-accent' : 'text-muted'}`}>
+              className={`flex h-[3.25rem] flex-1 flex-col items-center justify-center gap-0.5 text-[11px] font-medium ${tab === t.name ? 'text-accent' : 'text-muted'}`}>
               <Icon name={t.icon} className="size-6" />
               {t.name}
             </button>

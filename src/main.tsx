@@ -11,6 +11,13 @@ import { importFromLink, startSync } from './sync.ts'
 registerSW({ immediate: true })
 navigator.storage?.persist?.() // ask the browser not to evict workout data
 
+// Home Screen app is always full screen (portrait-locked), so the frame is exactly the screen's height
+if (matchMedia('(display-mode: standalone)').matches || (navigator as { standalone?: boolean }).standalone) {
+  const fit = () => document.documentElement.style.setProperty('--app-h', `${Math.max(screen.height, innerHeight)}px`)
+  fit()
+  addEventListener('resize', fit)
+}
+
 seed().finally(() => {
   startSync() // after the seed: its writes are local-only
   importFromLink().then((n) => n && setTimeout(() => toast(`Imported ${n} items`), 500)).catch((e) => setTimeout(() => toast(`Import failed: ${e.message}`), 500))
