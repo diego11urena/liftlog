@@ -205,7 +205,7 @@ Nothing else on this tab. No streaks, no levels, no trophies, no leaderboard, no
 
 ## Quality bar
 - Logging a set should take at most 2 taps after entering numbers.
-- Large tap targets, number inputs use `inputmode="decimal"`, no zoom-on-focus.
+- Large tap targets, number inputs use `inputmode="decimal"`, no zoom-on-focus: every input/select/textarea is at least 16px, and the viewport sets `maximum-scale=1` so iOS never auto-zooms (it got stuck zoomed in the Home Screen app, 2026-10-19).
 - Lighthouse PWA checks pass; app loads in airplane mode.
 - Unit tests for e1RM, PR detection, and volume totals.
 - Keep README.md updated with run, build, and hosting steps.

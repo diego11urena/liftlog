@@ -214,7 +214,7 @@ function UnitPicker({ unit, label, onChange }: { unit: Unit; label: string; onCh
   return (
     <span className="relative mr-1 shrink-0">
       <select aria-label={label} value={unit} onChange={(e) => onChange(e.target.value as Unit)}
-        className="h-8 appearance-none rounded-lg bg-card pl-2 pr-5 text-sm font-semibold text-accent outline-none focus:ring-2 focus:ring-accent">
+        className="h-8 appearance-none rounded-lg bg-card pl-2 pr-5 text-base font-semibold text-accent outline-none focus:ring-2 focus:ring-accent">
         <option value="kg">kg</option>
         <option value="lb">lb</option>
       </select>
