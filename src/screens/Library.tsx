@@ -12,7 +12,7 @@ const CLASSES = ['Barbell', 'Dumbbell', 'Machine', 'Cable', 'Kettlebell', 'Band'
 const SEGS = ['Exercises', 'Activities'] as const
 const DAY = 86400e3
 
-/** "Add Exercise" library. With `onAdd`, the detail screen's "+" adds the exercise and returns. */
+/** "Add Exercise" library. With `onAdd`, the detail screen's "Add Exercise" button adds it and returns. */
 export default function Library({ onBack, onAdd }: { onBack: () => void; onAdd?: (exerciseId: string) => void }) {
   const all = useExercises()
   const [seg, setSeg] = useState<(typeof SEGS)[number]>('Exercises')
@@ -139,10 +139,9 @@ function ExerciseDetail({ id, onBack, onAdd, onEdit }: { id: string; onBack: () 
     .map((s) => ({ t: s.t, v: Math.round(toDisplay(mode === 'PR' ? s.top : s.vol, unit) ?? 0) }))
 
   return (
-    <div className="pb-8">
+    <div className={onAdd ? 'pb-28' : 'pb-8'}>
       <TopBar title={e.name} onBack={onBack} sub={`Class: ${e.classification}`}
-        right={onAdd ? <RoundBtn icon="plus" label="Add to workout" className="bg-accent text-black" onClick={() => onAdd(id)} />
-          : e.isCustom ? <RoundBtn icon="pencil" label="Edit" onClick={onEdit} /> : null} />
+        right={e.isCustom ? <RoundBtn icon="pencil" label="Edit" onClick={onEdit} /> : null} />
       <div className="space-y-3 px-4">
         <div className="card py-5"><MuscleMap primary={e.primaryMuscles} secondary={e.secondaryMuscles} /></div>
 
@@ -207,9 +206,13 @@ function ExerciseDetail({ id, onBack, onAdd, onEdit }: { id: string; onBack: () 
           <div><span className="font-semibold">Primary muscles: </span><span className="text-muted">{e.primaryMuscles.map(label).join(', ') || '–'}</span></div>
           <div><span className="font-semibold">Secondary muscles: </span><span className="text-muted">{e.secondaryMuscles.map(label).join(', ') || '–'}</span></div>
         </div>
-
-        {(e.instructions.length > 0 || e.images.length > 0) && <HowTo e={e} />}
       </div>
+
+      {onAdd && (
+        <div className="phone-fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-30 px-4">
+          <button className="btn-accent w-full" onClick={() => onAdd(id)}>Add Exercise</button>
+        </div>
+      )}
     </div>
   )
 }
