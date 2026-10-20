@@ -9,7 +9,7 @@ import { db, isBodyweight, isTimed, unitOf, type Exercise, type Unit, type Worko
 import { bySetOrder, logSummary, useExerciseHistory, useExercises } from '../hooks'
 import { fmtClock, fmtDate, fmtDuration, fmtVolume, fmtWeight, fromDisplay, toDisplay } from '../lib'
 import MuscleMap from '../MuscleMap'
-import { Busy, Icon, Pager, RoundBtn, Sheet, Tile, TopBar } from '../ui'
+import { ask, Busy, Icon, Pager, RoundBtn, Sheet, Tile, TopBar } from '../ui'
 import Library, { HowTo, label } from './Library'
 
 /** Logging screen. Active sessions get the timer/End flow; finished ones (from Stats) are editable with Delete. */
@@ -33,7 +33,9 @@ export default function Session({ logId, onEnded, onClose }: { logId: string; on
 
   const active = log.status === 'active'
   const discard = async () => {
-    if (confirm(active ? 'Discard this workout? Everything logged in it will be deleted.' : 'Delete this workout from history?')) {
+    if (await ask(active
+      ? { title: 'Discard this workout?', message: 'Everything logged in it will be deleted.', confirm: 'Discard', danger: true }
+      : { title: 'Delete this workout?', message: "It will be removed from your history.", confirm: 'Delete', danger: true })) {
       await deleteLog(logId); onClose?.()
     }
   }
@@ -199,7 +201,7 @@ function ExerciseCard({ we, ex, log, onReplace, onMove, first, last }: {
             <label className="block text-sm text-muted">Workout notes
               <textarea className="field mt-1 min-h-20 py-3 text-fg" defaultValue={log.notes} onBlur={(e) => db.workoutLogs.update(log.id, { notes: e.target.value, updatedAt: Date.now() })} />
             </label>
-            <button className="btn-ghost w-full text-danger" onClick={() => { if (confirm(`Remove ${ex.name} and its sets?`)) { setMenu(false); void removeExercise(we.id) } }}>Remove exercise</button>
+            <button className="btn-ghost w-full text-danger" onClick={async () => { if (await ask({ title: `Remove ${ex.name}?`, message: 'Its sets in this workout will be deleted.', confirm: 'Remove', danger: true })) { setMenu(false); void removeExercise(we.id) } }}>Remove exercise</button>
           </div>
         </Sheet>
       )}

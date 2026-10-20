@@ -7,7 +7,7 @@ import { db, MUSCLES } from '../db'
 import { musclesOf, useActiveLog, useExercises, useWeekStatus } from '../hooks'
 import { addDays, dateKey, fmtDuration, fmtVolume, sundayOf, volume, weekStart } from '../lib'
 import MuscleMap from '../MuscleMap'
-import { Icon, RoundBtn, Sheet, WeekStrip, type IconName } from '../ui'
+import { ask, Icon, RoundBtn, Sheet, WeekStrip, type IconName } from '../ui'
 import { label } from './Library'
 
 export default function Profile({ onJump }: { onJump: (dateKey: string) => void }) {
@@ -132,7 +132,10 @@ function SettingsSheet({ onClose }: { onClose: () => void }) {
           <h3 className="mb-1 font-bold text-danger">Danger zone</h3>
           <p className="mb-3 text-sm text-muted">Erases every workout, plan, custom exercise and setting on this device. This can't be undone.</p>
           <button className="btn w-full bg-danger text-on-accent" onClick={() => {
-            if (confirm('Erase ALL data?') && confirm('Really erase everything? There is no backup.')) void eraseAll()
+            void (async () => {
+              if (await ask({ title: 'Erase all data?', message: 'Every workout, plan, custom exercise and setting on this phone will be deleted.', confirm: 'Erase', danger: true })
+                && await ask({ title: 'Really erase everything?', message: "There is no backup. This can't be undone.", confirm: 'Erase everything', danger: true })) void eraseAll()
+            })()
           }}>Erase all data</button>
         </div>
       </div>

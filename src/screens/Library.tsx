@@ -6,7 +6,8 @@ import { loggedSetsFor, useExerciseHistory, useExercises } from '../hooks'
 import { bests, fmtDate, fmtWeight, toDisplay, volume } from '../lib'
 import MuscleMap from '../MuscleMap'
 import { CLASSIFICATIONS, MUSCLE_LABEL } from '../muscles'
-import { Icon, RoundBtn, Segmented, Sheet, TopBar } from '../ui'
+import { toast } from '../App'
+import { ask, Icon, RoundBtn, Segmented, Sheet, TopBar } from '../ui'
 
 export const label = (s: string) => MUSCLE_LABEL[s as Muscle] ?? s.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
 const DAY = 86400e3
@@ -256,8 +257,8 @@ function CustomFormInner({ e, onDone }: { e?: Exercise; onDone: (id?: string) =>
   const remove = async () => {
     if (!e) return
     const used = await db.workoutExercises.where('exerciseId').equals(e.id).count()
-    if (used) return alert(`It's used in ${used} logged session(s), so it can't be deleted.`)
-    if (confirm(`Delete "${e.name}"?`)) { await db.exercises.delete(e.id); onDone() }
+    if (used) return toast(`It's used in ${used} logged session(s), so it can't be deleted.`)
+    if (await ask({ title: `Delete "${e.name}"?`, confirm: 'Delete', danger: true })) { await db.exercises.delete(e.id); onDone() }
   }
   return (
     <div className="pb-8">

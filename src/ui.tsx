@@ -182,3 +182,41 @@ export function Pager({ pages, index, onIndex }: { pages: ReactNode[]; index: nu
     </div>
   )
 }
+
+type AskOpts = { title: string; message?: string; confirm?: string; cancel?: string; danger?: boolean }
+type AskReq = AskOpts & { resolve: (ok: boolean) => void }
+
+/** In-app replacement for window.confirm: `if (await ask({ title: 'Discard?', danger: true })) …` */
+export const ask = (o: AskOpts) => new Promise<boolean>((resolve) => window.dispatchEvent(new CustomEvent<AskReq>('ask', { detail: { ...o, resolve } })))
+
+/** Renders `ask()` dialogs. Mount once (App). */
+export function AskHost() {
+  const [q, setQ] = useState<AskReq | null>(null)
+  useEffect(() => {
+    const on = (e: Event) => setQ((e as CustomEvent<AskReq>).detail)
+    window.addEventListener('ask', on)
+    return () => window.removeEventListener('ask', on)
+  }, [])
+  useEffect(() => {
+    if (!q) return
+    const k = (e: KeyboardEvent) => { if (e.key === 'Escape') { q.resolve(false); setQ(null) } }
+    window.addEventListener('keydown', k)
+    return () => window.removeEventListener('keydown', k)
+  }, [q])
+  if (!q) return null
+  const done = (ok: boolean) => { q.resolve(ok); setQ(null) }
+  return (
+    <div className="phone-fixed inset-y-0 z-[80] grid place-items-center p-6" role="alertdialog" aria-modal aria-labelledby="ask-title">
+      <button className="absolute inset-0 bg-scrim" aria-label="Cancel" tabIndex={-1} onClick={() => done(false)} />
+      <div className="pop relative w-full rounded-[28px] bg-card p-5 text-center">
+        <h2 id="ask-title" className="text-lg font-bold">{q.title}</h2>
+        {q.message && <p className="mt-1 text-sm text-muted">{q.message}</p>}
+        <div className="mt-5 grid grid-cols-2 gap-2">
+          {/* destructive dialogs focus Cancel, so a stray Enter can't delete anything */}
+          <button autoFocus={q.danger} className="btn-ghost" onClick={() => done(false)}>{q.cancel ?? 'Cancel'}</button>
+          <button autoFocus={!q.danger} className={q.danger ? 'btn bg-danger text-on-accent' : 'btn-accent'} onClick={() => done(true)}>{q.confirm ?? 'OK'}</button>
+        </div>
+      </div>
+    </div>
+  )
+}

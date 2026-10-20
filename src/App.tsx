@@ -3,7 +3,7 @@ import { dateKey } from './lib'
 import Profile from './screens/Profile'
 import Stats from './screens/Stats'
 import WorkoutTab from './screens/WorkoutTab'
-import { Icon, type IconName } from './ui'
+import { AskHost, Icon, type IconName } from './ui'
 
 const TABS: { name: 'Profile' | 'Workout' | 'Stats'; icon: IconName }[] = [
   { name: 'Profile', icon: 'person' }, { name: 'Workout', icon: 'dumbbell' }, { name: 'Stats', icon: 'stats' },
@@ -18,6 +18,13 @@ export default function App() {
   const [date, setDate] = useState(() => dateKey(Date.now()))
   const [msg, setMsg] = useState<string | null>(null)
 
+  // iOS can leave the window scrolled after the keyboard closes; the window never scrolls on purpose, so reset it
+  useEffect(() => {
+    const reset = () => setTimeout(() => { if (!document.activeElement?.matches('input, textarea, select')) window.scrollTo(0, 0) }, 50)
+    document.addEventListener('focusout', reset)
+    return () => document.removeEventListener('focusout', reset)
+  }, [])
+
   useEffect(() => {
     let t: number
     const on = (e: Event) => { setMsg((e as CustomEvent<string>).detail); clearTimeout(t); t = window.setTimeout(() => setMsg(null), 2000) }
@@ -26,17 +33,21 @@ export default function App() {
   }, [])
 
   return (
-    <div className="relative mx-auto min-h-dvh w-full max-w-[430px] bg-bg pb-[calc(4.5rem+env(safe-area-inset-bottom))]">
-      {tab === 'Profile' && <Profile onJump={(k) => { setDate(k); setTab('Workout') }} />}
-      {tab === 'Workout' && <WorkoutTab date={date} setDate={setDate} />}
-      {tab === 'Stats' && <Stats />}
+    // Fixed full-screen frame: only <main> scrolls, the page never does, so the iOS keyboard can't
+    // leave the layout shifted and the tab bar always sits at the bottom.
+    <div className="phone-fixed inset-y-0 flex flex-col bg-bg">
+      <main key={tab} className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain">
+        {tab === 'Profile' && <Profile onJump={(k) => { setDate(k); setTab('Workout') }} />}
+        {tab === 'Workout' && <WorkoutTab date={date} setDate={setDate} />}
+        {tab === 'Stats' && <Stats />}
+      </main>
 
       {msg && (
         <div role="status" className="pop phone-fixed top-[calc(1rem+env(safe-area-inset-top))] z-[70] flex justify-center px-4">
           <span className="rounded-full bg-fg px-5 py-2.5 text-sm font-semibold text-bg shadow-lg">{msg}</span>
         </div>
       )}
-      <nav className="phone-fixed bottom-0 z-40 border-t border-line bg-bg pb-[env(safe-area-inset-bottom)]">
+      <nav className="relative z-40 shrink-0 border-t border-line bg-bg pb-[env(safe-area-inset-bottom)]">
         <div className="flex">
           {TABS.map((t) => (
             <button key={t.name} onClick={() => setTab(t.name)} aria-current={tab === t.name ? 'page' : undefined}
@@ -47,6 +58,7 @@ export default function App() {
           ))}
         </div>
       </nav>
+      <AskHost />
     </div>
   )
 }

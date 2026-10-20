@@ -13,7 +13,7 @@ export default function DevMuscles() {
   }, [play])
   const m = MUSCLES[i]
   return (
-    <div className="mx-auto max-w-[430px] space-y-4 p-4">
+    <div className="mx-auto h-dvh max-w-[430px] space-y-4 overflow-y-auto p-4">
       <h1 className="text-xl font-bold">Muscle regions · {i + 1}/{MUSCLES.length}</h1>
       <div className="flex items-center gap-2">
         <button className="btn-ghost min-h-10" onClick={() => setI((i - 1 + MUSCLES.length) % MUSCLES.length)}>‹</button>

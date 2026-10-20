@@ -3,7 +3,7 @@ import { useRef, useState } from 'react'
 import { createWorkout, deleteWorkout } from '../actions'
 import { db, type PlanSet, type Workout } from '../db'
 import { useExercises } from '../hooks'
-import { Busy, Icon, NameModal, RoundBtn, TopBar } from '../ui'
+import { ask, Busy, Icon, NameModal, RoundBtn, TopBar } from '../ui'
 import Library, { label } from './Library'
 
 /** "Workouts" screen from the Workouts pill. */
@@ -72,7 +72,7 @@ function Builder({ existing, newName, onClose }: { existing?: Workout; newName: 
   }
   const remove = async () => {
     if (!existing) return onClose()
-    if (confirm(`Delete "${existing.name}"? It's also removed from any planned days. Logged history stays.`)) { await deleteWorkout(existing.id); onClose() }
+    if (await ask({ title: `Delete "${existing.name}"?`, message: "It's also removed from any planned days. Logged history stays.", confirm: 'Delete', danger: true })) { await deleteWorkout(existing.id); onClose() }
   }
   const target = (d: NonNullable<typeof drag>) => Math.max(0, Math.min(list.length - 1, d.i + Math.round(d.dy / rowH.current)))
   const drop = () => {

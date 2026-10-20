@@ -93,6 +93,8 @@ Replicate this layout and behavior closely. Use original icons, artwork, wording
 - Very large corner radii (cards ~24px, buttons fully pill-shaped), generous padding. Bold, large-ish sans-serif titles. Bottom tab bar: icon over a small label, active tab in `--accent`, inactive `--text-2`.
 - The reference's white pill buttons (End Workout in the header, Save Workout, Back to Home) become: header End Workout = solid `--text` pill with white text; Save Workout = outlined pill; the reference's green pills (Start Workout, Create Workout, Save Workout in the editor, End Workout on the review screen, Add Exercise) = solid `--accent` pills with `--on-accent` text. Disabled buttons use a muted `--panel` fill with `--text-2` text.
 - Sheets slide up from the bottom with a dimmed backdrop; loading states use a thin circular spinner.
+- No native browser dialogs (window.confirm/alert) anywhere: confirmations use the app's own dialog (`ask()` in `src/ui.tsx`); destructive ones are red and focus Cancel (owner, 2026-10-19).
+- App shell: a fixed full-screen frame where only `<main>` scrolls and the tab bar is part of the frame, so the iOS keyboard can never leave dead space under the tabs (owner, 2026-10-19).
 - Check contrast: text and the accent must meet WCAG AA on their backgrounds. The accent may change later; changing the tokens must be enough.
 - Contrast check results (2026-10-19): three spec values failed AA and were darkened the minimum needed: `--text-2` #6B6F7A → #676B76 (4.40 → 4.66 on `--panel`), `--rest` #14B8A6 → #0D7D70 (2.5 → 5.0 as text on white), `--danger` #E5484D → #D04146 (3.9 → 4.6 with white text). Tokens live in `src/index.css`.
 
