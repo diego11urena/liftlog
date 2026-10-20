@@ -153,6 +153,7 @@
 {"name":"Bench Dip","aliases":["tricep dip","chair dip","bench dips"],"classification":"Body Weight/Weighted","primaryMuscles":["triceps"],"secondaryMuscles":["delt-front","chest-lower"]},
 {"name":"Triceps Dip","aliases":["upright dip","tricep dips on bars"],"classification":"Body Weight/Weighted","primaryMuscles":["triceps"],"secondaryMuscles":["chest-lower","delt-front"]},
 {"name":"Seated Dip Machine","aliases":["tricep dip machine","dip machine","seated triceps press"],"classification":"Machine","primaryMuscles":["triceps"],"secondaryMuscles":["chest-lower"]},
+{"name":"Tricep Extension","aliases":["triceps extension","cable tricep extension","tricep ext","standing tricep extension"],"classification":"Cable","primaryMuscles":["triceps"],"secondaryMuscles":[]},
 {"name":"Triceps Extension Machine","aliases":["machine tricep extension","tricep machine"],"classification":"Machine","primaryMuscles":["triceps"],"secondaryMuscles":[]},
 {"name":"Dumbbell Kickback","aliases":["tricep kickback","db kickback"],"classification":"Dumbbell","primaryMuscles":["triceps-lateral","triceps-long"],"secondaryMuscles":["triceps-medial"]},
 {"name":"Cable Triceps Kickback","aliases":["cable tricep kickback"],"classification":"Cable","primaryMuscles":["triceps-lateral","triceps-long"],"secondaryMuscles":["triceps-medial"]},

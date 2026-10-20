@@ -65,7 +65,7 @@ db.on('versionchange', () => {
 })
 
 // Bump when exercises.seed.json changes.
-const SEED_VERSION = 3
+const SEED_VERSION = 4
 
 type SeedRow = Omit<Exercise, 'updatedAt'> & { legacyIds?: string[] }
 
