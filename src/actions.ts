@@ -1,7 +1,7 @@
 // Every edit writes straight to IndexedDB, so the in-progress session is always autosaved.
 import { db, isBodyweight, isTimed, uuid, type PlanSet, type Side, type Workout, type WorkoutExercise, type WSet } from './db'
 import { bySetOrder, loggedSetsFor } from './hooks'
-import { dateKey, detectPR, isLogged } from './lib'
+import { dateKey, isLogged, isPRSet } from './lib'
 
 const now = () => Date.now()
 const touch = <T extends object>(o: T) => ({ ...o, updatedAt: now() })
@@ -99,7 +99,7 @@ async function saveSet(id: string, patch: Partial<Pick<WSet, 'weight' | 'reps' |
   if (logged) {
     completedAt = s.completedAt || (log?.status === 'done' ? (log.endedAt ?? log.startedAt) : now())
     const prev = (await loggedSetsFor(s.exerciseId)).filter((p) => p.id !== id && p.completedAt <= completedAt && p.side === next.side)
-    isPR = detectPR(prev, next).length > 0
+    isPR = isPRSet(prev, next)
   }
   await db.sets.update(id, touch({ ...patch, completedAt, isPR }))
 }

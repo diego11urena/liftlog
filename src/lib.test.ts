@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { bests, dateKey, detectPR, e1rm, fmtClock, fmtDuration, fmtVolume, fromDisplay, fromKey, isLogged, toDisplay, volume } from './lib'
+import { bests, dateKey, e1rm, fmtClock, fmtDuration, fmtVolume, fromDisplay, fromKey, isLogged, isPRSet, toDisplay, volume } from './lib'
 
 test('e1rm', () => {
   expect(e1rm(100, 1)).toBe(100)
@@ -15,15 +15,15 @@ test('bests: heaviest, ties broken by reps', () => {
   expect(bests([{ weight: null, reps: 12 }]).top).toEqual({ weight: null, reps: 12 })
 })
 
-test('detectPR', () => {
+test('isPRSet: heaviest weight, ties broken by reps', () => {
   const prev = [{ weight: 100, reps: 5 }, { weight: 80, reps: 10 }]
-  expect(detectPR([], { weight: 50, reps: 5 })).toEqual([])
-  expect(detectPR(prev, { weight: 105, reps: 1 })).toEqual(['weight'])
-  expect(detectPR(prev, { weight: 100, reps: 6 })).toEqual(['e1rm', 'reps'])
-  expect(detectPR(prev, { weight: 80, reps: 11 })).toEqual(['reps'])
-  expect(detectPR(prev, { weight: 90, reps: 5 })).toEqual([])
-  expect(detectPR(prev, { weight: 100, reps: null })).toEqual([])
-  expect(detectPR([{ weight: null, reps: 10 }], { weight: null, reps: 12 })).toEqual(['reps']) // bodyweight
+  expect(isPRSet([], { weight: 50, reps: 5 })).toBe(false)
+  expect(isPRSet(prev, { weight: 105, reps: 1 })).toBe(true)
+  expect(isPRSet(prev, { weight: 100, reps: 6 })).toBe(true)
+  expect(isPRSet(prev, { weight: 80, reps: 20 })).toBe(false) // more reps at a lighter weight is not a PR
+  expect(isPRSet(prev, { weight: 95, reps: 8 })).toBe(false) // better e1RM but lighter
+  expect(isPRSet(prev, { weight: 100, reps: null })).toBe(false)
+  expect(isPRSet([{ weight: null, reps: 10 }], { weight: null, reps: 12 })).toBe(true) // bodyweight
 })
 
 test('isLogged needs both fields', () => {

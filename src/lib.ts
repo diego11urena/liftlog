@@ -21,20 +21,14 @@ export function bests(sets: SetLike[]) {
   return { top, e1rm: best1rm }
 }
 
-export type PRKind = 'weight' | 'e1rm' | 'reps'
-
-/** Which records `cur` beats compared to earlier sets. A first-ever set is not a PR. */
-export function detectPR(prev: SetLike[], cur: SetLike): PRKind[] {
-  if (!cur.reps) return []
+/** A PR is the heaviest weight so far (ties → more reps), same order as `bests().top`. A first-ever set is not a PR. */
+export function isPRSet(prev: SetLike[], cur: SetLike): boolean {
+  if (!cur.reps) return false
   const p = prev.filter((s) => s.reps)
-  if (!p.length) return []
-  const w = cur.weight ?? 0, ws = p.map((s) => s.weight ?? 0)
-  const out: PRKind[] = []
-  if (w > 0 && w > Math.max(...ws)) out.push('weight')
-  if (w > 0 && e1rm(w, cur.reps) > Math.max(...p.map((s) => e1rm(s.weight ?? 0, s.reps!))) + 1e-9) out.push('e1rm')
-  const atOrAbove = p.filter((s) => (s.weight ?? 0) >= w)
-  if (atOrAbove.length && cur.reps > Math.max(...atOrAbove.map((s) => s.reps!))) out.push('reps')
-  return out
+  if (!p.length) return false
+  const w = cur.weight ?? 0, top = bests(p).top!
+  const tw = top.weight ?? 0
+  return w > tw || (w === tw && cur.reps > top.reps)
 }
 
 /** A set is logged once both fields are filled ("BW" counts as filled for bodyweight exercises). */

@@ -1,6 +1,7 @@
 import Dexie, { type EntityTable } from 'dexie'
 
 export { MUSCLE_GROUPS, MUSCLES, type Muscle } from './muscles'
+import { isPRSet } from './lib'
 import { upgradeMuscles, type Muscle } from './muscles'
 
 type Row = { id: string; updatedAt: number }
@@ -60,6 +61,17 @@ db.version(1).stores({
   settings: 'key',
 })
 db.version(2).stores({ tombstones: 'key, deletedAt' })
+// v3: PR now means heaviest weight (it used to also flag rep/e1RM records); recompute the flag on logged sets.
+db.version(3).upgrade(async (tx) => {
+  const sets = (await tx.table('sets').toArray()).filter((s) => s.completedAt).sort((a, b) => a.completedAt - b.completedAt || a.order - b.order)
+  const prior = new Map<string, { weight: number | null; reps: number | null }[]>()
+  for (const s of sets) {
+    const k = `${s.exerciseId}|${s.side}`, p = prior.get(k) ?? []
+    const isPR = isPRSet(p, s)
+    if (isPR !== s.isPR) await tx.table('sets').update(s.id, { isPR, updatedAt: Date.now() })
+    prior.set(k, [...p, s])
+  }
+})
 
 /** While on, writes aren't re-stamped or logged for sync: applying another device's changes, and the local seed. */
 export const quiet = { on: false }

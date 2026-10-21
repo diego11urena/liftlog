@@ -42,7 +42,7 @@ The app is a free PWA used only on the owner's iPhone, anywhere (Wi-Fi or cellul
 4. **Saved workouts (templates)**: save a workout as a template, start a workout from a template, prefill from last session.
 5. **History**: list of past workouts, open one to view or edit, delete with confirmation.
 6. **Last session + PR at a glance (headline feature)**: while logging any exercise, show a header on that exercise card with (a) **Last workout**: the weight x reps for each set from the most recent completed session of that exercise, with its date, and (b) **PR**: my best weight and the reps I did at it, plus my best reps at other key weights if useful. Also show the matching previous set (weight x reps) inline next to each set row. Tapping a previous value copies it into the current set. This must work fully offline, load instantly (index `sets` by exerciseId + completedAt), and show a clear "No history yet" state for new exercises.
-7. **PRs**: detect and flag new records (heaviest weight, best estimated 1RM, rep PRs) during logging. The PR shown in the header (feature 6) must update live the moment a new PR is logged. Mark it with a plain "PR" label on the set; no animation, points, or badges.
+7. **PRs**: detect and flag new records during logging: a PR is the heaviest weight (ties broken by reps), nothing else (owner, 2026-10-20; a v3 DB upgrade recomputes old sets). The PR shown in the header (feature 6) must update live the moment a new PR is logged. Mark it with a plain "PR" label on the set; no animation, points, or badges.
 8. **Progress**: per-exercise charts (est. 1RM, volume, top set over time) and weekly volume per muscle group.
 9. **Week preview and planning**: plan each day (workout or rest), preview the week, start the planned workout. See "Workout tab" below.
 10. **Settings** (opens from the gear on the Profile tab): a "Move data here" box (paste a one-time `#import=` link; needed because iPhone Home Screen apps don't share Safari's storage; this is a migration tool, not the removed backup export/import) and the erase-all-data danger zone. There is no app-wide kg/lb or weight-step setting: units are chosen per exercise while logging (owner decision 2026-10-19). That is the complete list; there is no reference recording to match (owner, 2026-10-19). Light UI only, no theme toggle (the palette lives in theme tokens so a dark theme could be added later). No export/import (owner decision 2026-10-19).
@@ -179,7 +179,7 @@ Tapping **Start Workout** slides the Workout tab into this screen. The bottom ta
 
 **Definitions**
 - Volume = sum of weight x reps over every logged set, counting R and L rows separately (e.g. 20kg x 25 x2 + 25kg x 6 x2 = 1,300 kg, shown as "1.3k kgs"). Show "k" above 1,000.
-- A PR is any set that beats the stored best for that exercise (heaviest weight; ties broken by reps; also best e1RM). Count unilateral sides separately.
+- A PR is any set that beats the stored best for that exercise (heaviest weight; ties broken by reps; e1RM and rep-only records do not count). Count unilateral sides separately.
 - The "Prev. 4.7k kgs - 1h 3m" subtitle on the planned card is the previous session's volume and duration for that workout.
 
 **Data model additions for this screen**
