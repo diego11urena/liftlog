@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { bests, dateKey, e1rm, fmtClock, fmtDuration, fmtVolume, fromDisplay, fromKey, isLogged, isPRSet, toDisplay, volume } from './lib'
+import { bests, dateKey, e1rm, fmtClock, fmtDuration, fmtVolume, fromDisplay, fromKey, isLogged, isPRSet, sessionEnd, toDisplay, volume } from './lib'
 
 test('e1rm', () => {
   expect(e1rm(100, 1)).toBe(100)
@@ -54,4 +54,10 @@ test('formatting and dates', () => {
   expect(toDisplay(100, 'lb')).toBe(220.46)
   expect(toDisplay(fromDisplay(225, 'lb'), 'lb')).toBe(225)
   expect(dateKey(fromKey('2026-10-19'))).toBe('2026-10-19')
+})
+
+test('sessionEnd stops the clock at the last set after a 30+ min gap', () => {
+  expect(sessionEnd(1000, 1000 + 31 * 60e3)).toBe(1000)
+  expect(sessionEnd(1000, 1000 + 5 * 60e3)).toBe(1000 + 5 * 60e3)
+  expect(sessionEnd(0, 99)).toBe(99)
 })

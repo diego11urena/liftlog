@@ -1,7 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useEffect, useState } from 'react'
 import {
-  addExercise, addSet, deleteLog, MAX_SETS, dropSet, finishSession, moveExercise, removeExercise, removeLastSet, replaceExercise,
+  addExercise, addSet, endOf, deleteLog, MAX_SETS, dropSet, finishSession, moveExercise, removeExercise, removeLastSet, replaceExercise,
   saveSessionToWorkout, setUnilateral, updateSet,
 } from '../actions'
 import { toast } from '../App'
@@ -245,10 +245,9 @@ function Review({ log, onBack, onEnded }: { log: WorkoutLog; onBack: () => void;
   const u = (exerciseId: string) => unitOf(exercises.get(exerciseId))
   const data = useLiveQuery(async () => {
     const [s, wes] = await Promise.all([logSummary(log.id, exercises), db.workoutExercises.where('logId').equals(log.id).sortBy('order')])
-    return { ...s, wes }
+    return { ...s, wes, end: await endOf(log.id) }
   }, [log.id, exercises.size])
   const [busy, setBusy] = useState(false)
-  const [now] = useState(Date.now())
   if (!data) return null
 
   const end = async () => {
@@ -267,7 +266,7 @@ function Review({ log, onBack, onEnded }: { log: WorkoutLog; onBack: () => void;
       <div className="space-y-3 px-4">
         <p className="text-sm text-muted">Review your workout before you finish. You can go back to edit your sets.</p>
         <div className="flex gap-2">
-          <Tile label="Total Time" value={fmtDuration(now - log.startedAt)} icon="timer" />
+          <Tile label="Total Time" value={fmtDuration(data.end - log.startedAt)} icon="timer" />
           <Tile label="Volume" value={fmtVolume(data.volume, 'kg')} icon="dumbbell" />
         </div>
         <div className="card p-4">

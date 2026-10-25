@@ -38,7 +38,8 @@ export default function Profile({ onJump }: { onJump: (dateKey: string) => void 
 
   return (
     <div className="space-y-3 px-4 pb-8">
-      <div className="flex justify-end pt-[calc(1rem+env(safe-area-inset-top))]">
+      <div className="flex items-center justify-between pt-[calc(1rem+env(safe-area-inset-top))]">
+        <h1 className="text-2xl font-bold">{greeting()}, Diego</h1>
         <RoundBtn icon="gear" label="Settings" onClick={() => setSettings(true)} />
       </div>
 
@@ -117,6 +118,8 @@ function ImportBox() {
     </div>
   )
 }
+
+const greeting = () => { const h = new Date().getHours(); return h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening' }
 
 function SettingsSheet({ onClose }: { onClose: () => void }) {
   return (

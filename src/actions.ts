@@ -1,7 +1,7 @@
 // Every edit writes straight to IndexedDB, so the in-progress session is always autosaved.
 import { db, isBodyweight, isTimed, uuid, type PlanSet, type Side, type Workout, type WorkoutExercise, type WSet } from './db'
 import { bySetOrder, loggedSetsFor } from './hooks'
-import { dateKey, isLogged, isPRSet } from './lib'
+import { dateKey, isLogged, isPRSet, sessionEnd } from './lib'
 
 const now = () => Date.now()
 const touch = <T extends object>(o: T) => ({ ...o, updatedAt: now() })
@@ -127,11 +127,16 @@ export async function moveExercise(logId: string, weId: string, dir: -1 | 1) {
   await db.workoutExercises.bulkPut(list.map((w, k) => touch({ ...w, order: k })))
 }
 
+export async function endOf(logId: string) {
+  const done = await db.sets.where('logId').equals(logId).toArray()
+  return sessionEnd(Math.max(0, ...done.map((s) => s.completedAt)), now())
+}
+
 /** Ends the session: unlogged rows are dropped (a set only counts once both fields are filled). */
 export async function finishSession(logId: string) {
   await db.transaction('rw', db.workoutLogs, db.sets, async () => {
     await db.sets.where('logId').equals(logId).filter((s) => !s.completedAt).delete()
-    await db.workoutLogs.update(logId, touch({ status: 'done' as const, endedAt: now() }))
+    await db.workoutLogs.update(logId, touch({ status: 'done' as const, endedAt: await endOf(logId) }))
   })
 }
 

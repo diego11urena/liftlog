@@ -81,3 +81,7 @@ export function fmtClock(sec: number) {
 export const fmtMDY = (t: number) => new Date(t).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })
 export const fmtDate = (t: number) => new Date(t).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 export const fmtWeight = (kg: number | null, unit: 'kg' | 'lb') => (kg == null ? 'BW' : String(toDisplay(kg, unit)))
+
+/** End time for a session: if nothing was logged for 30+ min, the user forgot to finish, so stop the clock at the last set. */
+export const sessionEnd = (lastSetAt: number | undefined, t: number) =>
+  lastSetAt && t - lastSetAt > 30 * 60e3 ? lastSetAt : t
