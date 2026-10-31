@@ -4,7 +4,7 @@ import { eraseAll, startSession } from '../actions'
 import { toast } from '../App'
 import { importFromLink } from '../sync'
 import { db, MUSCLES } from '../db'
-import { musclesOf, useActiveLog, useExercises, useWeekStatus } from '../hooks'
+import { musclesOf, useActiveLog, useExercises, useStreak, useWeekStatus } from '../hooks'
 import { addDays, dateKey, fmtDuration, fmtVolume, sundayOf, volume, weekStart } from '../lib'
 import MuscleMap from '../MuscleMap'
 import { ask, Icon, RoundBtn, Sheet, WeekStrip, type IconName } from '../ui'
@@ -17,6 +17,7 @@ export default function Profile({ onJump }: { onJump: (dateKey: string) => void 
   const [full, setFull] = useState(false)
   const sunday = sundayOf(Date.now())
   const status = useWeekStatus(sunday, addDays(sunday, 6))
+  const streak = useStreak()
 
   const data = useLiveQuery(async () => {
     const logs = await db.workoutLogs.where('status').equals('done').toArray()
@@ -66,6 +67,9 @@ export default function Profile({ onJump }: { onJump: (dateKey: string) => void 
           <button className="btn-accent min-h-9 px-4 text-sm disabled:bg-panel disabled:text-muted disabled:opacity-100" disabled={!data?.todayWorkout || !!active}
             onClick={async () => { await startSession(data!.todayWorkout); onJump(dateKey(Date.now())) }}>Start Workout</button>
         </div>
+        {streak.current > 0 && (
+          <p className="mb-2 text-sm font-semibold">{streak.current}-day streak <span className="text-xs font-normal text-muted">Best: {streak.best}</span></p>
+        )}
         <WeekStrip sunday={sunday} status={status} onSelect={onJump} />
       </div>
 

@@ -1,6 +1,6 @@
 // Every edit writes straight to IndexedDB, so the in-progress session is always autosaved.
 import { db, isBodyweight, isTimed, uuid, type PlanSet, type Side, type Workout, type WorkoutExercise, type WSet } from './db'
-import { bySetOrder, loggedSetsFor } from './hooks'
+import { bySetOrder, loggedSetsFor, pendingNotes } from './hooks'
 import { dateKey, isLogged, isPRSet, sessionEnd } from './lib'
 
 const now = () => Date.now()
@@ -134,14 +134,23 @@ export async function endOf(logId: string) {
 
 /** Ends the session: unlogged rows are dropped (a set only counts once both fields are filled). */
 export async function finishSession(logId: string) {
-  await db.transaction('rw', db.workoutLogs, db.sets, async () => {
+  await db.transaction('rw', db.workoutLogs, db.workoutExercises, db.sets, async () => {
     await db.sets.where('logId').equals(logId).filter((s) => !s.completedAt).delete()
+    // notes for next time are handled for exercises that got at least one set; skipped exercises carry the note over
+    const log = (await db.workoutLogs.get(logId))!
+    const withSets = new Set((await db.sets.where('logId').equals(logId).toArray()).map((s) => s.workoutExerciseId))
+    const wes = (await db.workoutExercises.where('logId').equals(logId).toArray()).filter((w) => withSets.has(w.id))
+    for (const { we } of (await pendingNotes(log, wes.map((w) => w.exerciseId))).values()) await markNoteDone(we.id, logId)
     await db.workoutLogs.update(logId, touch({ status: 'done' as const, endedAt: await endOf(logId) }))
   })
 }
 
+export const markNoteDone = (weId: string, logId: string) => db.workoutExercises.update(weId, { noteHandledInLogId: logId })
+
 export async function deleteLog(logId: string) {
   await db.transaction('rw', db.workoutLogs, db.workoutExercises, db.sets, async () => {
+    // a discarded session handles nothing: notes it marked Done come back
+    await db.workoutExercises.filter((w) => w.noteHandledInLogId === logId).modify({ noteHandledInLogId: undefined })
     await db.sets.where('logId').equals(logId).delete()
     await db.workoutExercises.where('logId').equals(logId).delete()
     await db.workoutLogs.delete(logId)

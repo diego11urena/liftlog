@@ -157,7 +157,8 @@ export function WeekStrip({ sunday, selected, onSelect, onWeek, status }: {
 }
 
 /** Horizontal snap pager with dots: one full-width, centered page at a time; swipe for the next. */
-export function Pager({ pages, index, onIndex }: { pages: ReactNode[]; index: number; onIndex: (i: number) => void }) {
+/** `marks[i]`: page i gets an accent dot (e.g. the exercise has a note waiting). */
+export function Pager({ pages, index, onIndex, marks }: { pages: ReactNode[]; index: number; onIndex: (i: number) => void; marks?: boolean[] }) {
   const ref = useRef<HTMLDivElement>(null)
   // scroll to externally requested page
   useEffect(() => {
@@ -176,7 +177,10 @@ export function Pager({ pages, index, onIndex }: { pages: ReactNode[]; index: nu
       </div>
       {pages.length > 1 && (
         <div className="mt-3 flex justify-center gap-1.5">
-          {pages.map((_, i) => <button key={i} aria-label={`Page ${i + 1}`} onClick={() => onIndex(i)} className={`size-2 rounded-full ${i === index ? 'bg-fg' : 'bg-fg/20'}`} />)}
+          {pages.map((_, i) => (
+            <button key={i} aria-label={`Page ${i + 1}${marks?.[i] ? ', has a note' : ''}`} onClick={() => onIndex(i)}
+              className={`rounded-full ${marks?.[i] ? `size-2.5 ${i === index ? 'bg-accent' : 'bg-accent/50'}` : `size-2 ${i === index ? 'bg-fg' : 'bg-fg/20'}`}`} />
+          ))}
         </div>
       )}
     </div>

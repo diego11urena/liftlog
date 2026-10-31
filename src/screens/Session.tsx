@@ -2,11 +2,11 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { useEffect, useState } from 'react'
 import {
   addExercise, addSet, endOf, deleteLog, MAX_SETS, dropSet, finishSession, moveExercise, removeExercise, removeLastSet, replaceExercise,
-  saveSessionToWorkout, setUnilateral, updateSet,
+  markNoteDone, saveSessionToWorkout, setUnilateral, updateSet,
 } from '../actions'
 import { toast } from '../App'
 import { db, isBodyweight, isTimed, unitOf, type Exercise, type Unit, type WorkoutExercise, type WorkoutLog, type WSet } from '../db'
-import { bySetOrder, logSummary, useExerciseHistory, useExercises } from '../hooks'
+import { bySetOrder, logSummary, useExerciseHistory, useExercises, usePendingNotes } from '../hooks'
 import { fmtClock, fmtDate, fmtDuration, fmtVolume, fmtWeight, fromDisplay, toDisplay } from '../lib'
 import MuscleMap from '../MuscleMap'
 import { ask, Busy, Icon, Pager, RoundBtn, Sheet, Tile, TopBar } from '../ui'
@@ -20,6 +20,7 @@ export default function Session({ logId, onEnded, onClose }: { logId: string; on
   const [page, setPage] = useState(0)
   const [lib, setLib] = useState<null | { replace?: string }>(null)
   const [review, setReview] = useState(false)
+  const pending = usePendingNotes(log, (wes ?? []).map((w) => w.exerciseId))
 
   if (!log || !wes) return null
   if (lib) return (
@@ -53,11 +54,11 @@ export default function Session({ logId, onEnded, onClose }: { logId: string; on
         {active && <button className="btn-dark min-h-10 px-4 text-sm" onClick={() => setReview(true)}>End Workout</button>}
       </header>
 
-      <Pager index={Math.min(page, wes.length)} onIndex={setPage} pages={[
+      <Pager index={Math.min(page, wes.length)} onIndex={setPage} marks={wes.map((w) => pending.has(w.exerciseId))} pages={[
         ...wes.map((we, i) => {
           const ex = exercises.get(we.exerciseId)
           return ex ? (
-            <ExerciseCard key={we.id} we={we} ex={ex} log={log}
+            <ExerciseCard key={we.id} we={we} ex={ex} log={log} pending={pending.get(we.exerciseId)}
               onReplace={() => setLib({ replace: we.id })} first={i === 0} last={i === wes.length - 1}
               onMove={async (d) => { await moveExercise(logId, we.id, d); setPage(i + d) }} />
           ) : <div key={we.id} />
@@ -85,8 +86,8 @@ const parseTime = (t: string) => {
   const n = Number(t || 0); return Math.floor(n / 100) * 60 + (n % 100)
 }
 
-function ExerciseCard({ we, ex, log, onReplace, onMove, first, last }: {
-  we: WorkoutExercise; ex: Exercise; log: WorkoutLog; onReplace: () => void; onMove: (d: -1 | 1) => void; first: boolean; last: boolean
+function ExerciseCard({ we, ex, log, pending, onReplace, onMove, first, last }: {
+  we: WorkoutExercise; ex: Exercise; log: WorkoutLog; pending?: { we: WorkoutExercise; date: number }; onReplace: () => void; onMove: (d: -1 | 1) => void; first: boolean; last: boolean
 }) {
   const unit = unitOf(ex)
   const rows = useLiveQuery(() => db.sets.where('workoutExerciseId').equals(we.id).toArray().then((r) => r.sort(bySetOrder)), [we.id])
@@ -127,6 +128,9 @@ function ExerciseCard({ we, ex, log, onReplace, onMove, first, last }: {
         <span className="relative h-6 w-10 rounded-full bg-figure transition peer-checked:bg-accent after:absolute after:left-0.5 after:top-0.5 after:size-5 after:rounded-full after:bg-card after:transition peer-checked:after:translate-x-4 peer-focus-visible:ring-2 peer-focus-visible:ring-accent" />
         Unilateral
       </label>
+
+      {pending && <NextTimeNote note={pending.we.notes} date={pending.date} onDone={() => void markNoteDone(pending.we.id, log.id)} />}
+      {ex.notes?.trim() && <p className="mb-3 whitespace-pre-wrap px-1 text-sm text-muted">{ex.notes}</p>}
 
       {/* PR at a glance, e.g. "20kg 10 reps" (last session's numbers are the gray hints in the boxes) */}
       <div className="panel mb-3 flex items-baseline justify-between gap-2 px-3 py-2.5">
@@ -187,17 +191,40 @@ function ExerciseCard({ we, ex, log, onReplace, onMove, first, last }: {
               <button className="btn-ghost" disabled={first} onClick={() => { setMenu(false); onMove(-1) }}>Move left</button>
               <button className="btn-ghost" disabled={last} onClick={() => { setMenu(false); onMove(1) }}>Move right</button>
             </div>
-            <label className="block text-sm text-muted">Exercise notes
-              <textarea className="field mt-1 min-h-20 py-3 text-fg" defaultValue={we.notes} onBlur={(e) => db.workoutExercises.update(we.id, { notes: e.target.value, updatedAt: Date.now() })} />
+            <label className="block text-sm text-muted">Note for next time <span className="text-xs">(shown once, the next time you do this exercise)</span>
+              <textarea className="field mt-1 min-h-20 py-3 text-fg" defaultValue={we.notes} onChange={(e) => db.workoutExercises.update(we.id, { notes: e.target.value })} />
             </label>
-            <label className="block text-sm text-muted">Workout notes
-              <textarea className="field mt-1 min-h-20 py-3 text-fg" defaultValue={log.notes} onBlur={(e) => db.workoutLogs.update(log.id, { notes: e.target.value, updatedAt: Date.now() })} />
+            <label className="block text-sm text-muted">Permanent note <span className="text-xs">(always shown on this exercise; clear it to remove)</span>
+              <textarea className="field mt-1 min-h-20 py-3 text-fg" defaultValue={ex.notes} onChange={(e) => db.exercises.update(ex.id, { notes: e.target.value })} />
             </label>
             <button className="btn-ghost w-full text-danger" onClick={async () => { if (await ask({ title: `Remove ${ex.name}?`, message: 'Its sets in this workout will be deleted.', confirm: 'Remove', danger: true })) { setMenu(false); void removeExercise(we.id) } }}>Remove exercise</button>
           </div>
         </Sheet>
       )}
     </section>
+  )
+}
+
+/** A note left in an earlier session for this exercise. Tap to read; Done marks it handled without logging a set. */
+function NextTimeNote({ note, date, onDone }: { note: string; date: number; onDone: () => void }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div className="panel mb-3 px-3 py-2.5">
+      <button className="flex w-full items-center gap-2 text-left text-sm font-semibold text-accent" aria-expanded={open} onClick={() => setOpen(!open)}>
+        <Icon name="info" className="size-4 shrink-0" />
+        <span className="flex-1">You have a note for this exercise</span>
+        <Icon name={open ? 'chevD' : 'chevR'} className="size-4 shrink-0" />
+      </button>
+      {open && (
+        <div className="mt-2 space-y-2">
+          <p className="whitespace-pre-wrap text-sm">{note}</p>
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-xs text-muted">Written {fmtDate(date)}</span>
+            <button className="btn-ghost min-h-9 px-4 text-sm" onClick={onDone}>Done</button>
+          </div>
+        </div>
+      )}
+    </div>
   )
 }
 

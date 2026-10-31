@@ -3,7 +3,7 @@ import { useState, type ReactNode } from 'react'
 import { removePlan, setPlan, startSession, type Selection } from '../actions'
 import { toast } from '../App'
 import { db, type Plan, type Workout, type WorkoutLog } from '../db'
-import { logSummary, musclesOf, useActiveLog, useExercises, useWeekStatus } from '../hooks'
+import { logSummary, musclesOf, useActiveLog, useExercises, useStreak, useWeekStatus } from '../hooks'
 import { addDays, dateKey, fmtDate, fmtDuration, fmtMDY, fmtVolume, fromKey, sundayOf } from '../lib'
 import MuscleMap from '../MuscleMap'
 import { Icon, NameModal, Pager, RoundBtn, Sheet, Tile, WeekStrip, type IconName } from '../ui'
@@ -149,6 +149,7 @@ function DayCard({ p, isToday, onPlus, onMenu, onReview, onStartFree, onPlanRest
     const s = await logSummary(last[0].id, exercises)
     return `${fmtVolume(s.volume, 'kg')} · ${fmtDuration((last[0].endedAt ?? last[0].startedAt) - last[0].startedAt)}`
   }, [p, exercises.size])
+  const streak = useStreak().current
   const review = useLiveQuery(async () => (p.kind === 'review' ? logSummary(p.log.id, exercises) : null), [p, exercises.size])
 
   switch (p.kind) {
@@ -158,6 +159,7 @@ function DayCard({ p, isToday, onPlus, onMenu, onReview, onStartFree, onPlanRest
       return (
         <CardShell title={p.workout.name} sub={`Prev. ${prev ?? '…'}`} action={<RoundBtn icon="dots" label="Plan options" onClick={() => onMenu(p.plan)} />}>
           <span className="chip self-start text-xs">Planned Workout</span>
+          {isToday && streak > 0 && <p className="self-start text-sm text-muted">Keep your {streak}-day streak going.</p>}
           <MuscleMap size="md" primary={m.primary} secondary={m.secondary} />
           <div className="flex flex-wrap justify-center gap-1.5">
             {names.slice(0, 3).map((n, i) => <span key={i} className="chip text-xs">{n}</span>)}

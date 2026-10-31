@@ -13,7 +13,7 @@ A personal-use workout tracker inspired by the *flows and features* of the Arrow
 The reference app is a social, gamified product. Delete all of that. This app has none of the following, anywhere (screens, copy, data model, settings, notifications):
 - Friends tab, followers, feed, other people's profiles, sharing ("Share Workout"), invites, leaderboards, comparing with others
 - Levels, XP, level progress bars, scores (the reference's score ring), trophies, achievements, badges, challenges, goals with rewards
-- Streaks: no streak counters, streak screens, flame icons, or "you're about to break your streak" copy. Rest days are just a plan type.
+- Streak extras: the one allowed streak is the plain-text gym streak counter (owner decision 2026-10-31, see "Gym streak"). Still banned: streak screens, flame icons, "you're about to break your streak" copy, and any reward styling. Rest days are just a plan type.
 - Celebration screens, confetti, or animations whose only job is to reward. The post-workout "streak", "trophy", "level" and "score" screens from the reference are NOT built; after ending a workout, go straight to the plain summary.
 - Nutrition tab (out of scope)
 - Avatar, username, level badge on the avatar, "Add some friends", the shop/bag icon, the 3 empty "+" slots under the stats, Weekly challenges bar, Streak Multiplier card, Next Trophy card, Friend Leaderboard card, the "Diamond" premium-tier card, and the early-access/beta sign-up banner on the reference Profile tab
@@ -145,7 +145,7 @@ Replicate this layout and behavior closely. Use original icons, artwork, wording
 - Saved workouts store their exercises as an ordered embedded array (`workouts.exercises[{exerciseId, unilateral, sets[]}]`); array order is the drag order. `workoutExercises` rows belong to logged sessions only.
 
 **Acceptance checklist for this tab**
-- No streak, level, score or trophy UI anywhere.
+- No level, score or trophy UI anywhere. The only streak UI is the plain-text gym streak (see "Gym streak"): no flame icon, no animation.
 - Switching days in the week strip updates the title, date, and card instantly, with no network.
 - Planning a day from the sheet updates the card and the day-number color without a reload.
 - Start Workout: enabled for any planned workout on any day (it's logged as today's session) and for today's empty "+" page (freestyle); disabled on rest days, finished-workout cards and non-today empty days. Changed from the reference by owner decision 2026-10-19.
@@ -158,7 +158,7 @@ Tapping **Start Workout** slides the Workout tab into this screen. The bottom ta
 **Header**: workout name (large) with a count-up timer under it (mm:ss). Right side: a red round **X** button (discard workout; always confirm) and a solid `--text` pill **End Workout** (the reference's is white).
 
 **Exercise pager**: one full card per exercise, centered and full width (neighbor cards do NOT peek; owner decision 2026-10-19), swiped horizontally to the next exercise, with page dots under the card (one per exercise). Each exercise starts with ONE empty set; the user adds more, up to a maximum of 4 sets (Add Set and Drop Set disable at 4; owner decision 2026-10-19). Each card has:
-- Exercise name (no info/how-to icon) and a round "..." menu at top right (replace/remove exercise, notes).
+- Exercise name (no info/how-to icon) and a round "..." menu at top right (replace/move/remove exercise, "Note for next time", "Permanent note").
 - A **Unilateral** toggle under the name. Off: each set is one row. On: each set splits into two stacked rows labeled **R** and **L**, each with its own kgs and reps.
 - **Set rows**: set number, an accent circular-arrows icon (copies the previous set's values into this set), a weight field ("kgs") then "x" then a reps field ("reps"). Empty fields show **greyed placeholders with the last set you did of that exercise** (owner, 2026-10-19): the latest set already logged above it in this workout, else the last set of the previous session (same side for unilateral). Typing replaces them. Bodyweight exercises show "BW" in the weight field and use an mm:ss time field instead of reps (e.g. glute bridge).
 - The exercise's own front and back **body diagram** below the sets, primary muscles in `--accent`, secondary in `--accent-soft`.
@@ -169,7 +169,7 @@ Tapping **Start Workout** slides the Workout tab into this screen. The bottom ta
 
 **kg / lb per exercise** (owner decision 2026-10-19): the unit sits inside each set's weight box, right after the number (`62.5 kg ⌄`); it is a `<select>`, so iPhone shows its native wheel. All rows of an exercise share the value. The choice is saved on the exercise (`exercises.unit`, default kg) and used everywhere that exercise's weights are shown. Weights are always stored in kg; totals that mix exercises (volume tiles, profile totals) show kg. Drop sets step down in 2.5 kg / 5 lb.
 
-**Rest timer bar**: NOT built (owner decision 2026-10-19). Workout notes live in the exercise card's "..." menu and the review screen instead.
+**Rest timer bar**: NOT built (owner decision 2026-10-19). Notes: the exercise card's "..." menu holds "Note for next time" and "Permanent note" (see "Exercise notes"); the whole-session note lives only on the review screen.
 
 **Ending a workout**
 0. Forgotten sessions (owner, 2026-10-25): the header timer keeps running while a session is open, but when it is ended after 30+ minutes with no set logged, the end time (and Total Time) is the last logged set's time (`sessionEnd` in `src/lib.ts`).
@@ -192,8 +192,20 @@ The reference Profile tab is mostly social and gamified. Build ONLY the parts be
 1. **Top bar**: a time-of-day greeting at the left ("Good morning, Diego"; owner, 2026-10-25) and a gear icon button at the top right that opens Settings (danger zone to erase data). No avatar, name, level badge, flame/streak chip, or shop icon.
 2. **All-time totals row**: three centered stats separated by thin vertical dividers, each with a small icon above a value and a label: total training **time** (e.g. "1h 4m"), total **volume** (e.g. "6k kgs"), and number of **workouts** (e.g. "2 workouts"). These are sums over every logged workout (checked against the video: 4.7k + 1.3k volume = 6k, 2 workouts).
 3. **Muscles this week** card: a title with a large accent-colored percentage under it (e.g. "9%"), a small expand icon at the top right (opens the diagram full screen), and a big front and back body diagram with every muscle trained this week highlighted (primary `--accent`, secondary `--accent-soft`). My reading of the percentage (not stated in the video): the share of the app's muscle regions that were trained at least once in the current Monday-to-Sunday week. Show the formula in a tooltip or the full-screen view so it is not a mystery.
-4. **Week Overview** card: title "Week Overview" with a "Start Workout" pill at the right (starts today's planned workout; disabled if none), and the same 7-day strip as the Workout tab (filled accent circle = completed day, teal number = rest day, dark number = planned). Tapping a day jumps to that day on the Workout tab.
-Nothing else on this tab. No streaks, no levels, no trophies, no leaderboard, no upsell cards.
+4. **Week Overview** card (shows "N-day streak" with a small "Best: N" above the strip when the streak is above 0, owner 2026-10-31): title "Week Overview" with a "Start Workout" pill at the right (starts today's planned workout; disabled if none), and the same 7-day strip as the Workout tab (filled accent circle = completed day, teal number = rest day, dark number = planned). Tapping a day jumps to that day on the Workout tab.
+Nothing else on this tab. The only streak is the plain-text "N-day streak" line in Week Overview. No levels, no trophies, no leaderboard, no upsell cards.
+
+## Gym streak (owner decision 2026-10-31)
+Plain text only: no flame, no animation, nothing at all when the streak is 0. Derived on the fly by `streaks()` in `src/lib.ts` from `plans` and done `workoutLogs` (no stored per-day results), tested in `src/lib.test.ts`.
+- Only planned workout days count. A planned workout day with a done log is +1; planned rest days and unplanned days are skipped (neither add nor break); a past planned workout day with no log resets to 0; today's planned workout, if not done yet, is pending and breaks nothing. Logs on days with no planned workout are ignored. Days before the first plan never count. "Best" is the highest value the running count reached.
+- Done early: a log on a rest/unplanned day that is the same saved workout (`workoutId`) as a planned workout 1 to 3 days later counts for that planned day, so it is not a miss. A freestyle log, or a different workout, does not. A log on a day that has its own planned workout belongs to that day.
+- Several planned workouts on one day count once, satisfied by any done log that day.
+- UI: Profile → Week Overview ("N-day streak", "Best: N"); Workout tab, today's planned (not yet done) card: "Keep your N-day streak going."
+
+## Exercise notes (owner decision 2026-10-31)
+The "..." menu on an exercise card has two notes (the whole-session note stays on the review screen).
+- **Note for next time**: stored in `workoutExercises.notes` of the session it is written in; never shown in that session. In a later active session with the same exercise, the card shows "You have a note for this exercise" (tap to read it, with the date written, plus a Done button) and the pager dot for that exercise turns accent and larger. The newest unhandled note from an earlier finished session is shown. It is handled (`workoutExercises.noteHandledInLogId` on the original row; the note is never deleted) when the session ends with at least one logged set of that exercise, or when Done is tapped. Skipped exercises carry the note over. Discarding or deleting a session handles nothing (Done marks made in it are undone). Notes written more than 30 days before the session are not shown.
+- **Permanent note**: `exercises.notes`, always shown as a small line at the top of the exercise card; edit or clear it in the menu. The reseed keeps it (`seed()` in `src/db.ts`).
 
 ## Build order
 1. Scaffold Vite + PWA, Tailwind, Dexie schema

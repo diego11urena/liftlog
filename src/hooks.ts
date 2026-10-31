@@ -1,7 +1,7 @@
 import Dexie from 'dexie'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { db, type Exercise, type Muscle, type WSet } from './db'
-import { bests, dateKey, volume } from './lib'
+import { db, type Exercise, type Muscle, type WorkoutExercise, type WorkoutLog, type WSet } from './db'
+import { bests, dateKey, streaks, volume } from './lib'
 
 export function useExercises() {
   return useLiveQuery(async () => new Map((await db.exercises.toArray()).map((e) => [e.id, e])), []) ?? new Map<string, Exercise>()
@@ -59,4 +59,34 @@ export function useWeekStatus(from: number, to: number) {
     for (const l of logs) out[dateKey(l.startedAt)] = 'done'
     return out
   }, [from, to]) ?? {}
+}
+
+/** Gym streak and best streak, derived from the plans and done logs. */
+export function useStreak() {
+  return useLiveQuery(async () => {
+    const [plans, logs] = await Promise.all([db.plans.toArray(), db.workoutLogs.where('status').equals('done').toArray()])
+    return streaks(plans, logs, dateKey(Date.now()))
+  }, []) ?? { current: 0, best: 0 }
+}
+
+/** Older "note for next time" entries aren't surfaced (they'd be stale). */
+const NOTE_MAX_AGE = 30 * 86400e3
+
+/** Per exercise, the newest unhandled note from an earlier finished session (never the session it was written in). */
+export async function pendingNotes(log: WorkoutLog, exerciseIds: string[]) {
+  const rows = await db.workoutExercises.where('exerciseId').anyOf(exerciseIds)
+    .filter((w) => w.logId !== log.id && !!w.notes?.trim() && !w.noteHandledInLogId).toArray()
+  const logs = new Map((await db.workoutLogs.bulkGet([...new Set(rows.map((r) => r.logId))])).flatMap((l) => (l ? [[l.id, l] as const] : [])))
+  const out = new Map<string, { we: WorkoutExercise; date: number }>()
+  for (const we of rows) {
+    const l = logs.get(we.logId)
+    if (!l || l.status !== 'done' || l.startedAt >= log.startedAt || l.startedAt < log.startedAt - NOTE_MAX_AGE) continue
+    if (l.startedAt > (out.get(we.exerciseId)?.date ?? 0)) out.set(we.exerciseId, { we, date: l.startedAt })
+  }
+  return out
+}
+
+export function usePendingNotes(log: WorkoutLog | undefined, exerciseIds: string[]) {
+  return useLiveQuery(async () => (log?.status === 'active' ? pendingNotes(log, exerciseIds) : new Map<string, { we: WorkoutExercise; date: number }>()),
+    [log?.id, log?.status, exerciseIds.join()]) ?? new Map<string, { we: WorkoutExercise; date: number }>()
 }

@@ -25,7 +25,11 @@ export type WorkoutLog = Row & {
   name: string; workoutId?: string; startedAt: number; endedAt?: number; status: 'active' | 'done'; notes: string
 }
 export type WorkoutExercise = Row & {
-  logId: string; exerciseId: string; order: number; notes: string; unilateral: boolean
+  logId: string; exerciseId: string; order: number; unilateral: boolean
+  /** "Note for next time": shown once in a later session of this exercise */
+  notes: string
+  /** the session in which the note was handled (an exercise set was logged, or Done was tapped); the note is kept */
+  noteHandledInLogId?: string
   /** copied from the saved workout at start: placeholder fallback when there's no last session */
   planSets?: PlanSet[]
 }

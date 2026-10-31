@@ -85,3 +85,30 @@ export const fmtWeight = (kg: number | null, unit: 'kg' | 'lb') => (kg == null ?
 /** End time for a session: if nothing was logged for 30+ min, the user forgot to finish, so stop the clock at the last set. */
 export const sessionEnd = (lastSetAt: number | undefined, t: number) =>
   lastSetAt && t - lastSetAt > 30 * 60e3 ? lastSetAt : t
+
+type PlanLike = { date: string; type: 'workout' | 'rest'; workoutId?: string }
+type LogLike = { startedAt: number; workoutId?: string }
+
+/** Gym streak, derived from the plans and the done logs (nothing is stored). Only planned workout days count:
+ *  a day with a completed log is +1; rest days, unplanned days and a still-open today are skipped; a past
+ *  planned day with no log resets to 0. A log on a rest/unplanned day that is the same saved workout as a
+ *  planned day 1–3 days later counts for that day (done early, not a miss). `today` is a YYYY-MM-DD key. */
+export function streaks(plans: PlanLike[], logs: LogLike[], today: string) {
+  const planned = new Map<string, Set<string | undefined>>()
+  for (const p of plans) if (p.type === 'workout') planned.set(p.date, (planned.get(p.date) ?? new Set()).add(p.workoutId))
+  const logged = new Set(logs.map((l) => dateKey(l.startedAt)))
+  const early = new Set<LogLike>() // logs already used for an earlier planned day
+  let current = 0, best = 0
+  for (const date of [...planned.keys()].sort()) {
+    let done = logged.has(date)
+    for (let k = 1; k <= 3 && !done; k++) {
+      const d = dateKey(addDays(fromKey(date), -k))
+      if (planned.has(d)) continue // that day's own workout is its own
+      const hit = logs.find((l) => !early.has(l) && dateKey(l.startedAt) === d && planned.get(date)!.has(l.workoutId) && l.workoutId)
+      if (hit) { early.add(hit); done = true }
+    }
+    if (done) best = Math.max(best, ++current)
+    else if (date < today) current = 0
+  }
+  return { current, best }
+}

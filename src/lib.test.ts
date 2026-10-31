@@ -61,3 +61,41 @@ test('sessionEnd stops the clock at the last set after a 30+ min gap', () => {
   expect(sessionEnd(1000, 1000 + 5 * 60e3)).toBe(1000 + 5 * 60e3)
   expect(sessionEnd(0, 99)).toBe(99)
 })
+
+// ---- streaks
+import { streaks } from './lib'
+const at = (k: string, workoutId?: string) => ({ startedAt: fromKey(k) + 9 * 3600e3, workoutId })
+const wk = (date: string, workoutId = 'w') => ({ date, type: 'workout' as const, workoutId })
+const rest = (date: string) => ({ date, type: 'rest' as const })
+// 2026-11-02 is a Monday
+const MON = '2026-11-02', TUE = '2026-11-03', WED = '2026-11-04', THU = '2026-11-05', FRI = '2026-11-06'
+
+test('streak: example from the spec (Mon, Tue, rest Wed, Thu)', () => {
+  const plans = [wk(MON), wk(TUE), rest(WED), wk(THU)]
+  expect(streaks(plans, [at(MON), at(TUE)], WED)).toEqual({ current: 2, best: 2 })
+  expect(streaks(plans, [at(MON), at(TUE)], THU)).toEqual({ current: 2, best: 2 }) // Thu still open
+  expect(streaks(plans, [at(MON), at(TUE), at(THU)], THU)).toEqual({ current: 3, best: 3 })
+})
+test('streak: a missed planned day resets to 0 but keeps the best', () => {
+  const plans = [wk(MON), wk(TUE), rest(WED), wk(THU)]
+  expect(streaks(plans, [at(MON), at(TUE)], FRI)).toEqual({ current: 0, best: 2 })
+})
+test('streak: rest days and unplanned days neither add nor break', () => {
+  const plans = [wk(MON), rest(TUE), wk(THU)]
+  expect(streaks(plans, [at(MON), at(THU)], FRI)).toEqual({ current: 2, best: 2 })
+})
+test('streak: pending today does not break; a past planned day with no log does', () => {
+  expect(streaks([wk(MON), wk(TUE)], [at(MON)], TUE)).toEqual({ current: 1, best: 1 })
+  expect(streaks([wk(MON)], [], TUE)).toEqual({ current: 0, best: 0 })
+})
+test('streak: a workout on an unplanned day is ignored; empty history is 0', () => {
+  expect(streaks([wk(MON)], [at(TUE)], FRI)).toEqual({ current: 0, best: 0 })
+  expect(streaks([], [], FRI)).toEqual({ current: 0, best: 0 })
+  expect(streaks([], [at(MON)], FRI)).toEqual({ current: 0, best: 0 })
+})
+test('streak: a planned workout done a day early on a rest day counts for its planned day', () => {
+  const plans = [wk(MON), rest(TUE), wk(WED, 'chest')]
+  expect(streaks(plans, [at(MON), at(TUE, 'chest')], FRI)).toEqual({ current: 2, best: 2 })
+  expect(streaks(plans, [at(MON), at(TUE, 'legs')], FRI)).toEqual({ current: 0, best: 1 }) // different workout: still a miss
+  expect(streaks(plans, [at(MON), at(TUE)], FRI)).toEqual({ current: 0, best: 1 }) // freestyle: still a miss
+})
