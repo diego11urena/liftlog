@@ -18,6 +18,7 @@ export default function Profile({ onJump }: { onJump: (dateKey: string) => void 
   const sunday = sundayOf(Date.now())
   const status = useWeekStatus(sunday, addDays(sunday, 6))
   const streak = useStreak()
+  const name = useName()
 
   const data = useLiveQuery(async () => {
     const logs = await db.workoutLogs.where('status').equals('done').toArray()
@@ -40,7 +41,7 @@ export default function Profile({ onJump }: { onJump: (dateKey: string) => void 
   return (
     <div className="space-y-3 px-4 pb-8">
       <div className="flex items-center justify-between pt-[calc(1rem+env(safe-area-inset-top))]">
-        <h1 className="text-2xl font-bold">{greeting()}, Diego</h1>
+        <h1 className="text-2xl font-bold">{greeting()}{name ? `, ${name}` : ''}</h1>
         <RoundBtn icon="gear" label="Settings" onClick={() => setSettings(true)} />
       </div>
 
@@ -123,9 +124,13 @@ function ImportBox() {
   )
 }
 
+/** Name in the greeting, saved on this phone only (not synced). Empty = no name; default Diego. */
+const useName = () => useLiveQuery(async () => ((await db.settings.get('name'))?.value as string | undefined) ?? 'Diego', []) ?? ''
+
 const greeting = () => { const h = new Date().getHours(); return h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening' }
 
 function SettingsSheet({ onClose }: { onClose: () => void }) {
+  const name = useName()
   return (
     <Sheet label="Settings" onClose={onClose}>
       <div className="flex items-center justify-between p-4">
@@ -134,6 +139,10 @@ function SettingsSheet({ onClose }: { onClose: () => void }) {
       </div>
       <div className="space-y-3 px-4 pb-6">
         <p className="text-sm text-muted">Weight units are picked per exercise, right next to the weight while you log.</p>
+        <label className="card block p-4 font-bold">Your name
+          <input className="field mt-2 font-normal" placeholder="Shown in the greeting" defaultValue={name} maxLength={30}
+            onChange={(e) => db.settings.put({ key: 'name', value: e.target.value.trim() })} />
+        </label>
         <ImportBox />
         <div className="card p-4">
           <h3 className="mb-1 font-bold text-danger">Danger zone</h3>
