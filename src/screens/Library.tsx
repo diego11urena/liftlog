@@ -6,7 +6,7 @@ import { loggedSetsFor, useExerciseHistory, useExercises } from '../hooks'
 import { bests, fmtDate, fmtWeight, toDisplay, volume } from '../lib'
 import MuscleMap from '../MuscleMap'
 import { CLASSIFICATIONS, MUSCLE_LABEL } from '../muscles'
-import { toast } from '../App'
+import { toast, useHideTabs } from '../App'
 import { ask, Icon, RoundBtn, Segmented, Sheet, TopBar } from '../ui'
 
 export const label = (s: string) => MUSCLE_LABEL[s as Muscle] ?? s.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
@@ -14,6 +14,7 @@ const DAY = 86400e3
 
 /** "Add Exercise" library. With `onAdd`, the detail screen's "Add Exercise" button adds it and returns. */
 export default function Library({ onBack, onAdd }: { onBack: () => void; onAdd?: (exerciseId: string) => void }) {
+  useHideTabs()
   const all = useExercises()
   const [q, setQ] = useState('')
   const [group, setGroup] = useState(''), [muscle, setMuscle] = useState(''), [cls, setCls] = useState('')
@@ -52,34 +53,39 @@ export default function Library({ onBack, onAdd }: { onBack: () => void; onAdd?:
 
   return (
     <div>
-      <div className="sticky top-0 z-30 bg-bg px-4 pb-3 pt-[calc(.75rem+env(safe-area-inset-top))]">
-        <div className="mb-3 flex items-center gap-3">
+      <div className="sticky top-0 z-30 bg-bg px-[18px] pb-3 pt-[calc(28px+env(safe-area-inset-top))]">
+        <div className="mb-3.5 flex items-center gap-3">
           <RoundBtn icon="chevL" label="Back" onClick={onBack} />
-          <h1 className="flex-1 text-center text-lg font-bold">Exercises</h1>
+          <h1 className="flex-1 text-center text-[26px] font-semibold">Exercises</h1>
           <RoundBtn icon="plus" label="New custom exercise" onClick={() => setCustom({})} />
         </div>
-        <label className="field mb-2 flex items-center gap-2">
+        <label className="mb-2 flex h-[52px] items-center gap-2 rounded-2xl border border-line bg-card px-4">
           <Icon name="search" className="size-5 text-muted" />
-          <input className="min-w-0 flex-1 outline-none" type="search" placeholder="Search" value={q} onChange={(e) => setQ(e.target.value)} />
+          <input className="min-w-0 flex-1 outline-none" type="search" placeholder={`Search ${all.size} exercises`} value={q} onChange={(e) => setQ(e.target.value)} />
         </label>
         <div className="no-scrollbar flex gap-2 overflow-x-auto">
           {chips.map((c) => (
-            <button key={c.k} onClick={() => setPicker(c.k)} className={`chip min-h-9 ${c.v ? 'bg-accent text-on-accent font-semibold' : ''}`}>
-              {c.v || c.label} ▾
-            </button>
+            <span key={c.k} className={`inline-flex h-10 shrink-0 items-center rounded-full border-[1.5px] border-fg ${c.v ? 'bg-fg text-onink' : ''}`}>
+              <button onClick={() => setPicker(c.k)} className="h-full pl-4 pr-3 text-sm font-semibold">{c.v || c.label}{!c.v && ' ▾'}</button>
+              {c.v && <button aria-label={`Clear ${c.label}`} onClick={() => ({ group: setGroup, muscle: setMuscle, cls: setCls })[c.k]('')} className="relative h-full pr-3 before:absolute before:-inset-1 before:content-['']"><Icon name="x" className="size-4" /></button>}
+            </span>
           ))}
         </div>
       </div>
 
-      <div className="px-4 pb-6">
+      <div className="px-[18px] pb-6">
         {[...sections].map(([L, items]) => (
           <section key={L}>
-            <h2 className="sticky top-[10.5rem] z-20 bg-bg py-1 text-sm font-bold text-muted">{L}</h2>
-            <ul className="card mb-2 divide-y divide-line overflow-hidden">
+            <h2 className="num sticky top-[calc(198px+env(safe-area-inset-top))] z-20 h-[34px] bg-bg text-[13px] font-semibold leading-[34px] text-acc-t">{L}</h2>
+            <ul className="mb-2 divide-y divide-line overflow-hidden rounded-[22px] border border-line bg-card">
               {items.map((e) => (
                 <li key={e.id}>
-                  <button className="flex min-h-13 w-full items-center gap-2 px-4 py-3 text-left" onClick={() => setDetail(e.id)}>
-                    <span className="flex-1">{e.name}</span>
+                  <button className="flex h-[76px] w-full items-center gap-3 px-3.5 text-left" onClick={() => setDetail(e.id)}>
+                    <span className="grid h-[62px] w-[62px] shrink-0 place-items-center rounded-2xl bg-panel"><MuscleMap w={25} primary={e.primaryMuscles} secondary={e.secondaryMuscles} /></span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-[17px] font-semibold">{e.name}</span>
+                      <span className="block truncate text-[13px] text-muted">{[e.classification, e.primaryMuscles[0] && label(e.primaryMuscles[0])].filter(Boolean).join(' · ')}</span>
+                    </span>
                     {recent.has(e.id) && <Icon name="clock" className="size-4 text-muted" />}
                     <Icon name="chevR" className="size-4 text-muted" />
                   </button>
@@ -93,11 +99,11 @@ export default function Library({ onBack, onAdd }: { onBack: () => void; onAdd?:
 
       {pickerData && (
         <Sheet label={pickerData.title} onClose={() => setPicker(null)}>
-          <h2 className="p-4 text-center text-lg font-bold">{pickerData.title}</h2>
-          <ul className="card mx-4 mb-4 divide-y divide-line">
+          <h2 className="px-[18px] pb-3 pt-6 text-center text-[22px] font-semibold">{pickerData.title}</h2>
+          <ul className="card mx-[18px] mb-4 divide-y divide-line">
             {['', ...pickerData.opts].map((o) => (
               <li key={o}>
-                <button className="flex min-h-12 w-full items-center justify-between px-4" onClick={() => { pickerData.set(o); setPicker(null) }}>
+                <button className="flex min-h-14 w-full items-center justify-between px-4" onClick={() => { pickerData.set(o); setPicker(null) }}>
                   {o ? label(o) : 'Any'} <Radio on={pickerData.v === o} />
                 </button>
               </li>
@@ -116,8 +122,8 @@ export const Radio = ({ on }: { on: boolean }) => (
 )
 
 const RANGES = ['Month', 'Year', 'All Time'] as const
-const axis = { stroke: 'var(--muted)', fontSize: 11, tickLine: false, axisLine: false }
-const tip = { contentStyle: { background: 'var(--card)', border: 'none', borderRadius: 12, color: 'var(--fg)' }, cursor: { stroke: 'var(--line)', fill: 'var(--line)' } }
+const axis = { stroke: 'var(--mute)', fontSize: 11, tickLine: false, axisLine: false }
+const tip = { contentStyle: { background: 'var(--paper)', border: 'none', borderRadius: 12, color: 'var(--ink)' }, cursor: { stroke: 'var(--line)', fill: 'var(--line)' } }
 
 function ExerciseDetail({ id, onBack, onAdd, onEdit }: { id: string; onBack: () => void; onAdd?: (id: string) => void; onEdit: () => void }) {
   const e = useLiveQuery(() => db.exercises.get(id), [id])
@@ -140,52 +146,58 @@ function ExerciseDetail({ id, onBack, onAdd, onEdit }: { id: string; onBack: () 
     <div className="pb-4">
       <TopBar title={e.name} onBack={onBack} sub={`Class: ${e.classification}`}
         right={e.isCustom ? <RoundBtn icon="pencil" label="Edit" onClick={onEdit} /> : null} />
-      <div className="space-y-3 px-4">
-        <div className="card py-5"><MuscleMap primary={e.primaryMuscles} secondary={e.secondaryMuscles} /></div>
+      <div className="space-y-4 px-[18px]">
+        <div className="ink-panel px-[22px] py-6">
+          <MuscleMap w={104} surface="d" labels primary={e.primaryMuscles} secondary={e.secondaryMuscles} />
+          <div className="mt-4 flex justify-center gap-5 text-[13px]">
+            <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-[var(--p-d)]" />Primary</span>
+            <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-[var(--s-d)]" />Secondary</span>
+          </div>
+        </div>
 
-        <div className="card p-4">
+        <div className="card p-[18px]">
           {hist?.count ? (
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div>
-                <div className="text-xs text-muted">Last workout{hist.last && ` · ${fmtDate(hist.last.date)}`}</div>
-                <div className="font-semibold">{hist.last?.sets.map((s) => `${fmtWeight(s.weight, unit)}×${s.reps ?? '–'}`).join(', ') ?? '–'}</div>
+                <div className="label">Last workout{hist.last && ` · ${fmtDate(hist.last.date)}`}</div>
+                <div className="num mt-1 font-semibold">{hist.last?.sets.map((s) => `${fmtWeight(s.weight, unit)}×${s.reps ?? '–'}`).join(' · ') ?? '–'}</div>
               </div>
               <div className="text-right">
-                <div className="text-xs text-muted">PR</div>
-                <div className="font-semibold text-accent">{hist.top ? `${fmtWeight(hist.top.weight, unit)} ${hist.top.weight != null ? unit : ''} × ${hist.top.reps}` : '–'}</div>
+                <div className="label">PR</div>
+                <div className="num text-[28px] font-semibold leading-tight text-acc-t">{hist.top ? `${fmtWeight(hist.top.weight, unit)}×${hist.top.reps}` : '–'}</div>
               </div>
             </div>
           ) : (
             <div className="flex items-center gap-3">
               <div className="flex-1"><div className="font-semibold">No data</div><div className="text-sm text-muted">Log this exercise first</div></div>
-              <Icon name="pencil" className="size-5 text-accent" />
+              <Icon name="pencil" className="size-5 text-acc-t" />
             </div>
           )}
         </div>
 
-        <div className="card p-4">
+        <div className="card p-[18px]">
           <div className="mb-3 flex items-center justify-between gap-2">
-            <h2 className="font-bold">PR Progress</h2>
-            <Segmented className="w-36" value={mode} options={['PR', 'Vol.'] as const} onChange={setMode} />
+            <h2 className="text-lg font-semibold">PR Progress</h2>
+            <Segmented className="w-40" value={mode} options={['PR', 'Vol.'] as const} onChange={setMode} />
           </div>
           {data.length ? (
             <div className="h-48">
               <ResponsiveContainer>
                 {mode === 'PR' ? (
                   <LineChart data={data} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
-                    <CartesianGrid vertical={false} stroke="var(--line)" />
+                    <CartesianGrid vertical={false} stroke="var(--line)" strokeDasharray="3 4" />
                     <XAxis dataKey="t" tickFormatter={(t) => new Date(t).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} {...axis} minTickGap={24} />
                     <YAxis domain={['auto', 'auto']} {...axis} />
                     <Tooltip {...tip} labelFormatter={(t) => fmtDate(Number(t))} formatter={(v) => [`${v} ${unit}`, 'Top weight']} />
-                    <Line dataKey="v" stroke="var(--accent)" strokeWidth={2} dot={{ r: 4, fill: 'var(--accent)', stroke: 'var(--card)', strokeWidth: 2 }} isAnimationActive={false} />
+                    <Line dataKey="v" stroke="var(--acc-t)" strokeWidth={2.5} dot={{ r: 4, fill: 'var(--paper)', stroke: 'var(--acc-t)', strokeWidth: 2 }} activeDot={{ r: 5, fill: 'var(--acc-t)' }} isAnimationActive={false} />
                   </LineChart>
                 ) : (
                   <BarChart data={data} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
-                    <CartesianGrid vertical={false} stroke="var(--line)" />
+                    <CartesianGrid vertical={false} stroke="var(--line)" strokeDasharray="3 4" />
                     <XAxis dataKey="t" tickFormatter={(t) => new Date(t).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} {...axis} minTickGap={24} />
                     <YAxis {...axis} />
                     <Tooltip {...tip} labelFormatter={(t) => fmtDate(Number(t))} formatter={(v) => [`${v} ${unit}`, 'Volume']} />
-                    <Bar dataKey="v" fill="var(--accent)" radius={[4, 4, 0, 0]} isAnimationActive={false} />
+                    <Bar dataKey="v" fill="var(--acc-t)" radius={[4, 4, 0, 0]} isAnimationActive={false} />
                   </BarChart>
                 )}
               </ResponsiveContainer>
@@ -200,14 +212,14 @@ function ExerciseDetail({ id, onBack, onAdd, onEdit }: { id: string; onBack: () 
           <Segmented className="mt-3" value={range} options={RANGES} onChange={setRange} />
         </div>
 
-        <div className="card space-y-1 p-4 text-sm">
-          <div><span className="font-semibold">Primary muscles: </span><span className="text-muted">{e.primaryMuscles.map(label).join(', ') || '–'}</span></div>
-          <div><span className="font-semibold">Secondary muscles: </span><span className="text-muted">{e.secondaryMuscles.map(label).join(', ') || '–'}</span></div>
+        <div className="card space-y-2 p-[18px] text-[15px]">
+          <div className="flex justify-between gap-4"><span className="font-semibold">Primary muscles:</span><span className="text-right text-muted">{e.primaryMuscles.map(label).join(', ') || '–'}</span></div>
+          <div className="flex justify-between gap-4"><span className="font-semibold">Secondary muscles:</span><span className="text-right text-muted">{e.secondaryMuscles.map(label).join(', ') || '–'}</span></div>
         </div>
       </div>
 
       {onAdd && (
-        <div className="mt-4 pb-6 px-4">
+        <div className="mt-4 px-[18px] pb-6">
           <button className="btn-accent w-full" onClick={() => onAdd(id)}>Add Exercise</button>
         </div>
       )}
@@ -249,8 +261,8 @@ function CustomFormInner({ e, onDone }: { e?: Exercise; onDone: (id?: string) =>
   return (
     <div className="pb-8">
       <TopBar title={e ? 'Edit' : 'New Exercise'} onBack={() => onDone(e?.id)}
-        right={e && <RoundBtn icon="trash" label="Delete" className="bg-danger text-on-accent" onClick={remove} />} />
-      <div className="space-y-3 px-4">
+        right={e && <RoundBtn icon="trash" label="Delete" className="text-danger" onClick={remove} />} />
+      <div className="space-y-3 px-[18px]">
         <input className="field" placeholder="Name" value={name} onChange={(ev) => setName(ev.target.value)} />
         <select className="field" value={cls} onChange={(ev) => setCls(ev.target.value)} aria-label="Classification">
           {CLASSIFICATIONS.map((c) => <option key={c}>{c}</option>)}

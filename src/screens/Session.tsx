@@ -43,28 +43,28 @@ export default function Session({ logId, onEnded, onClose }: { logId: string; on
 
   return (
     <div className="pb-8">
-      <header className="flex items-start gap-2 px-4 pb-3 pt-[calc(1rem+env(safe-area-inset-top))]">
+      <header className="flex items-start gap-2 px-[18px] pb-4 pt-[calc(28px+env(safe-area-inset-top))]">
         {onClose && <RoundBtn icon="chevL" label="Back" onClick={onClose} />}
         <div className="min-w-0 flex-1">
-          <input className="w-full truncate bg-transparent text-3xl font-bold outline-none" defaultValue={log.name} key={log.id} aria-label="Workout name"
+          <input className="w-full truncate bg-transparent text-[32px] font-semibold leading-tight tracking-[-0.02em] outline-none" defaultValue={log.name} key={log.id} aria-label="Workout name"
             onBlur={(e) => e.target.value.trim() && db.workoutLogs.update(log.id, { name: e.target.value.trim(), updatedAt: Date.now() })} />
-          <p className="text-sm tabular-nums text-muted">{active ? <Elapsed since={log.startedAt} /> : `${fmtDate(log.startedAt)} · ${fmtDuration((log.endedAt ?? log.startedAt) - log.startedAt)}`}</p>
+          <p className="num text-xl font-medium text-muted">{active ? <Elapsed since={log.startedAt} /> : `${fmtDate(log.startedAt)} · ${fmtDuration((log.endedAt ?? log.startedAt) - log.startedAt)}`}</p>
         </div>
-        <RoundBtn icon={active ? 'x' : 'trash'} label={active ? 'Discard workout' : 'Delete workout'} className="bg-danger text-on-accent" onClick={discard} />
-        {active && <button className="btn-dark min-h-10 px-4 text-sm" onClick={() => setReview(true)}>End Workout</button>}
+        <RoundBtn icon={active ? 'x' : 'trash'} label={active ? 'Discard workout' : 'Delete workout'} className="text-danger" onClick={discard} />
+        {active && <button className="btn-dark min-h-[46px] px-5 text-[15px]" onClick={() => setReview(true)}>End Workout</button>}
       </header>
 
-      <Pager index={Math.min(page, wes.length)} onIndex={setPage} marks={wes.map((w) => pending.has(w.exerciseId))} pages={[
+      <Pager accent index={Math.min(page, wes.length)} onIndex={setPage} marks={wes.map((w) => pending.has(w.exerciseId))} pages={[
         ...wes.map((we, i) => {
           const ex = exercises.get(we.exerciseId)
           return ex ? (
-            <ExerciseCard key={we.id} we={we} ex={ex} log={log} pending={pending.get(we.exerciseId)}
+            <ExerciseCard key={we.id} we={we} ex={ex} log={log} pending={pending.get(we.exerciseId)} n={i + 1} total={wes.length}
               onReplace={() => setLib({ replace: we.id })} first={i === 0} last={i === wes.length - 1}
               onMove={async (d) => { await moveExercise(logId, we.id, d); setPage(i + d) }} />
           ) : <div key={we.id} />
         }),
         <div key="add" className="card grid min-h-80 place-items-center p-6">
-          <button className="flex flex-col items-center gap-3 text-accent" onClick={() => setLib({})}>
+          <button className="flex min-h-11 flex-col items-center gap-3 text-acc-t" onClick={() => setLib({})}>
             <span className="grid size-20 place-items-center rounded-full bg-accent/15"><Icon name="plus" className="size-9" /></span>
             Add Exercise
           </button>
@@ -86,8 +86,11 @@ const parseTime = (t: string) => {
   const n = Number(t || 0); return Math.floor(n / 100) * 60 + (n % 100)
 }
 
-function ExerciseCard({ we, ex, log, pending, onReplace, onMove, first, last }: {
-  we: WorkoutExercise; ex: Exercise; log: WorkoutLog; pending?: { we: WorkoutExercise; date: number }; onReplace: () => void; onMove: (d: -1 | 1) => void; first: boolean; last: boolean
+const PRTag = () => <span className="rounded-md bg-accent px-1.5 py-px text-[11px] font-semibold leading-4 text-on-accent">PR</span>
+
+function ExerciseCard({ we, ex, log, pending, n, total, onReplace, onMove, first, last }: {
+  we: WorkoutExercise; ex: Exercise; log: WorkoutLog; pending?: { we: WorkoutExercise; date: number }; n: number; total: number
+  onReplace: () => void; onMove: (d: -1 | 1) => void; first: boolean; last: boolean
 }) {
   const unit = unitOf(ex)
   const rows = useLiveQuery(() => db.sets.where('workoutExerciseId').equals(we.id).toArray().then((r) => r.sort(bySetOrder)), [we.id])
@@ -99,7 +102,6 @@ function ExerciseCard({ we, ex, log, pending, onReplace, onMove, first, last }: 
   const setNo = new Map<number, number>()
   for (const r of rows) if (!setNo.has(r.order)) setNo.set(r.order, setNo.size + 1)
 
-  /** Last session's value for the same set (falls back to the saved workout's plan). */
   /** Gray hint = the last set you did of this exercise: the latest logged set above this row in this workout,
    *  else the last set of your previous session, else the saved workout's numbers (owner, 2026-10-19). */
   const placeholder = (r: WSet) => {
@@ -110,82 +112,109 @@ function ExerciseCard({ we, ex, log, pending, onReplace, onMove, first, last }: 
     const p = plan?.[r.order]
     return p && (p.weight != null || p.reps != null || p.durationSec) ? { weight: p.weight, reps: p.reps, durationSec: p.durationSec ?? null } : null
   }
-  const prevRow = (r: WSet) => [...rows].reverse().find((s) => s.order < r.order && s.side === r.side)
+  /** The same set (number and side) from the previous session: the chip beside each row. */
+  const prevSession = (r: WSet) => hist?.last?.sets.find((s) => s.order === r.order && s.side === r.side)
+  const showSet = (s: { weight: number | null; reps: number | null; durationSec: number | null }) =>
+    `${fmtWeight(s.weight, unit)}×${timed ? (s.durationSec ? fmtClock(s.durationSec) : '–') : (s.reps ?? '–')}`
   const copyRow = async (r: WSet) => {
-    const src = prevRow(r) ?? placeholder(r)
+    const src = prevSession(r)
     if (src) await updateSet(r.id, { weight: src.weight, reps: src.reps, durationSec: src.durationSec ?? null })
   }
   const setUnit = (u: Unit) => db.exercises.update(ex.id, { unit: u, updatedAt: Date.now() })
+  const names = (l: typeof ex.primaryMuscles) => l.map(label).join(', ') || '–'
 
   return (
-    <section className="card p-4">
-      <div className="mb-1 flex items-start gap-2">
-        <h2 className="min-w-0 flex-1 text-xl font-bold leading-tight">{ex.name}</h2>
+    <section className="card space-y-3.5 p-[22px]">
+      <div className="flex items-start gap-2">
+        <div className="min-w-0 flex-1">
+          <div className="label">Exercise {n} of {total}</div>
+          <h2 className="mt-1 text-[26px] font-semibold leading-tight">{ex.name}</h2>
+        </div>
         <RoundBtn icon="dots" label="Exercise options" onClick={() => setMenu(true)} />
       </div>
-      <label className="mb-3 flex w-fit items-center gap-2 text-sm text-muted">
-        <input type="checkbox" className="peer sr-only" checked={we.unilateral} onChange={(e) => void setUnilateral(we.id, e.target.checked)} />
-        <span className="relative h-6 w-10 rounded-full bg-figure transition peer-checked:bg-accent after:absolute after:left-0.5 after:top-0.5 after:size-5 after:rounded-full after:bg-card after:transition peer-checked:after:translate-x-4 peer-focus-visible:ring-2 peer-focus-visible:ring-accent" />
-        Unilateral
-      </label>
 
+      {/* muscles trained, right under the name */}
+      <div className="flex items-center gap-4">
+        <MuscleMap w={40} primary={ex.primaryMuscles} secondary={ex.secondaryMuscles} />
+        <div className="min-w-0 flex-1 space-y-2 text-sm">
+          <div><div className="label flex items-center gap-1.5"><span className="size-2 rounded-full bg-[var(--p-l)]" />Primary</div><div className="font-semibold">{names(ex.primaryMuscles)}</div></div>
+          <div><div className="label flex items-center gap-1.5"><span className="size-2 rounded-full bg-[var(--s-l)]" />Secondary</div><div className="font-semibold">{names(ex.secondaryMuscles)}</div></div>
+        </div>
+      </div>
+
+      {ex.notes?.trim() && <p className="flex items-start gap-2 text-[13.5px] text-muted"><Icon name="pin" className="mt-0.5 size-4 shrink-0" /><span className="whitespace-pre-wrap">{ex.notes}</span></p>}
       {pending && <NextTimeNote note={pending.we.notes} date={pending.date} onDone={() => void markNoteDone(pending.we.id, log.id)} />}
-      {ex.notes?.trim() && <p className="mb-3 whitespace-pre-wrap px-1 text-sm text-muted">{ex.notes}</p>}
 
-      {/* PR at a glance, e.g. "20kg 10 reps" (last session's numbers are the gray hints in the boxes) */}
-      <div className="panel mb-3 flex items-baseline justify-between gap-2 px-3 py-2.5">
-        <span className="text-xs font-semibold uppercase tracking-wide text-muted">PR</span>
-        {hist?.top
-          ? <span className="font-bold text-accent">{hist.top.weight == null ? 'BW' : `${fmtWeight(hist.top.weight, unit)}${unit}`} {hist.top.reps} reps</span>
-          : <span className="text-sm text-muted">{hist ? 'No PR yet' : '…'}</span>}
+      {/* last session + PR at a glance; both update live */}
+      <div className="flex items-center justify-between gap-3 rounded-[14px] bg-panel px-3.5 py-3">
+        {hist?.last || hist?.top ? (
+          <>
+            <div className="min-w-0">
+              <div className="label">Last{hist.last && ` · ${fmtDate(hist.last.date).replace(/, \d{4}$/, '')}`}</div>
+              <div className="num mt-0.5 truncate text-[13px]">{hist.last ? hist.last.sets.map(showSet).join(' · ') : '–'}</div>
+            </div>
+            <div className="shrink-0 text-right">
+              <div className="label">PR</div>
+              <div className="num mt-0.5 text-[17px] font-semibold">{hist.top ? (hist.top.weight == null ? `BW×${hist.top.reps}` : `${fmtWeight(hist.top.weight, unit)}×${hist.top.reps}`) : '–'}</div>
+            </div>
+          </>
+        ) : <div className="text-sm text-muted">{hist ? 'No history yet' : '…'}</div>}
       </div>
 
-      <div className="mb-1 flex items-center gap-2 text-xs text-muted">
-        <span className="w-[4.25rem] shrink-0" />
-        <span className="flex-[1.4] text-center">Weight</span>
-        <span className="w-2" />
-        <span className="flex-1 text-center">{timed ? 'Time' : 'Reps'}</span>
-        <span className="w-7 shrink-0" />
+      <div className="flex items-center justify-between">
+        <span className="label">Sets</span>
+        <label className="flex min-h-11 cursor-pointer items-center gap-2 text-[13px] text-muted">
+          <input type="checkbox" className="peer sr-only" checked={we.unilateral} onChange={(e) => void setUnilateral(we.id, e.target.checked)} />
+          Unilateral
+          <span className="relative h-[22px] w-[38px] rounded-full bg-figure-lines transition peer-checked:bg-fg after:absolute after:left-0.5 after:top-0.5 after:size-[18px] after:rounded-full after:bg-card after:transition peer-checked:after:translate-x-4 peer-focus-visible:ring-2 peer-focus-visible:ring-fg" />
+        </label>
       </div>
+
       <div className="space-y-2">
         {rows.map((r) => {
-          const ph = placeholder(r), n = setNo.get(r.order)
+          const ph = placeholder(r), no = setNo.get(r.order), logged = r.completedAt > 0, prev = prevSession(r)
+          const box = `h-10 min-w-0 rounded-[10px] ${logged ? 'bg-panel' : 'border-[1.5px] border-dashed border-fg/35'}`
           return (
-            <div key={r.id} className="flex items-center gap-2">
-              <span className="w-7 shrink-0 text-center text-sm font-bold text-muted">
-                {r.side === 'L' ? '' : r.isDrop ? 'D' : n}
-                {r.side && <span className="block text-[10px] font-normal">{r.side}</span>}
+            <div key={r.id} className="grid min-h-11 grid-cols-[20px_1fr_10px_64px_70px] items-center gap-1.5">
+              <span className="num text-center text-sm font-semibold text-muted">
+                {r.side === 'L' ? '' : r.isDrop ? 'D' : no}
+                {r.side && <span className="block text-[10px] font-medium">{r.side}</span>}
               </span>
-              <button aria-label="Copy previous set" className="grid size-9 shrink-0 place-items-center text-accent" onClick={() => copyRow(r)}><Icon name="repeat" className="size-5" /></button>
-              {/* weight number with its unit right beside it, in one box */}
-              <span className="flex h-11 min-w-0 flex-[1.4] items-center rounded-xl bg-panel focus-within:ring-2 focus-within:ring-accent">
-                <NumField kind="weight" bare label={`Set ${n}${r.side ? ' ' + r.side : ''} weight (${unit})`} value={toDisplay(r.weight, unit)}
+              {/* weight with its unit right beside it, in one box */}
+              <span className={`relative flex items-center focus-within:ring-2 focus-within:ring-fg ${box}`}>
+                {r.isPR && <span className="absolute -top-2 right-2"><PRTag /></span>}
+                <NumField kind="weight" bare label={`Set ${no}${r.side ? ' ' + r.side : ''} weight (${unit})`} value={toDisplay(r.weight, unit)}
                   placeholder={ph?.weight != null ? String(toDisplay(ph.weight, unit)) : bw ? 'BW' : '0'}
                   onSave={(v) => updateSet(r.id, { weight: v == null ? null : fromDisplay(v, unit) })} />
                 <UnitPicker unit={unit} label={`Weight unit for ${ex.name}`} onChange={setUnit} />
               </span>
-              <span className="text-muted">×</span>
-              {timed
-                ? <NumField kind="time" label={`Set ${n}${r.side ? ' ' + r.side : ''} time`} value={r.durationSec}
-                    placeholder={ph?.durationSec ? fmtClock(ph.durationSec) : '--:--'} onSave={(v) => updateSet(r.id, { durationSec: v })} />
-                : <NumField kind="reps" label={`Set ${n}${r.side ? ' ' + r.side : ''} reps`} value={r.reps}
-                    placeholder={ph?.reps != null ? String(ph.reps) : 'reps'} onSave={(v) => updateSet(r.id, { reps: v })} />}
-              <span className={`w-7 shrink-0 text-center text-[10px] font-bold ${r.isPR ? 'text-accent' : 'text-transparent'}`}>PR</span>
+              <span className="text-center text-muted">×</span>
+              <span className={`flex items-center focus-within:ring-2 focus-within:ring-fg ${box}`}>
+                {timed
+                  ? <NumField kind="time" bare center label={`Set ${no}${r.side ? ' ' + r.side : ''} time`} value={r.durationSec}
+                      placeholder={ph?.durationSec ? fmtClock(ph.durationSec) : '--:--'} onSave={(v) => updateSet(r.id, { durationSec: v })} />
+                  : <NumField kind="reps" bare center label={`Set ${no}${r.side ? ' ' + r.side : ''} reps`} value={r.reps}
+                      placeholder={ph?.reps != null ? String(ph.reps) : 'reps'} onSave={(v) => updateSet(r.id, { reps: v })} />}
+              </span>
+              {prev
+                ? <button aria-label={`Copy last session's set: ${showSet(prev)}`} onClick={() => copyRow(r)} className="num flex min-h-11 items-center justify-end gap-1 text-xs text-muted">
+                    <Icon name="repeat" className="size-3.5 text-acc-t" />{showSet(prev)}
+                  </button>
+                : <span />}
             </div>
           )
         })}
       </div>
 
-      <div className="my-4"><MuscleMap size="md" primary={ex.primaryMuscles} secondary={ex.secondaryMuscles} /></div>
-      <div className="grid grid-cols-3 gap-2">
-        <button className="btn min-h-11 bg-danger/15 px-2 text-sm text-danger" onClick={() => removeLastSet(we.id)} disabled={!rows.length}>Remove Set</button>
-        <button className="btn-ghost min-h-11 px-2 text-sm" disabled={setNo.size >= MAX_SETS} onClick={() => dropSet(we.id, unit === 'kg' ? 2.5 : fromDisplay(5, 'lb'))}>Drop Set</button>
-        <button className="btn min-h-11 bg-accent/20 px-2 text-sm text-accent" disabled={setNo.size >= MAX_SETS} onClick={() => addSet(we.id)}>Add Set</button>
+      <div className="grid grid-cols-3 gap-2 pt-1">
+        <button className="btn-outline min-h-[42px] border-danger px-2 text-sm text-danger" onClick={() => removeLastSet(we.id)} disabled={!rows.length}>Remove Set</button>
+        <button className="btn-ghost min-h-[42px] px-2 text-sm" disabled={setNo.size >= MAX_SETS} onClick={() => dropSet(we.id, unit === 'kg' ? 2.5 : fromDisplay(5, 'lb'))}>Drop Set</button>
+        <button className="btn-accent min-h-[42px] px-2 text-sm" disabled={setNo.size >= MAX_SETS} onClick={() => addSet(we.id)}>Add Set</button>
       </div>
 
       {menu && (
         <Sheet label="Exercise options" onClose={() => setMenu(false)}>
-          <div className="space-y-2 p-4">
+          <div className="space-y-2 px-[18px] pb-6 pt-5">
             <button className="btn-ghost w-full" onClick={() => { setMenu(false); onReplace() }}>Replace exercise</button>
             <div className="grid grid-cols-2 gap-2">
               <button className="btn-ghost" disabled={first} onClick={() => { setMenu(false); onMove(-1) }}>Move left</button>
@@ -209,18 +238,18 @@ function ExerciseCard({ we, ex, log, pending, onReplace, onMove, first, last }: 
 function NextTimeNote({ note, date, onDone }: { note: string; date: number; onDone: () => void }) {
   const [open, setOpen] = useState(false)
   return (
-    <div className="panel mb-3 px-3 py-2.5">
-      <button className="flex w-full items-center gap-2 text-left text-sm font-semibold text-accent" aria-expanded={open} onClick={() => setOpen(!open)}>
+    <div className="rounded-[14px] border-[1.5px] border-dashed border-accent bg-accent/12 px-3">
+      <button className="flex min-h-10 w-full items-center gap-2 text-left text-sm font-semibold text-acc-t" aria-expanded={open} onClick={() => setOpen(!open)}>
         <Icon name="info" className="size-4 shrink-0" />
         <span className="flex-1">You have a note for this exercise</span>
         <Icon name={open ? 'chevD' : 'chevR'} className="size-4 shrink-0" />
       </button>
       {open && (
-        <div className="mt-2 space-y-2">
+        <div className="space-y-2 pb-3">
           <p className="whitespace-pre-wrap text-sm">{note}</p>
           <div className="flex items-center justify-between gap-2">
-            <span className="text-xs text-muted">Written {fmtDate(date)}</span>
-            <button className="btn-ghost min-h-9 px-4 text-sm" onClick={onDone}>Done</button>
+            <span className="num text-xs text-muted">Written {fmtDate(date)}</span>
+            <button className="btn-ghost min-h-11 px-4 text-sm" onClick={onDone}>Done</button>
           </div>
         </div>
       )}
@@ -228,24 +257,23 @@ function NextTimeNote({ note, date, onDone }: { note: string; date: number; onDo
   )
 }
 
-/** kg/lb pill beside the weight. A real <select>, so iPhone opens its native wheel picker; every row of an
- *  exercise shows the same value because the unit is saved on the exercise. */
+/** kg/lb beside the weight. The visible text is small; a transparent real <select> (16px, so iOS never zooms) sits on top,
+ *  and iPhone opens its native wheel. Every row of an exercise shows the same value because the unit is saved on the exercise. */
 function UnitPicker({ unit, label, onChange }: { unit: Unit; label: string; onChange: (u: Unit) => void }) {
   return (
-    <span className="relative mr-1 shrink-0">
-      <select aria-label={label} value={unit} onChange={(e) => onChange(e.target.value as Unit)}
-        className="h-8 appearance-none rounded-lg bg-card pl-2 pr-5 text-base font-semibold text-accent outline-none focus:ring-2 focus:ring-accent">
+    <span className="relative flex h-full shrink-0 items-center gap-0.5 pl-1 pr-2 text-[11.5px] text-muted">
+      {unit}<Icon name="chevD" className="size-3" />
+      <select aria-label={label} value={unit} onChange={(e) => onChange(e.target.value as Unit)} className="absolute -inset-y-0.5 inset-x-0 w-full cursor-pointer opacity-0">
         <option value="kg">kg</option>
         <option value="lb">lb</option>
       </select>
-      <Icon name="chevD" className="pointer-events-none absolute right-1 top-1/2 size-3.5 -translate-y-1/2 text-accent" />
     </span>
   )
 }
 
 /** Native input (iPhone numeric keypad). Keeps the typed text locally so "62." isn't eaten; saves on every change. */
-function NumField({ kind, value, placeholder, label, onSave, bare }: {
-  kind: 'weight' | 'reps' | 'time'; value: number | null; placeholder: string; label: string; onSave: (v: number | null) => void; bare?: boolean
+function NumField({ kind, value, placeholder, label, onSave, center }: {
+  kind: 'weight' | 'reps' | 'time'; value: number | null; placeholder: string; label: string; onSave: (v: number | null) => void; bare?: boolean; center?: boolean
 }) {
   const fmt = (v: number | null) => (v == null ? '' : kind === 'time' ? fmtClock(v) : String(v))
   const parse = (t: string): number | null => {
@@ -262,10 +290,18 @@ function NumField({ kind, value, placeholder, label, onSave, bare }: {
       inputMode={kind === 'weight' ? 'decimal' : 'numeric'} pattern={kind === 'weight' ? undefined : '[0-9]*'} enterKeyHint="next"
       onChange={(e) => { setText(e.target.value); onSave(parse(e.target.value)) }}
       onFocus={(e) => e.target.select()} onBlur={() => setText(fmt(value))}
-      className={bare ? 'h-11 w-0 min-w-0 flex-1 bg-transparent pr-1 text-right tabular-nums outline-none placeholder:text-muted/60'
-        : 'h-11 w-0 min-w-0 flex-1 rounded-xl bg-panel text-center tabular-nums outline-none placeholder:text-muted/60 focus:ring-2 focus:ring-accent'} />
+      className={`num h-full w-0 min-w-0 flex-1 bg-transparent text-[17px] font-semibold outline-none placeholder:font-semibold placeholder:text-muted/60 ${center ? 'text-center' : 'pr-1 text-right'}`} />
   )
 }
+
+/** Dotted-leader row: label left, value right. */
+const Ledger = ({ k, v, pr }: { k: string; v: string; pr?: boolean }) => (
+  <div className="flex items-baseline gap-2 py-1 text-[14.5px]">
+    <span className="text-muted">{k}</span>
+    <span className="flex-1 border-b-[1.5px] border-dotted border-figure-lines" />
+    <span className="flex items-center gap-1.5">{pr && <PRTag />}<span className="num font-semibold">{v}</span></span>
+  </div>
+)
 
 function Review({ log, onBack, onEnded }: { log: WorkoutLog; onBack: () => void; onEnded: () => void }) {
   const exercises = useExercises()
@@ -286,40 +322,41 @@ function Review({ log, onBack, onEnded }: { log: WorkoutLog; onBack: () => void;
     await saveSessionToWorkout(log.id)
     toast('Saved to your workout')
   }
+  const wt = (s: { weight: number | null; exerciseId: string }) => (s.weight == null ? 'BW' : `${fmtWeight(s.weight, u(s.exerciseId))} ${u(s.exerciseId)}`)
 
   return (
     <div className="pb-4">
       <TopBar title={log.name} onBack={onBack} right={<RoundBtn icon="pencil" label="Edit sets" onClick={onBack} />} />
-      <div className="space-y-3 px-4">
-        <p className="text-sm text-muted">Review your workout before you finish. You can go back to edit your sets.</p>
-        <div className="flex gap-2">
-          <Tile label="Total Time" value={fmtDuration(data.end - log.startedAt)} icon="timer" />
-          <Tile label="Volume" value={fmtVolume(data.volume, 'kg')} icon="dumbbell" />
+      <div className="space-y-4 px-[18px]">
+        <p className="text-[15px] text-muted">Review your workout before you finish. You can go back to edit your sets.</p>
+        <div className="flex gap-3">
+          <Tile tone="paper" big label="Total time" value={fmtDuration(data.end - log.startedAt)} />
+          <Tile tone="paper" big label="Volume" value={fmtVolume(data.volume, 'kg')} />
         </div>
-        <div className="card p-4">
-          <MuscleMap size="md" primary={data.primary} secondary={data.secondary} />
-          <div className="mt-3 flex flex-wrap justify-center gap-1.5">{data.primary.map((m) => <span key={m} className="chip text-xs">{label(m)}</span>)}</div>
+        <div className="ink-panel p-[22px]">
+          <MuscleMap w={92} surface="d" primary={data.primary} secondary={data.secondary} />
+          <div className="mt-4 flex flex-wrap justify-center gap-2">
+            {data.primary.map((m) => <span key={m} className="inline-flex min-h-[30px] items-center rounded-full bg-[#ffffff16] px-3 text-[13px] font-medium">{label(m)}</span>)}
+          </div>
         </div>
-        <div className="card p-4">
-          <h2 className="mb-2 font-bold">PRs</h2>
+        <div className="card p-[18px]">
+          <h2 className="mb-2 text-lg font-semibold">New PRs · <span className="num">{data.prs.length}</span></h2>
           {data.prs.length ? data.prs.map((s) => (
-            <div key={s.id} className="flex items-center gap-2 py-1 text-sm">
-              <Icon name="star" fill className="size-4 text-accent" />
+            <div key={s.id} className="flex items-center gap-2 py-1.5 text-[15px]">
+              <Icon name="star" fill className="size-4 text-acc-t" />
               <span className="flex-1">{exercises.get(s.exerciseId)?.name}{s.side && ` (${s.side})`}</span>
-              <span className="font-semibold">{fmtWeight(s.weight, u(s.exerciseId))}{s.weight != null && ` ${u(s.exerciseId)}`} × {s.reps}</span>
+              <span className="num font-semibold">{wt(s)} × {s.reps}</span>
             </div>
           )) : <p className="text-sm text-muted">No new PRs this time.</p>}
         </div>
         {data.wes.map((we) => {
           const sets = data.sets.filter((s) => s.workoutExerciseId === we.id).sort(bySetOrder)
           return (
-            <div key={we.id} className="card p-4">
-              <h3 className="mb-2 font-bold">{exercises.get(we.exerciseId)?.name}</h3>
+            <div key={we.id} className="card p-[18px]">
+              <h3 className="mb-2 text-lg font-semibold">{exercises.get(we.exerciseId)?.name}</h3>
               {sets.length ? sets.map((s) => (
-                <div key={s.id} className="flex justify-between py-0.5 text-sm">
-                  <span className="text-muted">Set {s.order + 1}{s.side && ` ${s.side}`}{s.isDrop && ' (drop)'}</span>
-                  <span>{fmtWeight(s.weight, u(s.exerciseId))}{s.weight != null && ` ${u(s.exerciseId)}`} × {s.reps ?? (s.durationSec ? fmtClock(s.durationSec) : '–')}</span>
-                </div>
+                <Ledger key={s.id} pr={s.isPR} k={`Set ${s.order + 1}${s.side ? ` ${s.side}` : ''}${s.isDrop ? ' (drop)' : ''}`}
+                  v={`${wt(s)} × ${s.reps ?? (s.durationSec ? fmtClock(s.durationSec) : '–')}`} />
               )) : <p className="text-sm text-muted">No logged sets (empty rows are dropped when you end).</p>}
             </div>
           )
@@ -328,7 +365,7 @@ function Review({ log, onBack, onEnded }: { log: WorkoutLog; onBack: () => void;
           <textarea className="field mt-1 min-h-20 py-3 text-fg" defaultValue={log.notes} onBlur={(e) => db.workoutLogs.update(log.id, { notes: e.target.value, updatedAt: Date.now() })} />
         </label>
       </div>
-      <div className="mt-4 pb-6 grid grid-cols-2 gap-2 px-4">
+      <div className="mt-4 grid gap-3 px-[18px] pb-6">
         <button className="btn-outline" onClick={saveBack}>Save Workout</button>
         <button className="btn-accent" onClick={end}>End Workout</button>
       </div>
@@ -345,16 +382,17 @@ export function Summary({ logId, onBack }: { logId: string; onBack: () => void }
   return (
     <div className="pb-8">
       <TopBar title="Workout Summary" onBack={onBack} />
-      <div className="space-y-3 px-4">
-        <div className="card py-4">
-          <h2 className="mb-3 px-4 text-lg font-bold">{log.name} <span className="text-sm font-normal text-muted">· {fmtDate(log.startedAt)}</span></h2>
-          <MuscleMap primary={s.primary} secondary={s.secondary} />
+      <div className="space-y-4 px-[18px]">
+        <div className="ink-panel flex min-h-[560px] flex-col p-[22px]">
+          <div className="label text-muteink">Finished · {new Date(log.startedAt).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</div>
+          <h2 className="mt-1 text-[36px] font-semibold leading-[1.1]">{log.name}</h2>
+          <div className="flex flex-1 items-center py-5"><MuscleMap w={108} surface="d" primary={s.primary} secondary={s.secondary} /></div>
+          <div className="flex gap-3">
+            <Tile tone="ink" big label="Time" value={fmtDuration((log.endedAt ?? Date.now()) - log.startedAt)} />
+            <Tile tone="ink" big label="Volume" value={fmtVolume(s.volume, 'kg')} />
+          </div>
         </div>
-        <div className="flex gap-2">
-          <Tile label="Time" value={fmtDuration((log.endedAt ?? Date.now()) - log.startedAt)} icon="timer" />
-          <Tile label="Volume" value={fmtVolume(s.volume, 'kg')} icon="dumbbell" />
-        </div>
-        <button className="btn-outline w-full" onClick={onBack}>Back to Home</button>
+        <button className="btn-accent w-full" onClick={onBack}>Back to Home</button>
       </div>
     </div>
   )

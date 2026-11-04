@@ -16,7 +16,7 @@ export default function WorkoutsScreen({ onBack }: { onBack: () => void }) {
   return (
     <div className="pb-4">
       <TopBar title="Workouts" onBack={onBack} />
-      <div className="space-y-3 px-4">
+      <div className="space-y-3 px-[18px]">
         {!workouts?.length ? (
           <div className="card p-6 text-center text-muted">No saved workouts yet.</div>
         ) : (
@@ -33,7 +33,7 @@ export default function WorkoutsScreen({ onBack }: { onBack: () => void }) {
           </ul>
         )}
       </div>
-      <div className="mt-4 pb-6 px-4">
+      <div className="mt-4 pb-6 px-[18px]">
         <button className="btn-accent w-full" onClick={() => setNaming(true)}>Create Workout</button>
       </div>
       {naming && <NameModal onClose={() => setNaming(false)} onConfirm={(name) => { setNaming(false); setEditing({ name }) }} />}
@@ -85,11 +85,11 @@ function Builder({ existing, newName, onClose }: { existing?: Workout; newName: 
   return (
     <div className="pb-4">
       <TopBar title={existing ? 'Edit Workout' : 'Create Workout'} onBack={onClose}
-        right={<RoundBtn icon="trash" label="Delete workout" className="bg-danger text-on-accent" onClick={remove} />} />
-      <div className="px-4">
+        right={<RoundBtn icon="trash" label="Delete workout" className="text-danger" onClick={remove} />} />
+      <div className="px-[18px]">
         <div className="card overflow-hidden">
           <button className="flex w-full items-center gap-2 px-4 py-4 text-left" onClick={() => setRenaming(true)}>
-            <span className="flex-1 text-xl font-bold">{name}</span>
+            <span className="flex-1 text-xl font-semibold">{name}</span>
             <Icon name="pencil" className="size-5 text-muted" />
           </button>
           <ul className="divide-y divide-line border-t border-line">
@@ -120,7 +120,7 @@ function Builder({ existing, newName, onClose }: { existing?: Workout; newName: 
               )
             })}
             <li>
-              <button className="flex min-h-14 w-full items-center gap-3 px-4 text-accent" onClick={() => setAdding(true)}>
+              <button className="flex min-h-14 w-full items-center gap-3 px-4 text-acc-t" onClick={() => setAdding(true)}>
                 <span className="grid size-7 place-items-center rounded-full border-2 border-accent"><Icon name="plus" className="size-4" /></span>
                 Add Exercise
               </button>
@@ -128,7 +128,7 @@ function Builder({ existing, newName, onClose }: { existing?: Workout; newName: 
           </ul>
         </div>
       </div>
-      <div className="mt-4 pb-6 px-4">
+      <div className="mt-4 pb-6 px-[18px]">
         <button className="btn-accent w-full" onClick={save} disabled={!name.trim()}>Save Workout</button>
       </div>
       {renaming && <NameModal initial={name} onClose={() => setRenaming(false)} onConfirm={(n) => { setName(n); setRenaming(false) }} />}

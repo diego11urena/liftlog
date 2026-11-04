@@ -39,49 +39,48 @@ export default function Profile({ onJump }: { onJump: (dateKey: string) => void 
   const formula = `${trained} of ${MUSCLES.length} muscle regions trained at least once this week (Mon–Sun).`
 
   return (
-    <div className="space-y-3 px-4 pb-8">
-      <div className="flex items-center justify-between pt-[calc(1rem+env(safe-area-inset-top))]">
-        <h1 className="text-2xl font-bold">{greeting()}{name ? `, ${name}` : ''}</h1>
+    <div className="space-y-4 px-[18px] pb-8">
+      <div className="flex items-start justify-between pt-[calc(28px+env(safe-area-inset-top))]">
+        <h1 className="text-[30px] font-semibold leading-[1.1]">{greeting()}{name ? <>,<br />{name}</> : ''}</h1>
         <RoundBtn icon="gear" label="Settings" onClick={() => setSettings(true)} />
       </div>
 
-      <div className="card grid grid-cols-3 divide-x divide-line py-4 text-center">
+      <div className="card grid grid-cols-3 divide-x divide-line py-[18px] text-center">
         <Total icon="timer" value={fmtDuration(data?.time ?? 0)} label="time" />
         <Total icon="dumbbell" value={fmtVolume(data?.volume ?? 0, 'kg')} label="volume" />
         <Total icon="calendar" value={`${data?.workouts ?? 0}`} label={data?.workouts === 1 ? 'workout' : 'workouts'} />
       </div>
 
-      <div className="card p-4">
+      <div className="ink-panel p-[22px]">
         <div className="mb-2 flex items-start justify-between">
           <div>
-            <h2 className="font-bold">Muscles this week</h2>
-            <div className="text-4xl font-bold text-accent" title={formula}>{pct}%</div>
+            <h2 className="label text-muteink">Muscles this week</h2>
+            <div className="num text-[60px] font-semibold leading-none text-glow" title={formula}>{pct}%</div>
           </div>
-          <RoundBtn icon="expand" label="Full screen" onClick={() => setFull(true)} />
+          <RoundBtn onInk icon="expand" label="Full screen" onClick={() => setFull(true)} />
         </div>
-        <MuscleMap primary={week.primary} secondary={week.secondary} />
+        <MuscleMap w={104} surface="d" primary={week.primary} secondary={week.secondary} />
+        <p className="num mt-4 text-center text-[13px] text-muteink">{trained} of {MUSCLES.length} muscle regions trained since Monday</p>
       </div>
 
-      <div className="card p-4">
+      <div className="card p-[22px]">
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="font-bold">Week Overview</h2>
-          <button className="btn-accent min-h-9 px-4 text-sm disabled:bg-panel disabled:text-muted disabled:opacity-100" disabled={!data?.todayWorkout || !!active}
+          <h2 className="text-[22px] font-semibold">Week Overview</h2>
+          <button className="btn-accent min-h-10 px-4 text-sm disabled:bg-panel disabled:text-muted disabled:opacity-100" disabled={!data?.todayWorkout || !!active}
             onClick={async () => { await startSession(data!.todayWorkout); onJump(dateKey(Date.now())) }}>Start Workout</button>
         </div>
-        {streak.current > 0 && (
-          <p className="mb-2 text-sm font-semibold">{streak.current}-day streak <span className="text-xs font-normal text-muted">Best: {streak.best}</span></p>
-        )}
+        {streak.current > 0 && <p className="num mb-3 text-sm text-muted">{streak.current}-day streak · Best: {streak.best}</p>}
         <WeekStrip sunday={sunday} status={status} onSelect={onJump} />
       </div>
 
       {full && (
         <Sheet full label="Muscles this week" onClose={() => setFull(false)}>
-          <div className="flex items-center justify-between p-4">
-            <h2 className="text-lg font-bold">Muscles this week</h2>
+          <div className="flex items-center justify-between px-[18px] pb-3 pt-6">
+            <h2 className="text-[22px] font-semibold">Muscles this week</h2>
             <RoundBtn icon="x" label="Close" onClick={() => setFull(false)} />
           </div>
-          <div className="space-y-4 px-4 pb-6">
-            <div className="text-5xl font-bold text-accent">{pct}%</div>
+          <div className="space-y-4 px-[18px] pb-6">
+            <div className="num text-5xl font-semibold text-acc-t">{pct}%</div>
             <p className="text-sm text-muted">{formula}</p>
             <MuscleMap primary={week.primary} secondary={week.secondary} />
             <div className="flex flex-wrap gap-1.5">
@@ -98,9 +97,9 @@ export default function Profile({ onJump }: { onJump: (dateKey: string) => void 
 
 const Total = ({ icon, value, label }: { icon: IconName; value: string; label: string }) => (
   <div className="px-2">
-    <Icon name={icon} className="mx-auto mb-1 size-5 text-muted" />
-    <div className="font-bold">{value}</div>
-    <div className="text-xs text-muted">{label}</div>
+    <Icon name={icon} className="mx-auto mb-1.5 size-5 text-muted" />
+    <div className="num text-xl font-semibold">{value}</div>
+    <div className="label mt-0.5">{label}</div>
   </div>
 )
 
@@ -116,7 +115,7 @@ function ImportBox() {
   }
   return (
     <div className="card p-4">
-      <h3 className="mb-1 font-bold">Move data here</h3>
+      <h3 className="mb-1 font-semibold">Move data here</h3>
       <p className="mb-3 text-sm text-muted">Paste a Liftlog import link to bring workouts over from another address. Existing data is kept.</p>
       <textarea className="field mb-2 min-h-20 py-3 text-base" placeholder="https://…/#import=…" value={text} onChange={(e) => setText(e.target.value)} />
       <button className="btn-accent w-full" disabled={!text.includes('#import=')} onClick={run}>Import</button>
@@ -133,19 +132,19 @@ function SettingsSheet({ onClose }: { onClose: () => void }) {
   const name = useName()
   return (
     <Sheet label="Settings" onClose={onClose}>
-      <div className="flex items-center justify-between p-4">
-        <h2 className="text-lg font-bold">Settings</h2>
+      <div className="flex items-center justify-between px-[18px] pb-3 pt-6">
+        <h2 className="text-[22px] font-semibold">Settings</h2>
         <RoundBtn icon="x" label="Close" onClick={onClose} />
       </div>
-      <div className="space-y-3 px-4 pb-6">
+      <div className="space-y-3 px-[18px] pb-6">
         <p className="text-sm text-muted">Weight units are picked per exercise, right next to the weight while you log.</p>
-        <label className="card block p-4 font-bold">Your name
+        <label className="card block p-4 font-semibold">Your name
           <input className="field mt-2 font-normal" placeholder="Shown in the greeting" defaultValue={name} maxLength={30}
             onChange={(e) => db.settings.put({ key: 'name', value: e.target.value.trim() })} />
         </label>
         <ImportBox />
         <div className="card p-4">
-          <h3 className="mb-1 font-bold text-danger">Danger zone</h3>
+          <h3 className="mb-1 font-semibold text-danger">Danger zone</h3>
           <p className="mb-3 text-sm text-muted">Erases every workout, plan, custom exercise and setting on this device. This can't be undone.</p>
           <button className="btn w-full bg-danger text-on-accent" onClick={() => {
             void (async () => {

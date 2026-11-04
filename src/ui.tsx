@@ -22,24 +22,25 @@ const PATHS = {
   person: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-7 9a7 7 0 0 1 14 0',
   stats: 'M5 20V11M12 20V4M19 20v-7',
   search: 'M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14ZM20 20l-4-4',
-  check: 'M5 12l5 5L20 7',
+  check: 'M5 12l5 5L20 7', pin: 'M12 16v5M8 3h8l-1 6 3 4H6l3-4-1-6Z',
 } as const
 export type IconName = keyof typeof PATHS
 
 export function Icon({ name, className = 'size-5', fill }: { name: IconName; className?: string; fill?: boolean }) {
   return (
     <svg viewBox="0 0 24 24" className={className} fill={fill ? 'currentColor' : 'none'} stroke="currentColor"
-      strokeWidth={name === 'dots' ? 3.5 : 2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      strokeWidth={name === 'dots' ? 3.5 : 1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
       <path d={PATHS[name]} />
     </svg>
   )
 }
 
-export function RoundBtn({ icon, label, onClick, className = '', disabled }: { icon: IconName; label: string; onClick?: () => void; className?: string; disabled?: boolean }) {
+/** 46px circle with a 1.5px outline (ink by default; pass text-danger for a danger one). `onInk` for dark panels. */
+export function RoundBtn({ icon, label, onClick, className = '', disabled, onInk }: { icon: IconName; label: string; onClick?: () => void; className?: string; disabled?: boolean; onInk?: boolean }) {
   return (
     <button aria-label={label} title={label} onClick={onClick} disabled={disabled}
-      className={`grid size-10 shrink-0 place-items-center rounded-full active:scale-95 disabled:opacity-30 ${/\bbg-/.test(className) ? '' : 'bg-panel'} ${className}`}>
-      <Icon name={icon} />
+      className={`relative grid shrink-0 place-items-center rounded-full border-[1.5px] active:scale-95 disabled:opacity-30 before:absolute before:-inset-0.5 before:content-[''] ${onInk ? 'size-11 border-[#ffffff3a] text-onink' : `size-[46px] border-current ${/\btext-/.test(className) ? '' : 'text-fg'}`} ${className}`}>
+      <Icon name={icon} className="size-[22px]" />
     </button>
   )
 }
@@ -47,23 +48,23 @@ export function RoundBtn({ icon, label, onClick, className = '', disabled }: { i
 /** Back chevron · centered title · optional right slot. */
 export function TopBar({ title, onBack, right, sub }: { title: ReactNode; onBack?: () => void; right?: ReactNode; sub?: ReactNode }) {
   return (
-    <div className="sticky top-0 z-30 grid grid-cols-[2.5rem_1fr_auto] items-center gap-2 bg-bg/95 px-4 pb-2 pt-[calc(.75rem+env(safe-area-inset-top))] backdrop-blur">
+    <div className="sticky top-0 z-30 grid grid-cols-[46px_1fr_auto] items-center gap-2 bg-bg/95 px-[18px] pb-3 pt-[calc(28px+env(safe-area-inset-top))] backdrop-blur">
       {onBack ? <RoundBtn icon="chevL" label="Back" onClick={onBack} /> : <span />}
       <div className="min-w-0 text-center">
-        <h1 className="truncate text-lg font-bold">{title}</h1>
+        <h1 className="truncate text-[22px] font-semibold leading-tight">{title}</h1>
         {sub && <div className="truncate text-xs text-muted">{sub}</div>}
       </div>
-      <div className="flex min-w-10 justify-end gap-2">{right}</div>
+      <div className="flex min-w-[46px] justify-end gap-2">{right}</div>
     </div>
   )
 }
 
 export function Segmented<T extends string>({ value, options, onChange, className = '' }: { value: T; options: readonly T[]; onChange: (v: T) => void; className?: string }) {
   return (
-    <div className={`flex rounded-full bg-card p-1 ${className}`} role="tablist">
+    <div className={`flex rounded-full bg-panel p-[3px] ${className}`} role="tablist">
       {options.map((o) => (
         <button key={o} role="tab" aria-selected={value === o} onClick={() => onChange(o)}
-          className={`min-h-9 flex-1 rounded-full px-3 text-sm font-semibold transition ${value === o ? 'bg-accent text-on-accent' : 'text-muted'}`}>{o}</button>
+          className={`min-h-9 flex-1 rounded-full px-3 text-sm font-semibold transition ${value === o ? 'bg-fg text-on-accent' : 'text-muted'}`}>{o}</button>
       ))}
     </div>
   )
@@ -75,7 +76,7 @@ export const Spinner = ({ className = 'size-6' }: { className?: string }) => (
 
 /** Full-screen dim + spinner, used while saving. */
 export const Busy = () => (
-  <div className="phone-fixed inset-y-0 z-[60] grid place-items-center bg-scrim"><Spinner className="size-10 text-accent" /></div>
+  <div className="phone-fixed inset-y-0 z-[60] grid place-items-center bg-scrim"><Spinner className="size-10 text-acc-t" /></div>
 )
 
 /** Bottom sheet with dimmed backdrop. `full` = full height. */
@@ -106,8 +107,8 @@ export function NameModal({ initial = '', onConfirm, onClose, title = 'Workout N
     <div className="phone-fixed inset-y-0 z-50 grid place-items-center p-6" role="dialog" aria-modal aria-label={title}>
       <button className="absolute inset-0 bg-scrim" aria-label="Close" onClick={onClose} tabIndex={-1} />
       <form className="pop relative w-full rounded-[28px] bg-card p-5 text-center" onSubmit={(e) => { e.preventDefault(); if (v.trim()) onConfirm(v.trim()) }}>
-        <div className="mx-auto mb-3 grid size-14 place-items-center rounded-full bg-accent/15 text-accent"><Icon name="dumbbell" className="size-7" /></div>
-        <h2 className="text-xl font-bold">{title}</h2>
+        <div className="mx-auto mb-3 grid size-14 place-items-center rounded-full bg-accent/15 text-acc-t"><Icon name="dumbbell" className="size-7" /></div>
+        <h2 className="text-[22px] font-semibold">{title}</h2>
         <p className="mb-4 text-sm text-muted">{help}</p>
         <input ref={ref} className="field mb-4 text-center" value={v} onChange={(e) => setV(e.target.value)} placeholder="e.g. Leg Day" maxLength={40} />
         <button className="btn-accent w-full" disabled={!v.trim()}>{cta}</button>
@@ -116,49 +117,49 @@ export function NameModal({ initial = '', onConfirm, onClose, title = 'Workout N
   )
 }
 
-export const Tile = ({ label, value, icon }: { label: string; value: ReactNode; icon?: IconName }) => (
-  <div className="flex-1 rounded-2xl bg-panel p-3 text-center">
-    {icon && <Icon name={icon} className="mx-auto mb-1 size-5 text-muted" />}
-    <div className="whitespace-nowrap text-lg font-bold">{value}</div>
-    <div className="text-xs text-muted">{label}</div>
+/** Stat tile. inset = on a light card; paper = standalone; ink = on a dark panel. */
+export const Tile = ({ label, value, tone = 'inset', big }: { label: string; value: ReactNode; tone?: 'inset' | 'paper' | 'ink'; big?: boolean }) => (
+  <div className={`min-w-0 flex-1 px-3 py-3.5 text-center ${tone === 'inset' ? 'rounded-[18px] bg-panel' : tone === 'paper' ? 'rounded-[20px] border border-line bg-card' : 'rounded-[18px] bg-[#ffffff12]'}`}>
+    <div className={`label ${tone === 'ink' ? 'text-muteink' : ''}`}>{label}</div>
+    <div className={`num mt-1 whitespace-nowrap font-semibold ${big ? 'text-[30px]' : 'text-2xl'}`}>{value}</div>
   </div>
 )
 
 const LETTERS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
 export type DayStatus = 'done' | 'rest' | 'planned' | undefined
 
-/** 7 round day buttons (Sun..Sat) with chevrons. */
+/** 7 day columns (Sun..Sat) with chevrons. Ring: solid ink = planned, dashed teal = rest; filled accent = completed. */
 export function WeekStrip({ sunday, selected, onSelect, onWeek, status }: {
   sunday: number; selected?: string; onSelect: (key: string) => void; onWeek?: (dir: -1 | 1) => void; status: Record<string, DayStatus>
 }) {
   const today = dateKey(Date.now())
   return (
-    <div className="flex items-center gap-1">
-      {onWeek && <button aria-label="Previous week" className="grid size-8 place-items-center text-muted" onClick={() => onWeek(-1)}><Icon name="chevL" /></button>}
-      <div className="grid flex-1 grid-cols-7 gap-1">
+    <div className="flex items-center justify-between">
+      {onWeek && <button aria-label="Previous week" className="grid h-[46px] w-[26px] shrink-0 place-items-center text-muted" onClick={() => onWeek(-1)}><Icon name="chevL" /></button>}
+      <div className="flex flex-1 justify-between">
         {LETTERS.map((l, i) => {
           const t = addDays(sunday, i), k = dateKey(t), st = status[k], sel = k === selected
-          const color = st === 'done' ? 'bg-accent text-on-accent font-bold' : st === 'rest' ? 'text-rest' : st === 'planned' ? 'text-fg' : 'text-muted'
+          const ring = st === 'done' ? 'bg-accent text-on-accent' : st === 'rest' ? 'border-[1.5px] border-dashed border-rest text-rest'
+            : st === 'planned' ? 'border-[1.5px] border-fg' : 'text-muted'
           return (
-            <button key={k} onClick={() => onSelect(k)} aria-pressed={sel} aria-label={`${new Date(t).toDateString()}${st ? `, ${st}` : ''}`}
-              className="flex flex-col items-center gap-1 py-1">
-              <span className={`grid size-10 place-items-center rounded-full text-[15px] ${color} ${sel && st !== 'done' ? 'bg-panel' : ''} ${sel ? 'ring-2 ring-fg/40' : ''} ${k === today && !sel ? 'ring-1 ring-fg/15' : ''}`}>
+            <button key={k} onClick={() => onSelect(k)} aria-pressed={sel} aria-label={`${new Date(t).toDateString()}${st ? `, ${st}` : ''}${k === today ? ', today' : ''}`}
+              className={`flex min-h-[72px] w-[42px] flex-col items-center gap-1 rounded-full py-1.5 ${sel ? 'border border-line bg-card shadow-[0_1px_3px_rgba(20,22,24,.12)]' : 'border border-transparent'}`}>
+              <span className="num text-[11px] text-muted">{l}</span>
+              <span className={`num grid size-[34px] place-items-center rounded-full text-[15px] font-semibold ${ring} ${k === today && !st ? 'underline decoration-fg/40 underline-offset-4' : ''}`}>
                 {new Date(t).getDate()}
               </span>
-              <span className="text-[11px] text-muted">{l}</span>
               <span className={`size-1 rounded-full ${sel ? 'bg-fg' : 'bg-transparent'}`} />
             </button>
           )
         })}
       </div>
-      {onWeek && <button aria-label="Next week" className="grid size-8 place-items-center text-muted" onClick={() => onWeek(1)}><Icon name="chevR" /></button>}
+      {onWeek && <button aria-label="Next week" className="grid h-[46px] w-[26px] shrink-0 place-items-center text-muted" onClick={() => onWeek(1)}><Icon name="chevR" /></button>}
     </div>
   )
 }
 
-/** Horizontal snap pager with dots: one full-width, centered page at a time; swipe for the next. */
 /** `marks[i]`: page i gets an accent dot (e.g. the exercise has a note waiting). */
-export function Pager({ pages, index, onIndex, marks }: { pages: ReactNode[]; index: number; onIndex: (i: number) => void; marks?: boolean[] }) {
+export function Pager({ pages, index, onIndex, marks, accent }: { pages: ReactNode[]; index: number; onIndex: (i: number) => void; marks?: boolean[]; accent?: boolean }) {
   const ref = useRef<HTMLDivElement>(null)
   // scroll to externally requested page
   useEffect(() => {
@@ -173,13 +174,13 @@ export function Pager({ pages, index, onIndex, marks }: { pages: ReactNode[]; in
   return (
     <div>
       <div ref={ref} onScroll={onScroll} className="no-scrollbar flex snap-x snap-mandatory overflow-x-auto">
-        {pages.map((p, i) => <div key={i} className="w-full shrink-0 snap-center px-4">{p}</div>)}
+        {pages.map((p, i) => <div key={i} className="w-full shrink-0 snap-center px-[18px]">{p}</div>)}
       </div>
       {pages.length > 1 && (
-        <div className="mt-3 flex justify-center gap-1.5">
+        <div className="mt-3 flex items-center justify-center gap-2">
           {pages.map((_, i) => (
             <button key={i} aria-label={`Page ${i + 1}${marks?.[i] ? ', has a note' : ''}`} onClick={() => onIndex(i)}
-              className={`rounded-full ${marks?.[i] ? `size-2.5 ${i === index ? 'bg-accent' : 'bg-accent/50'}` : `size-2 ${i === index ? 'bg-fg' : 'bg-fg/20'}`}`} />
+              className={`relative rounded-full before:absolute before:-inset-2 before:content-[''] ${marks?.[i] ? 'size-[11px] bg-accent' : i === index ? `h-2 w-[22px] ${accent ? 'bg-accent' : 'bg-fg'}` : 'size-2 bg-[#14161833]'}`} />
           ))}
         </div>
       )}
@@ -213,7 +214,7 @@ export function AskHost() {
     <div className="phone-fixed inset-y-0 z-[80] grid place-items-center p-6" role="alertdialog" aria-modal aria-labelledby="ask-title">
       <button className="absolute inset-0 bg-scrim" aria-label="Cancel" tabIndex={-1} onClick={() => done(false)} />
       <div className="pop relative w-full rounded-[28px] bg-card p-5 text-center">
-        <h2 id="ask-title" className="text-lg font-bold">{q.title}</h2>
+        <h2 id="ask-title" className="text-lg font-semibold">{q.title}</h2>
         {q.message && <p className="mt-1 text-sm text-muted">{q.message}</p>}
         <div className="mt-5 grid grid-cols-2 gap-2">
           {/* destructive dialogs focus Cancel, so a stray Enter can't delete anything */}

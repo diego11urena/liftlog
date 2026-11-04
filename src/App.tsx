@@ -10,6 +10,14 @@ const TABS: { name: 'Profile' | 'Workout' | 'Stats'; icon: IconName }[] = [
 ]
 type Tab = (typeof TABS)[number]['name']
 
+/** Screens without the tab bar (the exercise library) call `useHideTabs()`. */
+export function useHideTabs() {
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('tabs', { detail: false }))
+    return () => { window.dispatchEvent(new CustomEvent('tabs', { detail: true })) }
+  }, [])
+}
+
 /** Plain status message: `toast('Saved')`. */
 export const toast = (msg: string) => window.dispatchEvent(new CustomEvent('toast', { detail: msg }))
 
@@ -17,6 +25,12 @@ export default function App() {
   const [tab, setTab] = useState<Tab>('Workout')
   const [date, setDate] = useState(() => dateKey(Date.now()))
   const [msg, setMsg] = useState<string | null>(null)
+  const [nav, setNav] = useState(true)
+  useEffect(() => {
+    const on = (e: Event) => setNav((e as CustomEvent<boolean>).detail)
+    window.addEventListener('tabs', on)
+    return () => window.removeEventListener('tabs', on)
+  }, [])
 
   // iOS can leave the window scrolled after the keyboard closes; the window never scrolls on purpose, so reset it
   useEffect(() => {
@@ -44,20 +58,21 @@ export default function App() {
 
       {msg && (
         <div role="status" className="pop phone-fixed top-[calc(1rem+env(safe-area-inset-top))] z-[70] flex justify-center px-4">
-          <span className="rounded-full bg-fg px-5 py-2.5 text-sm font-semibold text-bg shadow-lg">{msg}</span>
+          <span className="rounded-full bg-fg px-5 py-2.5 text-sm font-semibold text-onink shadow-lg">{msg}</span>
         </div>
       )}
-      <nav className="relative z-40 shrink-0 border-t border-line bg-bg pb-[env(safe-area-inset-bottom)]">
+      {nav && <nav className="relative z-40 shrink-0 border-t border-line bg-card pb-[env(safe-area-inset-bottom)]">
         <div className="flex">
           {TABS.map((t) => (
             <button key={t.name} onClick={() => setTab(t.name)} aria-current={tab === t.name ? 'page' : undefined}
-              className={`flex h-[3.25rem] flex-1 flex-col items-center justify-center gap-0.5 text-[11px] font-medium ${tab === t.name ? 'text-accent' : 'text-muted'}`}>
-              <Icon name={t.icon} className="size-6" />
+              className={`relative flex h-14 flex-1 flex-col items-center justify-center gap-0.5 text-[11px] font-semibold ${tab === t.name ? 'text-fg' : 'text-muted'}`}>
+              {tab === t.name && <span className="absolute inset-x-0 top-0 mx-auto h-[3px] w-7 rounded-b-full bg-accent" />}
+              <Icon name={t.icon} className="size-[22px]" />
               {t.name}
             </button>
           ))}
         </div>
-      </nav>
+      </nav>}
       <AskHost />
     </div>
   )

@@ -13,8 +13,8 @@ export default function Stats() {
   if (open) return <Session logId={open} onClose={() => setOpen(null)} />
   return (
     <div className="pb-8">
-      <div className="px-4 pb-3 pt-[calc(1rem+env(safe-area-inset-top))]">
-        <h1 className="mb-3 text-3xl font-bold">Stats</h1>
+      <div className="px-[18px] pb-3 pt-[calc(28px+env(safe-area-inset-top))]">
+        <h1 className="mb-3 text-3xl font-semibold">Stats</h1>
         <Segmented value={seg} options={['History', 'Progress'] as const} onChange={setSeg} />
       </div>
       {seg === 'History' ? <History onOpen={setOpen} /> : <Progress />}
@@ -31,16 +31,16 @@ function History({ onOpen }: { onOpen: (id: string) => void }) {
       return { l, wes, sets: sets.length, prs: sets.filter((s) => s.isPR).length, vol: volume(sets) }
     }))
   }, [])
-  if (rows?.length === 0) return <p className="px-4 py-10 text-center text-muted">No finished workouts yet.</p>
+  if (rows?.length === 0) return <p className="px-[18px] py-10 text-center text-muted">No finished workouts yet.</p>
   return (
-    <ul className="space-y-2 px-4">
+    <ul className="space-y-2 px-[18px]">
       {rows?.map(({ l, wes, sets, prs, vol }) => (
         <li key={l.id}>
           <button className="card flex w-full items-center gap-3 p-4 text-left" onClick={() => onOpen(l.id)}>
             <div className="min-w-0 flex-1">
-              <div className="flex justify-between gap-2"><span className="truncate font-bold">{l.name}</span><span className="shrink-0 text-sm text-muted">{fmtDate(l.startedAt)}</span></div>
+              <div className="flex justify-between gap-2"><span className="truncate font-semibold">{l.name}</span><span className="shrink-0 text-sm text-muted">{fmtDate(l.startedAt)}</span></div>
               <div className="text-sm text-muted">
-                {fmtDuration((l.endedAt ?? l.startedAt) - l.startedAt)} · {sets} sets · {fmtVolume(vol, 'kg')}{prs > 0 && <span className="text-accent"> · {prs} PR{prs > 1 && 's'}</span>}
+                {fmtDuration((l.endedAt ?? l.startedAt) - l.startedAt)} · {sets} sets · {fmtVolume(vol, 'kg')}{prs > 0 && <span className="text-acc-t"> · {prs} PR{prs > 1 && 's'}</span>}
               </div>
               <div className="mt-1 truncate text-sm">{wes.map((w) => exercises.get(w.exerciseId)?.name).join(', ')}</div>
             </div>
@@ -55,8 +55,8 @@ function History({ onOpen }: { onOpen: (id: string) => void }) {
 const METRICS = { e1rm: 'Est. 1RM', top: 'Top set', volume: 'Volume' } as const
 type Metric = keyof typeof METRICS
 const WEEK = 7 * 86400e3
-const axis = { stroke: 'var(--muted)', fontSize: 11, tickLine: false, axisLine: false }
-const tip = { contentStyle: { background: 'var(--card)', border: 'none', borderRadius: 12, color: 'var(--fg)' }, cursor: { stroke: 'var(--line)', fill: 'var(--line)' } }
+const axis = { stroke: 'var(--mute)', fontSize: 11, tickLine: false, axisLine: false }
+const tip = { contentStyle: { background: 'var(--paper)', border: 'none', borderRadius: 12, color: 'var(--ink)' }, cursor: { stroke: 'var(--line)', fill: 'var(--line)' } }
 
 function Progress() {
   const exercises = useExercises()
@@ -65,7 +65,7 @@ function Progress() {
   const [metric, setMetric] = useState<Metric>('e1rm')
   const [week, setWeek] = useState(() => weekStart(Date.now()))
   if (!sets) return null
-  if (!sets.length) return <p className="px-4 py-10 text-center text-muted">Log some sets to see progress.</p>
+  if (!sets.length) return <p className="px-[18px] py-10 text-center text-muted">Log some sets to see progress.</p>
 
   const counts = new Map<string, number>()
   for (const s of sets) counts.set(s.exerciseId, (counts.get(s.exerciseId) ?? 0) + 1)
@@ -95,7 +95,7 @@ function Progress() {
   const thisWeek = weekStart(Date.now())
 
   return (
-    <div className="space-y-3 px-4">
+    <div className="space-y-3 px-[18px]">
       <section className="card p-4">
         <select className="field mb-3" value={current} onChange={(e) => setExId(e.target.value)} aria-label="Exercise">
           {logged.map((id) => <option key={id} value={id}>{exercises.get(id)?.name ?? id}</option>)}
@@ -109,7 +109,7 @@ function Progress() {
               <XAxis dataKey="t" tickFormatter={(t) => new Date(t).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} {...axis} minTickGap={24} />
               <YAxis domain={['auto', 'auto']} {...axis} />
               <Tooltip {...tip} labelFormatter={(t) => fmtDate(Number(t))} formatter={(v) => [`${v} ${unit}`, METRICS[metric]]} />
-              <Line dataKey="v" stroke="var(--accent)" strokeWidth={2} dot={{ r: 4, fill: 'var(--accent)', stroke: 'var(--card)', strokeWidth: 2 }} activeDot={{ r: 6 }} isAnimationActive={false} />
+              <Line dataKey="v" stroke="var(--acc-t)" strokeWidth={2} dot={{ r: 4, fill: 'var(--acc-t)', stroke: 'var(--paper)', strokeWidth: 2 }} activeDot={{ r: 6 }} isAnimationActive={false} />
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -130,7 +130,7 @@ function Progress() {
                 <XAxis type="number" {...axis} allowDecimals={false} />
                 <YAxis type="category" dataKey="m" width={84} {...axis} interval={0} />
                 <Tooltip {...tip} formatter={(v) => [`${v} sets`, 'Volume']} />
-                <Bar dataKey="v" fill="var(--accent)" radius={[0, 4, 4, 0]} isAnimationActive={false} />
+                <Bar dataKey="v" fill="var(--acc-t)" radius={[0, 4, 4, 0]} isAnimationActive={false} />
               </BarChart>
             </ResponsiveContainer>
           </div>

@@ -79,16 +79,16 @@ function Home({ date, setDate, go }: { date: string; setDate: (k: string) => voi
 
   return (
     <div className="pb-4">
-      <header className="flex items-start gap-2 px-4 pb-3 pt-[calc(1rem+env(safe-area-inset-top))]">
+      <header className="flex items-start gap-2 px-[18px] pb-[18px] pt-[calc(28px+env(safe-area-inset-top))]">
         <div className="min-w-0 flex-1">
-          <h1 className={`truncate text-3xl font-bold ${doneDay ? 'text-accent' : ''}`}>{title}</h1>
-          <p className="text-sm text-muted">{fmtMDY(day)}</p>
+          <h1 className={`truncate text-[38px] font-semibold leading-[1.1] ${doneDay ? 'text-acc-t' : ''}`}>{title}</h1>
+          <p className="num mt-1 text-[13px] text-muted">{fmtMDY(day)}{doneDay ? ' · Done' : isToday ? ' · Today' : ''}</p>
         </div>
         <RoundBtn icon="bell" label="Exercise library" onClick={() => go({ kind: 'library' })} />
-        <button className="btn-ghost min-h-10 px-4 text-sm" onClick={() => go({ kind: 'workouts' })}>Workouts</button>
+        <button className="btn-outline min-h-[46px] px-4 text-[15px]" onClick={() => go({ kind: 'workouts' })}>Workouts</button>
       </header>
 
-      <div className="mb-4 px-2">
+      <div className="mb-4 px-3">
         <WeekStrip sunday={sunday} selected={date} status={status} onSelect={pick} onWeek={(d) => pick(dateKey(addDays(day, 7 * d)))} />
       </div>
 
@@ -99,7 +99,7 @@ function Home({ date, setDate, go }: { date: string; setDate: (k: string) => voi
         ))} />
       )}
 
-      <div className="mt-4 pb-6 px-4">
+      <div className="mt-4 px-[18px] pb-6">
         <button className="btn-accent w-full disabled:bg-panel disabled:text-muted disabled:opacity-100" disabled={!canStart} onClick={start}>Start Workout</button>
       </div>
 
@@ -121,22 +121,23 @@ function Home({ date, setDate, go }: { date: string; setDate: (k: string) => voi
   )
 }
 
-function CardShell({ title, sub, action, children }: { title: string; sub?: ReactNode; action?: ReactNode; children: ReactNode }) {
+/** Light card (finished day, empty states). */
+function LightCard({ title, sub, action, dashed, children }: { title: string; sub?: ReactNode; action?: ReactNode; dashed?: boolean; children: ReactNode }) {
   return (
-    <div className="card flex min-h-[27rem] flex-col p-4">
-      <div className="mb-3 flex items-start gap-2">
+    <div className={`flex min-h-[460px] flex-col rounded-[28px] bg-card p-[22px] ${dashed ? 'border-[1.5px] border-dashed border-figure-lines' : 'border border-line'}`}>
+      <div className="mb-3.5 flex items-start gap-2">
         <div className="min-w-0 flex-1">
-          <h2 className="truncate text-xl font-bold">{title}</h2>
-          {sub && <p className="truncate text-sm text-muted">{sub}</p>}
+          <h2 className="truncate text-[26px] font-semibold leading-tight">{title}</h2>
+          {sub && <p className="truncate text-[15px] text-muted">{sub}</p>}
         </div>
         {action}
       </div>
-      <div className="panel flex flex-1 flex-col items-center justify-center gap-3 p-4">{children}</div>
+      <div className="flex flex-1 flex-col items-center justify-center gap-4">{children}</div>
     </div>
   )
 }
 
-const Dim = ({ icon }: { icon: IconName }) => <Icon name={icon} className="size-24 text-figure" />
+const Dim = ({ icon, className = 'text-figure' }: { icon: IconName; className?: string }) => <Icon name={icon} className={`size-24 ${className}`} />
 
 function DayCard({ p, isToday, onPlus, onMenu, onReview, onStartFree, onPlanRest }: {
   p: Page; isToday: boolean; onPlus: () => void; onMenu: (p: Plan) => void; onReview: (logId: string) => void; onStartFree: () => void; onPlanRest: (p: Plan) => void
@@ -157,45 +158,60 @@ function DayCard({ p, isToday, onPlus, onMenu, onReview, onStartFree, onPlanRest
       const m = musclesOf(p.workout.exercises.map((e) => e.exerciseId), exercises)
       const names = p.workout.exercises.map((e) => exercises.get(e.exerciseId)?.name ?? '?')
       return (
-        <CardShell title={p.workout.name} sub={`Prev. ${prev ?? '…'}`} action={<RoundBtn icon="dots" label="Plan options" onClick={() => onMenu(p.plan)} />}>
-          <span className="chip self-start text-xs">Planned Workout</span>
-          {isToday && streak > 0 && <p className="self-start text-sm text-muted">Keep your {streak}-day streak going.</p>}
-          <MuscleMap size="md" primary={m.primary} secondary={m.secondary} />
-          <div className="flex flex-wrap justify-center gap-1.5">
-            {names.slice(0, 3).map((n, i) => <span key={i} className="chip text-xs">{n}</span>)}
-            {names.length > 3 && <span className="chip text-xs">+{names.length - 3} more</span>}
-            {!names.length && <span className="text-sm text-muted">No exercises yet. Use ⋯ → Edit workout.</span>}
+        <div className="ink-panel flex min-h-[460px] flex-col p-[22px]">
+          <div className="flex items-start gap-2">
+            <div className="min-w-0 flex-1">
+              <div className="label text-glow">Planned workout</div>
+              <p className="num mt-1.5 truncate text-[15px] text-muteink">Prev. {prev ?? '…'}</p>
+            </div>
+            <RoundBtn onInk icon="dots" label="Plan options" onClick={() => onMenu(p.plan)} />
           </div>
-        </CardShell>
+          <div className="flex flex-1 items-center py-4"><MuscleMap w={88} surface="d" labels primary={m.primary} secondary={m.secondary} /></div>
+          <div className="flex flex-wrap justify-center gap-2">
+            {names.slice(0, 3).map((n, i) => <span key={i} className="inline-flex min-h-[30px] items-center rounded-full bg-[#ffffff16] px-3 text-[13px] font-medium">{n}</span>)}
+            {names.length > 3 && <span className="inline-flex min-h-[30px] items-center rounded-full border-[1.5px] border-dashed border-[#ffffff4a] px-3 text-[13px] font-medium text-muteink">+{names.length - 3} more</span>}
+            {!names.length && <span className="text-sm text-muteink">No exercises yet. Use ⋯ → Edit workout.</span>}
+          </div>
+          {isToday && streak > 0 && <p className="num mt-4 text-center text-[12.5px] text-muteink">Keep your {streak}-day streak going.</p>}
+        </div>
       )
     }
     case 'review':
       return (
-        <CardShell title="Workout Review" sub={p.log.name} action={<RoundBtn icon="eye" label="Open summary" onClick={() => onReview(p.log.id)} />}>
-          {review && <MuscleMap size="md" primary={review.primary} secondary={review.secondary} />}
+        <LightCard title="Workout Review" sub={p.log.name} action={<RoundBtn icon="eye" label="Open summary" onClick={() => onReview(p.log.id)} />}>
+          <div className="flex flex-1 items-center">{review && <MuscleMap w={88} labels primary={review.primary} secondary={review.secondary} />}</div>
           <div className="flex w-full gap-2">
             <Tile label="PRs" value={review?.prs.length ?? 0} />
             <Tile label="Volume" value={fmtVolume(review?.volume ?? 0, 'kg')} />
             <Tile label="Time" value={fmtDuration((p.log.endedAt ?? p.log.startedAt) - p.log.startedAt)} />
           </div>
-        </CardShell>
+        </LightCard>
       )
     case 'rest':
       return (
-        <CardShell title="Rest Day" sub="Recovery day" action={<RoundBtn icon="dots" label="Plan options" onClick={() => onMenu(p.plan)} />}>
-          <Dim icon="moon" />
-          <button className="chip mt-4" onClick={() => onPlanRest(p.plan)}>Log a workout</button>
-        </CardShell>
+        <div className="relative flex min-h-[460px] flex-col rounded-[28px] bg-rest-panel p-[22px] text-rest-text" style={{ backgroundImage: 'radial-gradient(#ffffff12 1px, transparent 1px)', backgroundSize: '14px 14px' }}>
+          <div className="flex items-start gap-2">
+            <div className="min-w-0 flex-1">
+              <h2 className="text-[26px] font-semibold leading-tight">Rest Day</h2>
+              <p className="text-[15px] text-rest-mute">Recovery day</p>
+            </div>
+            <RoundBtn onInk icon="dots" label="Plan options" onClick={() => onMenu(p.plan)} />
+          </div>
+          <div className="flex flex-1 flex-col items-center justify-center gap-6">
+            <Dim icon="moon" className="text-rest-icon" />
+            <button className="inline-flex min-h-11 items-center rounded-full border-[1.5px] border-rest-line px-5 text-[15px] font-semibold" onClick={() => onPlanRest(p.plan)}>Log a workout</button>
+          </div>
+        </div>
       )
     case 'none':
-      return <CardShell title="No Workout" sub="Nothing logged"><Dim icon="moon" /></CardShell>
+      return <LightCard dashed title="No Workout" sub="Nothing logged"><Dim icon="moon" /></LightCard>
     case 'empty':
       return (
-        <CardShell title="Not Planned Yet!">
-          <button aria-label="Plan this day" onClick={onPlus} className="card grid size-20 place-items-center rounded-full! active:scale-95"><Icon name="plus" className="size-9" /></button>
-          <p className="max-w-56 text-center text-sm text-muted">Tap + to plan a workout or add a rest day.</p>
-          {isToday && <button className="chip mt-2" onClick={onStartFree}>or just start a freestyle workout below</button>}
-        </CardShell>
+        <LightCard title="Not Planned Yet!">
+          <button aria-label="Plan this day" onClick={onPlus} className="grid size-[88px] place-items-center rounded-full bg-fg text-onink active:scale-95"><Icon name="plus" className="size-9" /></button>
+          <p className="max-w-56 text-center text-[15px] text-muted">Tap + to plan a workout or add a rest day.</p>
+          {isToday && <button className="chip mt-2 min-h-11" onClick={onStartFree}>or just start a freestyle workout below</button>}
+        </LightCard>
       )
   }
 }
@@ -222,20 +238,20 @@ function PlanSheet({ date, replace, hasLogs, onClose, onCreate }: { date: string
 
   return (
     <Sheet full label="Plan the day" onClose={onClose}>
-      <div className="grid grid-cols-[2.5rem_1fr_2.5rem] items-center gap-2 p-4">
+      <div className="grid grid-cols-[46px_1fr_46px] items-center gap-2 px-[18px] pb-3 pt-[calc(28px+env(safe-area-inset-top))]">
         <RoundBtn icon="chevL" label="Back" onClick={onClose} />
-        <h2 className="text-center font-bold">{fmtDate(fromKey(date))}</h2>
+        <h2 className="text-center font-semibold">{fmtDate(fromKey(date))}</h2>
         <RoundBtn icon="plus" label="Create workout" onClick={onCreate} />
       </div>
       <div className="flex-1 space-y-4 overflow-y-auto px-4">
         <section>
-          <h3 className="mb-2 text-sm font-semibold text-muted">Presets</h3>
+          <h3 className="label mb-2">Presets</h3>
           {hideRest ? <p className="card p-4 text-sm text-muted">Rest isn't available once a workout is logged or started that day.</p> : (
             <ul className="card divide-y divide-line overflow-hidden">{row('rest', 'Rest', 'moon')}</ul>
           )}
         </section>
         <section>
-          <h3 className="mb-2 text-sm font-semibold text-muted">Your Workouts</h3>
+          <h3 className="label mb-2">Your Workouts</h3>
           {workouts?.length ? (
             <ul className="card divide-y divide-line overflow-hidden">{workouts.map((w) => row(w.id, w.name))}</ul>
           ) : <p className="card p-4 text-sm text-muted">No saved workouts yet. Tap + to create one.</p>}

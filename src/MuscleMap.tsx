@@ -17,27 +17,37 @@ const FIBER: Partial<Record<Muscle, number>> = {
   'glutes-max': 50, 'glutes-med': 30, 'hip-flexors': 25, adductors: -15, 'abs-upper': 0, 'abs-lower': 0,
 }
 
-const WIDTH = { sm: 64, md: 180, lg: 340 }
+/** Per-figure widths (front and back each); height follows the art's aspect. `size` is for the dev page. */
+const WIDTH = { sm: 31, md: 86, lg: 163 }
 
-type Props = { primary: Muscle[]; secondary?: Muscle[]; size?: keyof typeof WIDTH; onMuscle?: (m: Muscle) => void }
+type Props = {
+  primary: Muscle[]; secondary?: Muscle[]; size?: keyof typeof WIDTH; onMuscle?: (m: Muscle) => void
+  /** width of ONE figure in px (overrides size) */
+  w?: number
+  /** the surface behind it: light (default) or an ink panel */
+  surface?: 'l' | 'd'
+  /** FRONT / BACK captions */
+  labels?: boolean
+}
 
-export default function MuscleMap({ primary, secondary = [], size = 'lg', onMuscle }: Props) {
+export default function MuscleMap({ primary, secondary = [], size = 'lg', w: figW, surface = 'l', labels, onMuscle }: Props) {
   const uid = useId().replace(/:/g, '')
   const shown = (list: Muscle[]) => new Set(list.map((m) => SHOWN_AS[m] ?? m))
   const p = shown(primary), s = shown(secondary)
-  const fill = (r: Muscle) => (p.has(r) ? 'var(--accent)' : s.has(r) ? 'var(--accent-soft)' : 'var(--figure)')
-  const w = WIDTH[size], fibers = size !== 'sm'
+  const fill = (r: Muscle) => (p.has(r) ? 'var(--p)' : s.has(r) ? 'var(--s)' : 'var(--fig)')
+  const w = figW ?? WIDTH[size], fibers = w >= 80, small = w < 60
   const label = (l: Muscle[]) => l.map((m) => MUSCLE_LABEL[m]).join(', ') || 'none'
 
   return (
-    <div className="mx-auto flex shrink-0 justify-center" style={{ width: w, gap: w * 0.04 }} role="img"
+    <div className={`fig-${surface} mx-auto flex shrink-0 justify-center`} style={{ gap: Math.max(6, w * 0.08) }} role="img"
       aria-label={`Primary: ${label(primary)}. Secondary: ${label(secondary)}.`}>
       {VIEWS.map((v, vi) => (
-        <svg key={vi} viewBox={body.viewBox} style={{ width: w * 0.48, height: (w * 0.48 * VH) / VW }} aria-hidden>
+        <div key={vi} className="flex flex-col items-center gap-1.5">
+        <svg viewBox={body.viewBox} style={{ width: w, height: (w * VH) / VW }} aria-hidden>
           <defs>
             {fibers && [...new Set(v.muscles.map((m) => angle(m)))].map((a) => (
               <pattern key={a} id={`${uid}f${a}`} width="14" height="14" patternUnits="userSpaceOnUse" patternTransform={`rotate(${a})`}>
-                <line x1="3" y1="0" x2="3" y2="14" stroke="var(--figure-lines)" strokeWidth="1.6" />
+                <line x1="3" y1="0" x2="3" y2="14" stroke="var(--ln)" strokeWidth="1.6" />
               </pattern>
             ))}
             {v.muscles.map((m, i) => m.clip && (
@@ -46,17 +56,19 @@ export default function MuscleMap({ primary, secondary = [], size = 'lg', onMusc
               </clipPath>
             ))}
           </defs>
-          {v.outline.map((d, i) => <path key={i} d={d} fill="var(--figure)" stroke="var(--figure-lines)" strokeWidth={size === 'sm' ? 0.5 : 1} vectorEffect="non-scaling-stroke" />)}
+          {v.outline.map((d, i) => <path key={i} d={d} fill="var(--fig)" stroke="var(--ln)" strokeWidth={small ? 0.5 : 1} vectorEffect="non-scaling-stroke" strokeLinejoin="round" />)}
           {v.muscles.map((m, i) => {
             const clip = m.clip ? `url(#${uid}c${vi}-${i})` : undefined
             return (
               <g key={i} clipPath={clip} data-muscle={m.r} onClick={onMuscle && (() => onMuscle(m.r))} style={onMuscle ? { cursor: 'pointer' } : undefined}>
-                <path d={m.d} fill={fill(m.r)} stroke="var(--figure-lines)" strokeWidth={size === 'sm' ? 0.4 : 0.9} vectorEffect="non-scaling-stroke" />
-                {fibers && <path d={m.d} fill={`url(#${uid}f${angle(m)})`} opacity={fill(m.r) === 'var(--figure)' ? 0.45 : 0.3} pointerEvents="none" />}
+                <path d={m.d} fill={fill(m.r)} stroke="var(--ln)" strokeWidth={small ? 0.4 : 0.6} vectorEffect="non-scaling-stroke" strokeLinejoin="round" />
+                {fibers && <path d={m.d} fill={`url(#${uid}f${angle(m)})`} opacity={fill(m.r) === 'var(--fig)' ? 0.45 : 0.3} pointerEvents="none" />}
               </g>
             )
           })}
         </svg>
+        {labels && <span className={`label ${surface === 'd' ? 'text-muteink' : ''}`}>{vi ? 'Back' : 'Front'}</span>}
+        </div>
       ))}
     </div>
   )

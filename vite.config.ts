@@ -21,8 +21,8 @@ export default defineConfig({
         name: 'Liftlog',
         short_name: 'Liftlog',
         description: 'Personal offline workout log',
-        theme_color: '#F6F6F3',
-        background_color: '#F6F6F3',
+        theme_color: '#E8EAE5',
+        background_color: '#E8EAE5',
         display: 'standalone',
         orientation: 'portrait',
         icons: [
@@ -32,7 +32,7 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,svg,png,json}'],
+        globPatterns: ['**/*.{js,css,html,svg,png,json,woff2}'],
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
         navigateFallbackDenylist: [/^\/api\//],
       },

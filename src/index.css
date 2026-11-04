@@ -1,56 +1,78 @@
 @import 'tailwindcss';
 
-/* THE theme. Every color in the app comes from these tokens (CLAUDE.md "Look and feel").
-   Values from the spec, except --text-2, --rest and --danger, which are darkened just enough to pass WCAG AA. */
+/* Fonts are bundled (latin subset) so the service worker precaches them: the app must work offline. */
+@font-face { font-family: 'Instrument Sans'; font-weight: 400 700; font-display: swap; src: url('@fontsource-variable/instrument-sans/files/instrument-sans-latin-wght-normal.woff2') format('woff2-variations'); }
+@font-face { font-family: 'Inter'; font-weight: 100 900; font-display: swap; src: url('@fontsource-variable/inter/files/inter-latin-wght-normal.woff2') format('woff2-variations'); }
+
+/* THE theme ("gym logbook", DESIGN.md). Every color in the app comes from these tokens. */
 :root {
-  --bg: #F6F6F3;
-  --card: #FFFFFF;
-  --card-border: #E6E6E1;
-  --card-shadow: 0 1px 2px rgba(17, 19, 24, .06);
-  --panel: #F0F0EC;
-  --text: #111318;
-  --text-2: #676B76;       /* spec #6B6F7A: 4.40:1 on --panel, below AA */
-  --accent: #2F5BFF;
-  --on-accent: #FFFFFF;
-  --accent-soft: #9DB4FF;
-  --figure: #D9DBE1;
-  --figure-lines: #B4B8C4;
-  --rest: #0D7D70;         /* spec #14B8A6: 2.5:1 as text, below AA */
-  --danger: #D04146;       /* spec #E5484D: 3.9:1 with white text, below AA */
-  --scrim: rgba(17, 19, 24, .45);
+  --ground: #E8EAE5;   /* page */
+  --paper: #F7F8F4;    /* cards */
+  --inset: #DDE0D8;    /* inner fields/panels, disabled fill */
+  --line: #CBCFC5;     /* hairlines, card borders */
+  --ink: #141618;      /* text, dark panels, primary dark buttons */
+  --mute: #586060;     /* secondary text */
+  --acc: #C94418;      /* primary buttons, completed day, PR tag, accent dot */
+  --acc-t: #B33A12;    /* accent used as text on light surfaces */
+  --glow: #FF6F31;     /* accent on ink panels only */
+  --rest: #1E6B66;     /* rest-day number/ring */
+  --danger: #B3261E;
+  --onink: #F1F2EC;    /* text on ink */
+  --muteink: #9CA4A0;  /* secondary text on ink */
+  --on-acc: #FFFFFF;
+  --scrim: rgba(20, 22, 24, .45);
+  /* rest-day panel */
+  --rest-panel: #12403C; --rest-panel-text: #E4F0EE; --rest-panel-mute: #9FC4BF; --rest-panel-icon: #4C8782; --rest-panel-line: #6FA39D;
+  /* muscle figure: light surfaces / ink panels */
+  --fig-l: #D2D6CD; --ln-l: #AEB4A9; --p-l: #C94418; --s-l: #F0B49C;
+  --fig-d: #2B3034; --ln-d: #474E53; --p-d: #FF6F31; --s-d: #9B4C2D;
   color-scheme: light;
 }
+.fig-l { --fig: var(--fig-l); --ln: var(--ln-l); --p: var(--p-l); --s: var(--s-l); }
+.fig-d { --fig: var(--fig-d); --ln: var(--ln-d); --p: var(--p-d); --s: var(--s-d); }
 
 @theme inline {
-  --color-bg: var(--bg); --color-card: var(--card); --color-panel: var(--panel); --color-line: var(--card-border);
-  --color-fg: var(--text); --color-muted: var(--text-2); --color-accent: var(--accent); --color-on-accent: var(--on-accent);
-  --color-accent-soft: var(--accent-soft); --color-figure: var(--figure); --color-figure-lines: var(--figure-lines);
-  --color-rest: var(--rest); --color-danger: var(--danger); --color-scrim: var(--scrim);
+  --color-bg: var(--ground); --color-card: var(--paper); --color-panel: var(--inset); --color-line: var(--line);
+  --color-fg: var(--ink); --color-muted: var(--mute); --color-accent: var(--acc); --color-acc-t: var(--acc-t); --color-glow: var(--glow);
+  --color-on-accent: var(--on-acc); --color-accent-soft: var(--s-l); --color-onink: var(--onink); --color-muteink: var(--muteink);
+  --color-figure: var(--fig-l); --color-figure-lines: var(--ln-l); --color-rest: var(--rest); --color-danger: var(--danger); --color-scrim: var(--scrim);
+  --color-rest-panel: var(--rest-panel); --color-rest-text: var(--rest-panel-text); --color-rest-mute: var(--rest-panel-mute);
+  --color-rest-icon: var(--rest-panel-icon); --color-rest-line: var(--rest-panel-line);
+  --font-sans: 'Instrument Sans', system-ui, -apple-system, sans-serif;
+  --font-num: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
 /* the page itself never scrolls (App renders a fixed frame whose <main> scrolls); swipeable rows (exercise
    pager, day cards, chips) scroll inside their own containers, so they still work */
 html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
 /* same color as the app/tab bar, so nothing different can ever show around or under the frame */
-html, body { background: var(--bg); }
 /* Home Screen app: with the see-through status bar iOS reports a viewport one status bar shorter than the screen,
    leaving a gap under the tab bar. main.tsx measures the real screen height into --app-h. */
 @media (display-mode: standalone) {
   .app-frame { bottom: auto; height: var(--app-h, 100vh); }
 }
-body { color: var(--text); -webkit-tap-highlight-color: transparent; overscroll-behavior-y: none; font-family: system-ui, -apple-system, 'SF Pro Text', Roboto, sans-serif; }
+html, body { background: var(--ground); }
+body { color: var(--ink); -webkit-tap-highlight-color: transparent; overscroll-behavior-y: none; font-family: var(--font-sans); font-weight: 500; font-variant-numeric: tabular-nums; }
+/* titles: 600, tight; never heavier (DESIGN.md) */
+h1, h2, h3 { letter-spacing: -0.02em; }
 /* 16px+ inputs: no iOS zoom-on-focus */
 @layer base { input, select, textarea { font-size: 16px; background: transparent; } }
 
-@utility btn { @apply inline-flex items-center justify-center gap-2 rounded-full px-5 min-h-12 font-semibold active:scale-[.98] transition disabled:bg-panel disabled:text-muted disabled:border-transparent disabled:active:scale-100; }
+@utility btn { @apply inline-flex items-center justify-center gap-2 rounded-full px-5 min-h-14 text-[17px] font-semibold active:scale-[.98] transition disabled:bg-panel disabled:text-muted disabled:border-transparent disabled:active:scale-100; }
 @utility btn-accent { @apply btn bg-accent text-on-accent; }
 @utility btn-dark { @apply btn bg-fg text-on-accent; }
-@utility btn-outline { @apply btn border-2 border-fg bg-card text-fg; }
+@utility btn-outline { @apply btn border-[1.5px] border-fg bg-transparent text-fg; }
 @utility btn-ghost { @apply btn bg-panel text-fg; }
-@utility card { @apply bg-card rounded-3xl border border-line; box-shadow: var(--card-shadow); }
+@utility card { @apply bg-card rounded-[26px] border border-line; }
 @utility panel { @apply bg-panel rounded-2xl; }
-@utility field { @apply w-full rounded-2xl bg-panel px-4 min-h-12 outline-none focus:ring-2 focus:ring-accent; }
-@utility chip { @apply rounded-full border border-line bg-card px-3 py-1 text-sm whitespace-nowrap; }
+@utility field { @apply w-full rounded-[10px] bg-panel px-4 min-h-12 outline-none focus:ring-2 focus:ring-fg; }
+@utility chip { @apply rounded-full border border-line bg-card px-3 min-h-8 inline-flex items-center text-[13px] font-medium whitespace-nowrap; }
+/* Inter for every number */
+@utility num { font-family: var(--font-num); font-variant-numeric: tabular-nums; }
+/* small uppercase label */
+@utility label { @apply num text-[11px] font-medium uppercase tracking-[.08em] text-muted; }
+/* dark hero panel with a subtle dot texture */
+@utility ink-panel { @apply bg-fg text-onink rounded-[28px]; background-image: radial-gradient(#ffffff12 1px, transparent 1px); background-size: 14px 14px; }
 /* fixed element constrained to the phone frame */
 @utility phone-fixed { @apply fixed inset-x-0 mx-auto w-full max-w-[430px]; }
 @utility no-scrollbar { scrollbar-width: none; &::-webkit-scrollbar { display: none; } }
