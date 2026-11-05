@@ -50,7 +50,7 @@ export default function App() {
     // Fixed full-screen frame: only <main> scrolls, the page never does, so the iOS keyboard can't
     // leave the layout shifted and the tab bar always sits at the bottom.
     <div className="app-frame phone-fixed inset-y-0 flex flex-col bg-bg">
-      <main key={tab} className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain">
+      <main key={tab} className={`min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain ${nav ? 'pb-[calc(76px+env(safe-area-inset-bottom))]' : ''}`}>
         {tab === 'Profile' && <Profile onJump={(k) => { setDate(k); setTab('Workout') }} />}
         {tab === 'Workout' && <WorkoutTab date={date} setDate={setDate} />}
         {tab === 'Stats' && <Stats />}
@@ -61,17 +61,17 @@ export default function App() {
           <span className="rounded-full bg-fg px-5 py-2.5 text-sm font-semibold text-onink shadow-lg">{msg}</span>
         </div>
       )}
-      {nav && <nav className="relative z-40 shrink-0 border-t border-line bg-card pb-[env(safe-area-inset-bottom)]">
-        <div className="flex">
-          {TABS.map((t) => (
-            <button key={t.name} onClick={() => setTab(t.name)} aria-current={tab === t.name ? 'page' : undefined}
-              className={`relative flex h-14 flex-1 flex-col items-center justify-center gap-0.5 text-[11px] font-semibold ${tab === t.name ? 'text-fg' : 'text-muted'}`}>
-              {tab === t.name && <span className="absolute inset-x-0 top-0 mx-auto h-[3px] w-7 rounded-b-full bg-accent" />}
-              <Icon name={t.icon} className="size-[22px]" />
-              {t.name}
-            </button>
-          ))}
-        </div>
+      {/* 76px + the home-indicator inset, pinned to the bottom of the frame (absolute inside the fixed frame, so it
+          follows the frame's lvh height). Content above gets the same bottom padding. */}
+      {nav && <nav className="absolute inset-x-0 bottom-0 z-40 flex h-[calc(76px+env(safe-area-inset-bottom))] border-t border-line bg-card px-2 pb-[env(safe-area-inset-bottom)]">
+        {TABS.map((t) => (
+          <button key={t.name} onClick={() => setTab(t.name)} aria-current={tab === t.name ? 'page' : undefined}
+            className={`relative flex h-full w-full flex-col items-center justify-center gap-1 text-[0.6875rem] ${tab === t.name ? 'font-bold text-fg' : 'font-semibold text-muted'}`}>
+            {tab === t.name && <span className="absolute inset-x-0 top-0 mx-auto h-[3px] w-7 rounded-b-full bg-accent" />}
+            <Icon name={t.icon} className="size-[22px]" />
+            {t.name}
+          </button>
+        ))}
       </nav>}
       <AskHost />
     </div>
