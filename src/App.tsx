@@ -1,9 +1,11 @@
+import { useLiveQuery } from 'dexie-react-hooks'
 import { useEffect, useState } from 'react'
+import { db } from './db'
 import { dateKey } from './lib'
 import Profile from './screens/Profile'
 import Stats from './screens/Stats'
 import WorkoutTab from './screens/WorkoutTab'
-import { AskHost, Icon, type IconName } from './ui'
+import { AskHost, Icon, NameModal, type IconName } from './ui'
 
 const TABS: { name: 'Profile' | 'Workout' | 'Stats'; icon: IconName }[] = [
   { name: 'Profile', icon: 'person' }, { name: 'Workout', icon: 'dumbbell' }, { name: 'Stats', icon: 'stats' },
@@ -26,6 +28,8 @@ export default function App() {
   const [date, setDate] = useState(() => dateKey(Date.now()))
   const [msg, setMsg] = useState<string | null>(null)
   const [nav, setNav] = useState(true)
+  // a browser can't read the device's name, so each phone asks once (null = never asked; undefined = still loading)
+  const asked = useLiveQuery(async () => (await db.settings.get('name')) ?? null, [])
   useEffect(() => {
     const on = (e: Event) => setNav((e as CustomEvent<boolean>).detail)
     window.addEventListener('tabs', on)
@@ -73,6 +77,10 @@ export default function App() {
           </button>
         ))}
       </nav>}
+      {asked === null && (
+        <NameModal title="What's your name?" help="Used in your greeting. You can change it later in Settings." cta="Continue" placeholder="Your name"
+          onConfirm={(name) => void db.settings.put({ key: 'name', value: name })} onClose={() => void db.settings.put({ key: 'name', value: '' })} />
+      )}
       <AskHost />
     </div>
   )

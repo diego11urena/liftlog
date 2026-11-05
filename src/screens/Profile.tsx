@@ -123,8 +123,8 @@ function ImportBox() {
   )
 }
 
-/** Name in the greeting, saved on this phone only (not synced). Empty = no name; default Diego. */
-const useName = () => useLiveQuery(async () => ((await db.settings.get('name'))?.value as string | undefined) ?? 'Diego', []) ?? ''
+/** Name in the greeting, saved on this phone only (not synced); asked once on first launch (App). Empty = no name. */
+const useName = () => useLiveQuery(async () => ((await db.settings.get('name'))?.value as string | undefined) ?? '', []) ?? ''
 
 const greeting = () => { const h = new Date().getHours(); return h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening' }
 

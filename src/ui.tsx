@@ -97,8 +97,8 @@ export function Sheet({ onClose, children, full, label }: { onClose: () => void;
 }
 
 /** Small centered modal ("Workout Name"). */
-export function NameModal({ initial = '', onConfirm, onClose, title = 'Workout Name', help = 'Name your workout. You can edit it later.', cta = 'Confirm Workout Name' }: {
-  initial?: string; onConfirm: (name: string) => void; onClose: () => void; title?: string; help?: string; cta?: string
+export function NameModal({ initial = '', onConfirm, onClose, title = 'Workout Name', help = 'Name your workout. You can edit it later.', cta = 'Confirm Workout Name', placeholder = 'e.g. Leg Day' }: {
+  initial?: string; onConfirm: (name: string) => void; onClose: () => void; title?: string; help?: string; cta?: string; placeholder?: string
 }) {
   const [v, setV] = useState(initial)
   const ref = useRef<HTMLInputElement>(null)
@@ -110,7 +110,7 @@ export function NameModal({ initial = '', onConfirm, onClose, title = 'Workout N
         <div className="mx-auto mb-3 grid size-14 place-items-center rounded-full bg-accent/15 text-acc-t"><Icon name="dumbbell" className="size-7" /></div>
         <h2 className="text-[22px] font-semibold">{title}</h2>
         <p className="mb-4 text-sm text-muted">{help}</p>
-        <input ref={ref} className="field mb-4 text-center" value={v} onChange={(e) => setV(e.target.value)} placeholder="e.g. Leg Day" maxLength={40} />
+        <input ref={ref} className="field mb-4 text-center" value={v} onChange={(e) => setV(e.target.value)} placeholder={placeholder} maxLength={40} />
         <button className="btn-accent w-full" disabled={!v.trim()}>{cta}</button>
       </form>
     </div>
