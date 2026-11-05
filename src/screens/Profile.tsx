@@ -8,6 +8,7 @@ import { musclesOf, useActiveLog, useExercises, useStreak, useWeekStatus } from 
 import { addDays, dateKey, fmtDuration, fmtVolume, sundayOf, volume, weekStart } from '../lib'
 import MuscleMap from '../MuscleMap'
 import { ask, Icon, RoundBtn, Sheet, WeekStrip, type IconName } from '../ui'
+import { BackupBox } from './Backup'
 import { label } from './Library'
 
 export default function Profile({ onJump }: { onJump: (dateKey: string) => void }) {
@@ -180,6 +181,7 @@ function SettingsSheet({ onClose }: { onClose: () => void }) {
           <input className="field mt-2 font-normal" placeholder="Shown in the greeting" defaultValue={name} maxLength={30}
             onChange={(e) => db.settings.put({ key: 'name', value: e.target.value.trim() })} />
         </label>
+        <BackupBox />
         <ImportBox />
         <DisplayInfo />
         <div className="card p-4">
@@ -188,7 +190,7 @@ function SettingsSheet({ onClose }: { onClose: () => void }) {
           <button className="btn w-full bg-danger text-on-accent" onClick={() => {
             void (async () => {
               if (await ask({ title: 'Erase all data?', message: 'Every workout, plan, custom exercise and setting on this phone will be deleted.', confirm: 'Erase', danger: true })
-                && await ask({ title: 'Really erase everything?', message: "There is no backup. This can't be undone.", confirm: 'Erase everything', danger: true })) void eraseAll()
+                && await ask({ title: 'Really erase everything?', message: "It can only come back from your online backup, with your recovery code.", confirm: 'Erase everything', danger: true })) void eraseAll()
             })()
           }}>Erase all data</button>
         </div>

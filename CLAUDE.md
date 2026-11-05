@@ -1,6 +1,6 @@
 # CLAUDE.md: Personal Workout Log PWA
 
-A personal-use workout tracker inspired by the *flows and features* of the Arrow workout app (formerly Levels, by LevelUp App Studios). Single user, no accounts. Its sole purpose is to be a personal hub for workouts: plan the week, preview it, log sessions, and review history and progress. No social features and no gamification of any kind (see "Removed on purpose").
+A personal-use workout tracker inspired by the *flows and features* of the Arrow workout app (formerly Levels, by LevelUp App Studios). One person per phone, no accounts. Its sole purpose is to be a personal hub for workouts: plan the week, preview it, log sessions, and review history and progress. No social features and no gamification of any kind (see "Removed on purpose").
 
 ## Ground rules
 - Recreate features and flows from the descriptions in this file only. Do NOT copy Arrow's code, assets, icons, name, or branding. Use original UI, name, and wording.
@@ -18,7 +18,7 @@ The reference app is a social, gamified product. Delete all of that. This app ha
 - Nutrition tab (out of scope)
 - Avatar, username, level badge on the avatar, "Add some friends", the shop/bag icon, the 3 empty "+" slots under the stats, Weekly challenges bar, Streak Multiplier card, Next Trophy card, Friend Leaderboard card, the "Diamond" premium-tier card, and the early-access/beta sign-up banner on the reference Profile tab
 - Steps / Apple Health connection (not possible in a PWA, and out of scope)
-- Accounts, login, cloud profile, analytics, push notifications
+- Accounts, login, cloud profile, analytics, push notifications (the automatic backup uses a recovery code, not an account)
 - Routines (multi-day plans) and Activities (cardio/other activities: the library's Activities tab, the plan sheet's Activities preset, activity day cards, cardio entries in the exercise list). Removed by owner decision 2026-10-19.
 Plain data is fine and wanted: PRs shown as facts, volume, time, history, charts.
 
@@ -32,8 +32,17 @@ Plain data is fine and wanted: PRs shown as facts, volume, time, history, charts
 ## Hosting (owner decision 2026-10-19)
 The app is a free PWA used only on the owner's iPhone, anywhere (Wi-Fi or cellular), never on the Mac.
 - Hosted as a static site on the owner's free Vercel Hobby account: project `liftlog`, https://liftlog-livid.vercel.app. Deploy with `npx vercel deploy --prod`. Install from Safari → Share → Add to Home Screen.
-- All data lives on the phone (IndexedDB, persistent storage requested). There is no server in production: `/api/sync` returns 404 there and the app stops trying to sync.
+- The phone is the working copy (IndexedDB, persistent storage requested), so the app stays fully offline. An automatic online backup sits behind it (owner decision 2026-11-05, after deleting the Home Screen icon erased all logged workouts): `api/sync.ts`, a Vercel Function on Neon Postgres (`DATABASE_URL`). See "Automatic backup".
 - The Mac sync server (`server/`, `npm run serve`, `npm run install-service`) still exists for local use, and `scripts/export-link.ts` turns its SQLite copy into a one-time `#import=` link that moves data to a new address. The Tailscale plan is dropped.
+
+## Automatic backup (owner decision 2026-11-05)
+Reverses "no server in production" and "no export/import" for this one purpose. There is still no account, login or email.
+- Each phone makes a random 24-character recovery code (`backupCode()` in `src/sync.ts`, 120 bits, no I/L/O/U). It is the only credential: sent as `Authorization: Bearer`, stored online only as its SHA-256 (`owner`). Each code is a separate space, so two people's data never mix. The data itself is readable in the database, not end-to-end encrypted.
+- Every change syncs about 2 seconds later (retry every 5 minutes, on open and when back online), in batches of 1,000 rows. Last write wins by `updatedAt`, deletes travel as tombstones. Built-in exercises nobody edited (`updatedAt` 1) are not sent. Offline, nothing changes and it catches up later.
+- After the name prompt, each phone shows "Save your recovery code" once (`backupCodeSaved`), with "I already have a code" to restore. Settings → Automatic backup shows the last backup time, the code, and restore.
+- Restoring: a code with nothing behind it is refused, so a typo can't start an empty backup. Local data is kept and joins the backup. Erase all data doesn't touch the online copy; that phone gets a new code.
+- The Mac server (`server/`) uses the same client and ignores the code. Tests: `server/cloud.test.ts` (real Postgres via PGlite), `src/sync.test.ts`.
+- Known limit: anyone who invents a code can open a space, so a stranger could fill the free database. Add a per-IP limit if that ever happens.
 
 ## Core features (MVP)
 1. **Active workout screen**: add exercises, log sets (weight x reps; a set counts as logged once both are filled, there is no separate done checkbox), add/remove/reorder exercises, per-exercise and workout notes, workout timer.
@@ -45,7 +54,7 @@ The app is a free PWA used only on the owner's iPhone, anywhere (Wi-Fi or cellul
 7. **PRs**: detect and flag new records during logging: a PR is the heaviest weight (ties broken by reps), nothing else (owner, 2026-10-20; a v3 DB upgrade recomputes old sets). The PR shown in the header (feature 6) must update live the moment a new PR is logged. Mark it with a plain "PR" label on the set; no animation, points, or badges.
 8. **Progress**: per-exercise charts (est. 1RM, volume, top set over time) and weekly volume per muscle group.
 9. **Week preview and planning**: plan each day (workout or rest), preview the week, start the planned workout. See "Workout tab" below.
-10. **Settings** (opens from the gear on the Profile tab): a "Move data here" box (paste a one-time `#import=` link; needed because iPhone Home Screen apps don't share Safari's storage; this is a migration tool, not the removed backup export/import) and the erase-all-data danger zone. There is no app-wide kg/lb or weight-step setting: units are chosen per exercise while logging (owner decision 2026-10-19). That is the complete list; there is no reference recording to match (owner, 2026-10-19). Light UI only, no theme toggle (the palette lives in theme tokens so a dark theme could be added later). No export/import (owner decision 2026-10-19).
+10. **Settings** (opens from the gear on the Profile tab): a "Move data here" box (paste a one-time `#import=` link; needed because iPhone Home Screen apps don't share Safari's storage; this is a migration tool, not the removed backup export/import) and the erase-all-data danger zone. There is no app-wide kg/lb or weight-step setting: units are chosen per exercise while logging (owner decision 2026-10-19). It also has "Your name", "Automatic backup" and "Display info" (2026-11). Light UI only, no theme toggle (the palette lives in theme tokens so a dark theme could be added later). No export/import file (owner decision 2026-10-19); the automatic backup covers this.
 
 ## Data model (Dexie tables)
 - `exercises`: id, name, aliases[], category ('strength'), classification, equipment, primaryMuscles[], secondaryMuscles[], instructions[], images[]?, isCustom, notes, timed?, unit? ('kg'|'lb', default kg) (muscles use the app's own canonical muscle enum, see below)

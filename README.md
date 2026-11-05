@@ -30,3 +30,7 @@ Moving data to a new address: `node --experimental-strip-types scripts/export-li
 `#import=` link built from the Mac sync server's copy (`server/data/liftlog.sqlite`). Open it on the phone once.
 
 Optional local sync server (not used in production): `npm run serve`, or `npm run install-service` to run it at login.
+
+## Automatic backup
+
+`api/sync.ts` is a Vercel Function backed by Neon Postgres (`DATABASE_URL`, set by the Marketplace integration). Each phone reaches its own data with a recovery code from Settings. The table is created on the first request. Run the tests with `npm test`.
