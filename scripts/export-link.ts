@@ -9,8 +9,11 @@ if (!base) throw new Error('usage: export-link.ts <base-url>')
 
 const db = new DatabaseSync('server/data/liftlog.sqlite', { readOnly: true })
 const rows = db.prepare('select tbl, id, updatedAt, data from rows where deleted = 0').all() as { tbl: string; id: string; updatedAt: number; data: string }[]
-const changes = rows
-  .map((r) => ({ tbl: r.tbl, id: r.id, updatedAt: r.updatedAt, data: JSON.parse(r.data) }))
+const all = rows.map((r) => ({ tbl: r.tbl, id: r.id, updatedAt: r.updatedAt, data: JSON.parse(r.data) }))
+// a session that was never ended would come back as a forever-running workout: leave it and its rows behind
+const open = new Set(all.filter((c) => c.tbl === 'workoutLogs' && c.data.status === 'active').map((c) => c.id))
+const changes = all
+  .filter((c) => !open.has(c.data.logId) && !open.has(c.id))
   // built-in exercises come with the app; only carry the ones you changed (unit, notes) and your custom ones
   .filter((c) => c.tbl !== 'exercises' || c.data.isCustom || c.data.unit || c.data.notes)
 
