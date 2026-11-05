@@ -47,13 +47,9 @@
 /* the page itself never scrolls (App renders a fixed frame whose <main> scrolls); swipeable rows (exercise
    pager, day cards, chips) scroll inside their own containers, so they still work */
 html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
-/* Home Screen app: iOS lays out fixed elements against a viewport one status bar (about 62px) shorter than the screen,
-   which left a gap under the tab bar. `lvh` is the full screen height, so the frame takes it from CSS: no JS measuring
-   (a measured screen.height cut the tab bar off, 2026-11-03). Whatever still shows below the frame is the tab bar's
-   own color (html/body are --paper). */
-@media (display-mode: standalone) {
-  .app-frame { bottom: auto; height: 100vh; height: 100lvh; }
-}
+/* Plain `fixed` frame, top and bottom 0. Measured heights (screen.height) and `100lvh` both cut the tab bar off on iPhones
+   (2026-11-03, 2026-11-05): iOS paints nothing below the layout viewport, which is shorter than the screen in the
+   installed app. Whatever strip shows below the frame is the tab bar's own color (html/body are --paper). */
 html, body { background: var(--paper); }
 body { color: var(--ink); -webkit-tap-highlight-color: transparent; overscroll-behavior-y: none; font-family: var(--font-sans); font-weight: 500; font-variant-numeric: tabular-nums; }
 /* titles: 600, tight; never heavier (DESIGN.md) */

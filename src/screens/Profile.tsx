@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { eraseAll, startSession } from '../actions'
 import { toast } from '../App'
 import { importFromLink } from '../sync'
@@ -128,6 +128,44 @@ const useName = () => useLiveQuery(async () => ((await db.settings.get('name'))?
 
 const greeting = () => { const h = new Date().getHours(); return h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening' }
 
+/** Screen measurements, to debug layout on a specific phone (send a screenshot of this). */
+function DisplayInfo() {
+  const [rows, setRows] = useState<[string, string][]>([])
+  const [strips, setStrips] = useState(false)
+  useEffect(() => {
+    const measure = () => {
+      const box = (css: string) => { const d = document.createElement('div'); d.style.cssText = `position:fixed;visibility:hidden;${css}`; document.body.append(d); const r = d.getBoundingClientRect(); d.remove(); return r }
+      const vv = window.visualViewport
+      setRows([
+        ['display', `${matchMedia('(display-mode: standalone)').matches ? 'standalone' : 'browser'} · ${(navigator as { standalone?: boolean }).standalone ? 'iOS home screen' : '-'}`],
+        ['inner (w×h)', `${innerWidth} × ${innerHeight}`], ['outer (w×h)', `${outerWidth} × ${outerHeight}`],
+        ['screen (w×h)', `${screen.width} × ${screen.height}`], ['visualViewport', vv ? `${Math.round(vv.width)} × ${Math.round(vv.height)} @ ${Math.round(vv.offsetTop)}` : 'n/a'],
+        ['html clientHeight', String(document.documentElement.clientHeight)],
+        ['100vh / svh / lvh / dvh', ['100vh', '100svh', '100lvh', '100dvh'].map((h) => Math.round(box(`height:${h}`).height)).join(' / ')],
+        ['safe top / bottom', `${Math.round(box('top:0;height:env(safe-area-inset-top)').height)} / ${Math.round(box('height:env(safe-area-inset-bottom)').height)}`],
+        ['fixed bottom:0 sits at', String(Math.round(box('bottom:0;height:1px').bottom))],
+        ['nav-h', `${Math.round(box('height:var(--nav-h)').height)}`],
+      ])
+    }
+    measure()
+    addEventListener('resize', measure)
+    return () => removeEventListener('resize', measure)
+  }, [])
+  return (
+    <div className="card p-[18px]">
+      <h3 className="mb-1 font-semibold">Display info</h3>
+      <p className="mb-3 text-sm text-muted">For fixing layout on a specific phone. Screenshot this box.</p>
+      <dl className="num space-y-1 text-[13px]">{rows.map(([k, v]) => <div key={k} className="flex justify-between gap-3"><dt className="text-muted">{k}</dt><dd className="text-right">{v}</dd></div>)}</dl>
+      <button className="btn-ghost mt-3 min-h-11 w-full text-sm" onClick={() => setStrips(!strips)}>{strips ? 'Hide' : 'Show'} test strips below the screen edge</button>
+      {strips && <>
+        {/* painted just past the layout viewport: which colors can you see at the very bottom of the phone? */}
+        <div className="fixed inset-x-0 z-[90] h-6 bg-[#e00]" style={{ top: 'calc(100% + 4px)' }} />
+        <div className="absolute inset-x-0 z-[90] h-6 bg-[#06f]" style={{ top: `${innerHeight + 34}px` }} />
+      </>}
+    </div>
+  )
+}
+
 function SettingsSheet({ onClose }: { onClose: () => void }) {
   const name = useName()
   return (
@@ -143,6 +181,7 @@ function SettingsSheet({ onClose }: { onClose: () => void }) {
             onChange={(e) => db.settings.put({ key: 'name', value: e.target.value.trim() })} />
         </label>
         <ImportBox />
+        <DisplayInfo />
         <div className="card p-4">
           <h3 className="mb-1 font-semibold text-danger">Danger zone</h3>
           <p className="mb-3 text-sm text-muted">Erases every workout, plan, custom exercise and setting on this device. This can't be undone.</p>
