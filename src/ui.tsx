@@ -89,7 +89,7 @@ export function Sheet({ onClose, children, full, label }: { onClose: () => void;
   return (
     <div className="phone-fixed inset-y-0 z-50 flex flex-col justify-end" role="dialog" aria-modal aria-label={label}>
       <button className="absolute inset-0 bg-scrim" aria-label="Close" onClick={onClose} tabIndex={-1} />
-      <div className={`slide-up relative flex flex-col overflow-y-auto rounded-t-[28px] bg-bg pb-[env(safe-area-inset-bottom)] ${full ? 'h-[94dvh]' : 'max-h-[85dvh]'}`}>
+      <div className={`slide-up relative flex flex-col overflow-y-auto rounded-t-[28px] bg-bg pb-[var(--safe-b)] ${full ? 'h-[94dvh]' : 'max-h-[85dvh]'}`}>
         {children}
       </div>
     </div>

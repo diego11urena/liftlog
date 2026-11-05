@@ -144,7 +144,7 @@ function DisplayInfo() {
         ['100vh / svh / lvh / dvh', ['100vh', '100svh', '100lvh', '100dvh'].map((h) => Math.round(box(`height:${h}`).height)).join(' / ')],
         ['safe top / bottom', `${Math.round(box('top:0;height:env(safe-area-inset-top)').height)} / ${Math.round(box('height:env(safe-area-inset-bottom)').height)}`],
         ['fixed bottom:0 sits at', String(Math.round(box('bottom:0;height:1px').bottom))],
-        ['nav-h', `${Math.round(box('height:var(--nav-h)').height)}`],
+        ['nav-h / safe-b / gap-b', ['var(--nav-h)', 'var(--safe-b)', 'var(--gap-b)'].map((v) => Math.round(box(`height:${v}`).height)).join(' / ')],
       ])
     }
     measure()

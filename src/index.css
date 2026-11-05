@@ -28,6 +28,11 @@
   --fig-d: #2B3034; --ln-d: #474E53; --p-d: #FF6F31; --s-d: #9B4C2D;
   /* tab bar height (without the home-indicator inset): scales with the screen, 64px on small phones up to 80px */
   --nav-h: clamp(64px, 8.9svh, 80px);
+  /* Installed iPhone app: iOS only paints down to a layout viewport that is shorter than the screen (main.tsx measures the
+     difference into --gap-b). The home indicator sits inside that unpaintable strip, so the bar needs only whatever
+     home-indicator padding is left over (--safe-b), and a shorter bar (--nav-h) to avoid doubling the dead space. */
+  --gap-b: 0px;
+  --safe-b: max(0px, calc(env(safe-area-inset-bottom) - var(--gap-b)));
   color-scheme: light;
 }
 .fig-l { --fig: var(--fig-l); --ln: var(--ln-l); --p: var(--p-l); --s: var(--s-l); }

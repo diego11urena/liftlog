@@ -54,7 +54,7 @@ export default function App() {
     // Fixed full-screen frame: only <main> scrolls, the page never does, so the iOS keyboard can't
     // leave the layout shifted and the tab bar always sits at the bottom.
     <div className="app-frame phone-fixed inset-y-0 flex flex-col bg-bg">
-      <main key={tab} className={`min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain ${nav ? 'pb-[calc(var(--nav-h)+env(safe-area-inset-bottom))]' : ''}`}>
+      <main key={tab} className={`min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain ${nav ? 'pb-[calc(var(--nav-h)+var(--safe-b))]' : ''}`}>
         {tab === 'Profile' && <Profile onJump={(k) => { setDate(k); setTab('Workout') }} />}
         {tab === 'Workout' && <WorkoutTab date={date} setDate={setDate} />}
         {tab === 'Stats' && <Stats />}
@@ -67,7 +67,7 @@ export default function App() {
       )}
       {/* --nav-h (64-80px, about 76px on a 15/16/17 Pro) + the home-indicator inset, pinned to the bottom of the frame (absolute inside the fixed frame, so it
           follows the frame's lvh height). Content above gets the same bottom padding. */}
-      {nav && <nav className="absolute inset-x-0 bottom-0 z-40 flex h-[calc(var(--nav-h)+env(safe-area-inset-bottom))] border-t border-line bg-card px-2 pb-[env(safe-area-inset-bottom)]">
+      {nav && <nav className="absolute inset-x-0 bottom-0 z-40 flex h-[calc(var(--nav-h)+var(--safe-b))] border-t border-line bg-card px-2 pb-[var(--safe-b)]">
         {TABS.map((t) => (
           <button key={t.name} onClick={() => setTab(t.name)} aria-current={tab === t.name ? 'page' : undefined}
             className={`relative flex h-full w-full flex-col items-center justify-center gap-1 text-[0.6875rem] ${tab === t.name ? 'font-bold text-fg' : 'font-semibold text-muted'}`}>
