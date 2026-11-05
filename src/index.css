@@ -26,6 +26,8 @@
   /* muscle figure: light surfaces / ink panels */
   --fig-l: #D2D6CD; --ln-l: #AEB4A9; --p-l: #C94418; --s-l: #F0B49C;
   --fig-d: #2B3034; --ln-d: #474E53; --p-d: #FF6F31; --s-d: #9B4C2D;
+  /* tab bar height (without the home-indicator inset): scales with the screen, 64px on small phones up to 80px */
+  --nav-h: clamp(64px, 8.9svh, 80px);
   color-scheme: light;
 }
 .fig-l { --fig: var(--fig-l); --ln: var(--ln-l); --p: var(--p-l); --s: var(--s-l); }

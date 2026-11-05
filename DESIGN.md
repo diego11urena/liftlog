@@ -111,7 +111,7 @@ Ink panels get a subtle dot texture: `background-image: radial-gradient(#ffffff1
 
 **Segmented control** (PR | Vol., Month | Year | All Time): `--inset` track with 3px padding, 36px segments, selected = ink fill white text.
 
-**Tab bar** Profile | Workout | Stats. Bg `--paper`, 1px top hairline. 76px tall plus `env(safe-area-inset-bottom)` (owner spec 2026-11-05, replaces the 56px band), 8px side padding, pinned to the bottom of the frame. Each tab: icon (22px) over an 11px label, 4px gap, centered, filling its cell; label weight 600, 700 when active. Active = ink + a 28×3px accent tab at the very top edge; inactive `--mute`. Stays visible on Workout, Active workout, Profile.
+**Tab bar** Profile | Workout | Stats. Bg `--paper`, 1px top hairline. `--nav-h` tall plus `env(safe-area-inset-bottom)` (`clamp(64px, 8.9svh, 80px)`, about 76px on a Pro iPhone; owner spec 2026-11-05, replaces the 56px band), 8px side padding, pinned to the bottom of the frame. Each tab: icon (22px) over an 11px label, 4px gap, centered, filling its cell; label weight 600, 700 when active. Active = ink + a 28×3px accent tab at the very top edge; inactive `--mute`. Stays visible on Workout, Active workout, Profile.
 
 **Week strip** (Workout home and Profile Week Overview)
 - Row: chevron (26×46) + 7 day columns (42px) + chevron. Column = letter (Inter 11px, `--mute`) over a 34px circle with the day number (Inter 15px/600).
